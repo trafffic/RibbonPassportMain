@@ -1,0 +1,48 @@
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+
+# Personal Xcode settings (keep shared schemes and project files)
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# Build output and results
+build/
+DerivedData/
+*.xcarchive
+*.xcresult
+*.ipa
+*.dSYM/
+*.dSYM.zip
+
+# Local configuration and signing material
+/CONFIGURATION.json
+*.xcconfig.local
+*.local.xcconfig
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.p8
+*.cer
+*.key
+.env
+.env.*
+!.env.example
+
+# Updater and repair backups
+/UpdateBackups/
+*.before-resource-repair
+*.bak
+
+# Python helper cache
+__pycache__/
+*.py[cod]
+.venv/
+
+# Packaged releases
+/Releases/
+/RibbonPassport*.zip

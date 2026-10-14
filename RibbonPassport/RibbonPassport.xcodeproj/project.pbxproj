@@ -1,0 +1,579 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		02E0912D4BE2F7C52EAF4F6B /* Shared/PassportViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E17F99EE9D62A9EE1983AF90 /* Shared/PassportViews.swift */; };
+		086AB688E059A70ED8F87A00 /* Widgets/RibbonWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C9C34B1B3691A7A6A689D2 /* Widgets/RibbonWidgets.swift */; };
+		0C603B8F3E5FC0AEA746BF9F /* Tests/ImportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 865EDA16E42C1CCC6E4DC14D /* Tests/ImportTests.swift */; };
+		3B6F3B60B86C843E62EE2EA6 /* App/RibbonPassportApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B5F1379DA6A10A3AF40757A /* App/RibbonPassportApp.swift */; };
+		4A54E05F0F1D8265588ED29A /* RibbonWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4C47665D1BA4105DF9684DC4 /* RibbonWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8D0F4E8D38F00AD0AFC6E00A /* Shared/RibbonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81ADD167DFD716F4A67858D6 /* Shared/RibbonCore.swift */; };
+		97A1302C11F9F4ACAE819CC3 /* Shared/RibbonCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81ADD167DFD716F4A67858D6 /* Shared/RibbonCore.swift */; };
+		9BBA1FBAA3D5F4FFEF835458 /* Shared/SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5399B7D0B17BF2F627D0F784 /* Shared/SharedStore.swift */; };
+		A01F16B9F9034C066DE3705B /* Shared/PassportViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = E17F99EE9D62A9EE1983AF90 /* Shared/PassportViews.swift */; };
+		AF306FE0BB8AAB4A39F41F6A /* RibbonAssets in Resources */ = {isa = PBXBuildFile; fileRef = C8AA0765840735F294B5C5FC /* RibbonAssets */; };
+		C92F68A182337EB71BBB4E72 /* RibbonAssets in Resources */ = {isa = PBXBuildFile; fileRef = C8AA0765840735F294B5C5FC /* RibbonAssets */; };
+		E8978CDCD73A0ECB68AA9318 /* Shared/SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5399B7D0B17BF2F627D0F784 /* Shared/SharedStore.swift */; };
+		F4AC48BC10F8925D3A34069B /* App/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A5CCB0147A1F44705D7DBD4 /* App/Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		225795B2DAF32C318234BC12 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A5A0AA9F4FB5BC8D9254438A;
+			remoteInfo = RibbonWidgets.appex;
+		};
+		3A20F91C1979DAC95DC45800 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 29C7B681C8D62CBAC94D51C0;
+			remoteInfo = RibbonPassport.app;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A725348DB565792F7F782603 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4A54E05F0F1D8265588ED29A /* RibbonWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		45B8F44ED4BF504911C85EF5 /* Shared/AppGroups.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Shared/AppGroups.entitlements; sourceTree = "<group>"; };
+		4C47665D1BA4105DF9684DC4 /* RibbonWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RibbonWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5399B7D0B17BF2F627D0F784 /* Shared/SharedStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/SharedStore.swift; sourceTree = "<group>"; };
+		624A8F936E0903B5DF7F6FC4 /* App/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = App/Info.plist; sourceTree = "<group>"; };
+		7A5CCB0147A1F44705D7DBD4 /* App/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = App/Assets.xcassets; sourceTree = "<group>"; };
+		7C00590ED4574C49F4854542 /* Widgets/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Widgets/Info.plist; sourceTree = "<group>"; };
+		81ADD167DFD716F4A67858D6 /* Shared/RibbonCore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/RibbonCore.swift; sourceTree = "<group>"; };
+		82C9C34B1B3691A7A6A689D2 /* Widgets/RibbonWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Widgets/RibbonWidgets.swift; sourceTree = "<group>"; };
+		865EDA16E42C1CCC6E4DC14D /* Tests/ImportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/ImportTests.swift; sourceTree = "<group>"; };
+		9B5F1379DA6A10A3AF40757A /* App/RibbonPassportApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/RibbonPassportApp.swift; sourceTree = "<group>"; };
+		B6CDB6E5D160E013280D3C68 /* RibbonPassport.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RibbonPassport.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C0803114C2E5C3C747C272A8 /* CREDITS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CREDITS.md; sourceTree = "<group>"; };
+		C8AA0765840735F294B5C5FC /* RibbonAssets */ = {isa = PBXFileReference; lastKnownFileType = folder; path = RibbonAssets; sourceTree = "<group>"; };
+		C930CA7F89F43E87FDAD13B3 /* TESTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TESTING.md; sourceTree = "<group>"; };
+		E02A90D9643568EA39115CFB /* RibbonPassportTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RibbonPassportTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E17F99EE9D62A9EE1983AF90 /* Shared/PassportViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/PassportViews.swift; sourceTree = "<group>"; };
+		EF693362BFE20FDFC889CA35 /* START-HERE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "START-HERE.md"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4AE99467E58E0041D5ECB82F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C625D7DE41C2AF349B1399D6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EA43E238E18648AD05F0D1CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		328EC33DF3954DC9B83FA285 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B6CDB6E5D160E013280D3C68 /* RibbonPassport.app */,
+				4C47665D1BA4105DF9684DC4 /* RibbonWidgets.appex */,
+				E02A90D9643568EA39115CFB /* RibbonPassportTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		958B6263A0B70C847CDA462B /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				81ADD167DFD716F4A67858D6 /* Shared/RibbonCore.swift */,
+				5399B7D0B17BF2F627D0F784 /* Shared/SharedStore.swift */,
+				E17F99EE9D62A9EE1983AF90 /* Shared/PassportViews.swift */,
+				9B5F1379DA6A10A3AF40757A /* App/RibbonPassportApp.swift */,
+				82C9C34B1B3691A7A6A689D2 /* Widgets/RibbonWidgets.swift */,
+				865EDA16E42C1CCC6E4DC14D /* Tests/ImportTests.swift */,
+				624A8F936E0903B5DF7F6FC4 /* App/Info.plist */,
+				7C00590ED4574C49F4854542 /* Widgets/Info.plist */,
+				45B8F44ED4BF504911C85EF5 /* Shared/AppGroups.entitlements */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		E50290A24C49A459B43487C5 = {
+			isa = PBXGroup;
+			children = (
+				958B6263A0B70C847CDA462B /* Sources */,
+				C8AA0765840735F294B5C5FC /* RibbonAssets */,
+				7A5CCB0147A1F44705D7DBD4 /* App/Assets.xcassets */,
+				EF693362BFE20FDFC889CA35 /* START-HERE.md */,
+				C930CA7F89F43E87FDAD13B3 /* TESTING.md */,
+				C0803114C2E5C3C747C272A8 /* CREDITS.md */,
+				328EC33DF3954DC9B83FA285 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		29C7B681C8D62CBAC94D51C0 /* RibbonPassport */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9EA62D25DFD1EFBA21F6DE7B /* Build configuration list for PBXNativeTarget "RibbonPassport" */;
+			buildPhases = (
+				DFEA44A84213AE39EA449F56 /* Sources */,
+				4AE99467E58E0041D5ECB82F /* Frameworks */,
+				5B5B8C35BD86B90B3870E7D3 /* Resources */,
+				A725348DB565792F7F782603 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5B21A5802740265D858D38C2 /* PBXTargetDependency */,
+			);
+			name = RibbonPassport;
+			productName = RibbonPassport;
+			productReference = B6CDB6E5D160E013280D3C68 /* RibbonPassport.app */;
+			productType = "com.apple.product-type.application";
+		};
+		7EC8F98B7A265120217712DE /* RibbonPassportTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0AD37307DFDAE852A779B369 /* Build configuration list for PBXNativeTarget "RibbonPassportTests" */;
+			buildPhases = (
+				186203AAFC2F3A3C5EE76CD4 /* Sources */,
+				EA43E238E18648AD05F0D1CE /* Frameworks */,
+				2AFD6FBD48376C02A050CF57 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AC1711AC664BDAED77173DF4 /* PBXTargetDependency */,
+			);
+			name = RibbonPassportTests;
+			productName = RibbonPassportTests;
+			productReference = E02A90D9643568EA39115CFB /* RibbonPassportTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A5A0AA9F4FB5BC8D9254438A /* RibbonWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5E733EA2C91A646BD263FFDF /* Build configuration list for PBXNativeTarget "RibbonWidgets" */;
+			buildPhases = (
+				921819B6B0EDCEBCA04B50DA /* Sources */,
+				C625D7DE41C2AF349B1399D6 /* Frameworks */,
+				12ABFB548D12CC44246DDDA9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RibbonWidgets;
+			productName = RibbonWidgets;
+			productReference = 4C47665D1BA4105DF9684DC4 /* RibbonWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		98F54143AB4E86B28C3AFEE0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2640;
+				TargetAttributes = {
+					29C7B681C8D62CBAC94D51C0 = {
+						CreatedOnToolsVersion = 16.0;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+					7EC8F98B7A265120217712DE = {
+						CreatedOnToolsVersion = 16.0;
+						ProvisioningStyle = Automatic;
+						TestTargetID = 29C7B681C8D62CBAC94D51C0;
+					};
+					A5A0AA9F4FB5BC8D9254438A = {
+						CreatedOnToolsVersion = 16.0;
+						ProvisioningStyle = Automatic;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+				};
+			};
+			buildConfigurationList = 247BF104A9AD002C539DA531 /* Build configuration list for PBXProject "RibbonPassport" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E50290A24C49A459B43487C5;
+			productRefGroup = 328EC33DF3954DC9B83FA285 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				29C7B681C8D62CBAC94D51C0 /* RibbonPassport */,
+				A5A0AA9F4FB5BC8D9254438A /* RibbonWidgets */,
+				7EC8F98B7A265120217712DE /* RibbonPassportTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		12ABFB548D12CC44246DDDA9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C92F68A182337EB71BBB4E72 /* RibbonAssets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AFD6FBD48376C02A050CF57 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5B5B8C35BD86B90B3870E7D3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF306FE0BB8AAB4A39F41F6A /* RibbonAssets in Resources */,
+				F4AC48BC10F8925D3A34069B /* App/Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		186203AAFC2F3A3C5EE76CD4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0C603B8F3E5FC0AEA746BF9F /* Tests/ImportTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		921819B6B0EDCEBCA04B50DA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				97A1302C11F9F4ACAE819CC3 /* Shared/RibbonCore.swift in Sources */,
+				9BBA1FBAA3D5F4FFEF835458 /* Shared/SharedStore.swift in Sources */,
+				02E0912D4BE2F7C52EAF4F6B /* Shared/PassportViews.swift in Sources */,
+				086AB688E059A70ED8F87A00 /* Widgets/RibbonWidgets.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DFEA44A84213AE39EA449F56 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D0F4E8D38F00AD0AFC6E00A /* Shared/RibbonCore.swift in Sources */,
+				E8978CDCD73A0ECB68AA9318 /* Shared/SharedStore.swift in Sources */,
+				A01F16B9F9034C066DE3705B /* Shared/PassportViews.swift in Sources */,
+				3B6F3B60B86C843E62EE2EA6 /* App/RibbonPassportApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5B21A5802740265D858D38C2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A5A0AA9F4FB5BC8D9254438A /* RibbonWidgets */;
+			targetProxy = 225795B2DAF32C318234BC12 /* PBXContainerItemProxy */;
+		};
+		AC1711AC664BDAED77173DF4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 29C7B681C8D62CBAC94D51C0 /* RibbonPassport */;
+			targetProxy = 3A20F91C1979DAC95DC45800 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0FE5D1EF1FA727BADCF217D2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/AppGroups.entitlements;
+				CURRENT_PROJECT_VERSION = "3";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = "0.3";
+				PRODUCT_BUNDLE_IDENTIFIER = ie.liamburke1.ribbonpassport;
+				PRODUCT_NAME = RibbonPassport;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+		196372C5242E3118EE8DE229 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/AppGroups.entitlements;
+				CURRENT_PROJECT_VERSION = "3";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = App/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = "0.3";
+				PRODUCT_BUNDLE_IDENTIFIER = ie.liamburke1.ribbonpassport;
+				PRODUCT_NAME = RibbonPassport;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		262E02E3C63E2FBADCBCB6A2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = BMXVW9JNQ9;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				ONLY_ACTIVE_ARCH = YES;
+				RIBBON_APP_GROUP = group.ie.liamburke1.ribbonpassport;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		73A745620BA705725DD3D817 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/AppGroups.entitlements;
+				CURRENT_PROJECT_VERSION = "3";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Widgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "0.3";
+				PRODUCT_BUNDLE_IDENTIFIER = ie.liamburke1.ribbonpassport.Widgets;
+				PRODUCT_NAME = RibbonWidgets;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Release;
+		};
+		86E0D76135EE80816AB07AC0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = BMXVW9JNQ9;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				RIBBON_APP_GROUP = group.ie.liamburke1.ribbonpassport;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		8FB2A6B1B25BD560D9256E0A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CURRENT_PROJECT_VERSION = "3";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = "0.3";
+				PRODUCT_BUNDLE_IDENTIFIER = ie.liamburke1.ribbonpassport.Tests;
+				PRODUCT_NAME = RibbonPassportTests;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RibbonPassport.app/RibbonPassport";
+			};
+			name = Release;
+		};
+		D30841DE2B0FC2971730049F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CURRENT_PROJECT_VERSION = "3";
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = "0.3";
+				PRODUCT_BUNDLE_IDENTIFIER = ie.liamburke1.ribbonpassport.Tests;
+				PRODUCT_NAME = RibbonPassportTests;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RibbonPassport.app/RibbonPassport";
+			};
+			name = Debug;
+		};
+		E07930319D7D3EA19A026B89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = Shared/AppGroups.entitlements;
+				CURRENT_PROJECT_VERSION = "3";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Widgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "0.3";
+				PRODUCT_BUNDLE_IDENTIFIER = ie.liamburke1.ribbonpassport.Widgets;
+				PRODUCT_NAME = RibbonWidgets;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0AD37307DFDAE852A779B369 /* Build configuration list for PBXNativeTarget "RibbonPassportTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D30841DE2B0FC2971730049F /* Debug */,
+				8FB2A6B1B25BD560D9256E0A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		247BF104A9AD002C539DA531 /* Build configuration list for PBXProject "RibbonPassport" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				262E02E3C63E2FBADCBCB6A2 /* Debug */,
+				86E0D76135EE80816AB07AC0 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5E733EA2C91A646BD263FFDF /* Build configuration list for PBXNativeTarget "RibbonWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E07930319D7D3EA19A026B89 /* Debug */,
+				73A745620BA705725DD3D817 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9EA62D25DFD1EFBA21F6DE7B /* Build configuration list for PBXNativeTarget "RibbonPassport" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0FE5D1EF1FA727BADCF217D2 /* Debug */,
+				196372C5242E3118EE8DE229 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}
