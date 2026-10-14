@@ -20,6 +20,15 @@
 		C92F68A182337EB71BBB4E72 /* RibbonAssets in Resources */ = {isa = PBXBuildFile; fileRef = C8AA0765840735F294B5C5FC /* RibbonAssets */; };
 		E8978CDCD73A0ECB68AA9318 /* Shared/SharedStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5399B7D0B17BF2F627D0F784 /* Shared/SharedStore.swift */; };
 		F4AC48BC10F8925D3A34069B /* App/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7A5CCB0147A1F44705D7DBD4 /* App/Assets.xcassets */; };
+		DBB6847FF4FD04710E67DDF4 /* Shared/UserCustomization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CEE4DA72E93E41B659B79A /* Shared/UserCustomization.swift */; };
+		EE7CEBF2362C1CC88C7A18AA /* Shared/UserCustomization.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8CEE4DA72E93E41B659B79A /* Shared/UserCustomization.swift */; };
+		7D32ED944972E0D5EE2D3F6C /* Shared/RetroStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C96F8CAE7898CF867881B40 /* Shared/RetroStyle.swift */; };
+		965D74A497FC5B6DF5D4B126 /* Shared/RetroStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C96F8CAE7898CF867881B40 /* Shared/RetroStyle.swift */; };
+		CFDD21E0802F70D767D72BEF /* Shared/WidgetLayouts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 074754AF2859DBDAEA669DEC /* Shared/WidgetLayouts.swift */; };
+		ED622620CF68FD90933BE19D /* Shared/WidgetLayouts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 074754AF2859DBDAEA669DEC /* Shared/WidgetLayouts.swift */; };
+		55974DD25B9F60ED9A8A62C8 /* App/PCScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 787BEDBE68CD2BAD538DD5B9 /* App/PCScreens.swift */; };
+		E5D885E0F02572DA1B0ADB76 /* App/CompetitiveScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1221F5F3AC8BB68ED66C8CCC /* App/CompetitiveScreens.swift */; };
+		81E1225AD15F2E7ECE893B50 /* App/WidgetStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F224F8797E565966DA8D43 /* App/WidgetStudio.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +80,12 @@
 		E02A90D9643568EA39115CFB /* RibbonPassportTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RibbonPassportTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E17F99EE9D62A9EE1983AF90 /* Shared/PassportViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/PassportViews.swift; sourceTree = "<group>"; };
 		EF693362BFE20FDFC889CA35 /* START-HERE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "START-HERE.md"; sourceTree = "<group>"; };
+		A8CEE4DA72E93E41B659B79A /* Shared/UserCustomization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/UserCustomization.swift; sourceTree = "<group>"; };
+		3C96F8CAE7898CF867881B40 /* Shared/RetroStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/RetroStyle.swift; sourceTree = "<group>"; };
+		074754AF2859DBDAEA669DEC /* Shared/WidgetLayouts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/WidgetLayouts.swift; sourceTree = "<group>"; };
+		787BEDBE68CD2BAD538DD5B9 /* App/PCScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PCScreens.swift; sourceTree = "<group>"; };
+		1221F5F3AC8BB68ED66C8CCC /* App/CompetitiveScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/CompetitiveScreens.swift; sourceTree = "<group>"; };
+		97F224F8797E565966DA8D43 /* App/WidgetStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/WidgetStudio.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +127,12 @@
 			isa = PBXGroup;
 			children = (
 				81ADD167DFD716F4A67858D6 /* Shared/RibbonCore.swift */,
+				A8CEE4DA72E93E41B659B79A /* Shared/UserCustomization.swift */,
+				3C96F8CAE7898CF867881B40 /* Shared/RetroStyle.swift */,
+				074754AF2859DBDAEA669DEC /* Shared/WidgetLayouts.swift */,
+				787BEDBE68CD2BAD538DD5B9 /* App/PCScreens.swift */,
+				1221F5F3AC8BB68ED66C8CCC /* App/CompetitiveScreens.swift */,
+				97F224F8797E565966DA8D43 /* App/WidgetStudio.swift */,
 				5399B7D0B17BF2F627D0F784 /* Shared/SharedStore.swift */,
 				E17F99EE9D62A9EE1983AF90 /* Shared/PassportViews.swift */,
 				9B5F1379DA6A10A3AF40757A /* App/RibbonPassportApp.swift */,
@@ -288,6 +309,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EE7CEBF2362C1CC88C7A18AA /* Shared/UserCustomization.swift in Sources */,
+				965D74A497FC5B6DF5D4B126 /* Shared/RetroStyle.swift in Sources */,
+				ED622620CF68FD90933BE19D /* Shared/WidgetLayouts.swift in Sources */,
 				97A1302C11F9F4ACAE819CC3 /* Shared/RibbonCore.swift in Sources */,
 				9BBA1FBAA3D5F4FFEF835458 /* Shared/SharedStore.swift in Sources */,
 				02E0912D4BE2F7C52EAF4F6B /* Shared/PassportViews.swift in Sources */,
@@ -299,6 +323,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DBB6847FF4FD04710E67DDF4 /* Shared/UserCustomization.swift in Sources */,
+				7D32ED944972E0D5EE2D3F6C /* Shared/RetroStyle.swift in Sources */,
+				CFDD21E0802F70D767D72BEF /* Shared/WidgetLayouts.swift in Sources */,
+				55974DD25B9F60ED9A8A62C8 /* App/PCScreens.swift in Sources */,
+				E5D885E0F02572DA1B0ADB76 /* App/CompetitiveScreens.swift in Sources */,
+				81E1225AD15F2E7ECE893B50 /* App/WidgetStudio.swift in Sources */,
 				8D0F4E8D38F00AD0AFC6E00A /* Shared/RibbonCore.swift in Sources */,
 				E8978CDCD73A0ECB68AA9318 /* Shared/SharedStore.swift in Sources */,
 				A01F16B9F9034C066DE3705B /* Shared/PassportViews.swift in Sources */,

@@ -109,6 +109,8 @@ struct RibbonPokemon: Codable, Identifiable, Equatable {
     var ribbons: [String] = []
     var source: String = "manual"
     var showdownSet: ShowdownSet? = nil
+    var visits: [JourneyVisit]? = nil
+    var earnedGenerations: [String: Int]? = nil
 
     var displayName: String { nickname.isEmpty ? (RibbonCatalog.shared.pokemon[species]?.name ?? species) : nickname }
     var spritePath: String {
@@ -141,6 +143,9 @@ struct CollectionSnapshot: Codable {
     var selectedTeamID: String = ""
     var appearance: Appearance = .automatic
     var updatedAt: Date = Date()
+    var storage: StorageLayout? = nil
+    var widgetPresets: [WidgetPreset]? = nil
+    var widgetDefaults: [String: String]? = nil
     func members(teamID: String? = nil) -> [RibbonPokemon] {
         let id = teamID ?? selectedTeamID
         guard let team = teams.first(where: { $0.id == id }) else { return Array(pokemon.prefix(6)) }

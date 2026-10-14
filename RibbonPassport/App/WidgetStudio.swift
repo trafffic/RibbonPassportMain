@@ -1,0 +1,197 @@
+import SwiftUI
+import WidgetKit
+
+enum WidgetPreviewSize: String, CaseIterable, Identifiable {
+    case small, medium, large
+    var id: String { rawValue }
+    var name: String { rawValue.capitalized }
+    var passport: PassportSize { switch self { case .small: .small; case .medium: .medium; case .large: .large } }
+    var height: CGFloat { switch self { case .small: 176; case .medium: 184; case .large: 384 } }
+}
+
+struct WidgetStudioView: View {
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.colorScheme) private var scheme
+    @State private var draft: WidgetPreset
+    @State private var size: WidgetPreviewSize = .large
+    @State private var showInstall = false
+    @State private var savedMessage = ""
+    @State private var deleting: WidgetPreset?
+    init(initialContent: WidgetContent = .pokemon, initialSelection: String = "") {
+        _draft = State(initialValue: WidgetPreset(name: initialContent.name, content: initialContent, selectionID: initialSelection))
+    }
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
+    private var previewTheme: PassportTheme {
+        let appearance = draft.style.appearance == .automatic ? store.snapshot.appearance : draft.style.appearance
+        return PassportTheme(dark: appearance == .dark || (appearance == .automatic && scheme == .dark), game: previewPokemon.first?.currentgame ?? "", style: draft.style)
+    }
+    private var eligibleTeams: [RibbonTeam] { store.snapshot.teams(for: draft.content == .showdownTeam ? .showdown : .ribbon) }
+    private var previewPokemon: [RibbonPokemon] {
+        if draft.content == .pokemon {
+            if !draft.selectionID.isEmpty { return store.snapshot.pokemon.filter { $0.id == draft.selectionID } }
+            if store.snapshot.pokemon.isEmpty { return Array(SharedStore.demo().pokemon.prefix(1)) }
+            return [store.snapshot.pokemon.first { $0.id == store.snapshot.selectedID } ?? store.snapshot.pokemon[0]]
+        }
+        if let team = store.snapshot.widgetTeam(for: draft.content == .showdownTeam ? .showdown : .ribbon, id: draft.selectionID.isEmpty ? nil : draft.selectionID) {
+            return store.snapshot.members(teamID: team.id)
+        }
+        if !draft.selectionID.isEmpty { return [] }
+        return draft.content == .showdownTeam ? SharedStore.showdownPreview().pokemon : SharedStore.demo().pokemon
+    }
+    private var previewName: String {
+        if let t = eligibleTeams.first(where: { $0.id == draft.selectionID }) { return t.name }
+        return store.snapshot.widgetTeam(for: draft.content == .showdownTeam ? .showdown : .ribbon)?.name ?? draft.content.name
+    }
+    private var isDemo: Bool { draft.selectionID.isEmpty && (draft.content == .pokemon ? store.snapshot.pokemon.isEmpty : eligibleTeams.isEmpty) }
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Widget studio").font(PixelFont.font(30))
+                Picker("Widget", selection: Binding(get: { draft.content }, set: { content in
+                    draft = WidgetPreset(name: content.name, content: content, style: draft.style); savedMessage = ""
+                    if content != .pokemon && size == .small { size = .medium }
+                })) { ForEach(WidgetContent.allCases) { Text($0.name).tag($0) } }
+                Picker("Size", selection: $size) {
+                    ForEach(WidgetPreviewSize.allCases.filter { draft.content == .pokemon || $0 != .small }) { Text($0.name).tag($0) }
+                }.pickerStyle(.segmented)
+                HStack(spacing: 6) {
+                    ForEach(Appearance.allCases, id: \.self) { appearance in
+                        Button(appearance == .automatic ? "Auto" : appearance.rawValue.capitalized) { draft.style.appearance = appearance }
+                            .font(PixelFont.font(15)).padding(9).frame(maxWidth: .infinity)
+                            .background(draft.style.appearance == appearance ? theme.ink : theme.panel)
+                            .foregroundStyle(draft.style.appearance == appearance ? theme.paper : theme.ink)
+                            .overlay(Rectangle().stroke(theme.border, lineWidth: 1))
+                    }
+                }.buttonStyle(.plain)
+                if isDemo { Text("Demo preview").font(PixelFont.font(13)).foregroundStyle(theme.muted) }
+                preview.frame(maxWidth: .infinity)
+                VStack(alignment: .leading, spacing: 13) {
+                    TextField("Design name", text: $draft.name).font(PixelFont.font(20)).textFieldStyle(.roundedBorder)
+                    selectionPicker
+                    Picker("Palette", selection: $draft.style.palette) { ForEach(WidgetPalette.allCases) { Text($0.name).tag($0) } }
+                    Picker("Font", selection: $draft.style.typeface) { ForEach(WidgetTypeface.allCases) { Text($0.name).tag($0) } }
+                    HStack { Text("Text size"); Spacer(); Text("\(Int((draft.style.textScale * 100).rounded()))%") }
+                    Slider(value: $draft.style.textScale, in: 0.85...1.15, step: 0.05).accessibilityLabel("Widget text size")
+                    DisclosureGroup("Visible details") { detailToggles.padding(.top, 10) }
+                    if draft.content != .showdownTeam {
+                        Picker("Ribbon order", selection: $draft.style.awardOrdering) { ForEach(AwardOrdering.allCases) { Text($0.name).tag($0) } }
+                    }
+                }.font(PixelFont.font(16)).retroPanel()
+                HStack(spacing: 8) {
+                    Button("Save design") { save(false) }.frame(maxWidth: .infinity)
+                    Button("Set default") { save(true) }.frame(maxWidth: .infinity)
+                }.buttonStyle(RetroAction())
+                Button("Add to Home Screen") { if save(false) { showInstall = true } }
+                    .buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("widgets.addToHomeScreen")
+                if !savedMessage.isEmpty { Text(savedMessage).font(PixelFont.font(14)).foregroundStyle(theme.accent).accessibilityAddTraits(.updatesFrequently) }
+                if !(store.snapshot.widgetPresets ?? []).isEmpty { savedDesigns }
+                Button("New design") {
+                    draft = WidgetPreset(name: draft.content.name, content: draft.content); savedMessage = ""
+                }.buttonStyle(RetroAction())
+            }.padding(16)
+        }.background(theme.paper).navigationTitle("Widgets").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+            .sheet(isPresented: $showInstall) { WidgetInstallHelp(preset: draft, size: size) }
+            .confirmationDialog("Delete this design?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+                Button("Delete design", role: .destructive) {
+                    if let deleting { store.deletePreset(deleting.id) }; deleting = nil
+                }
+            }
+    }
+    @ViewBuilder private var preview: some View {
+        if previewPokemon.isEmpty {
+            Text("Selection removed").font(PixelFont.font(18)).frame(height: size.height).frame(maxWidth: .infinity).retroPanel()
+        } else {
+            ConfiguredWidgetView(pokemon: previewPokemon, name: previewName, content: draft.content, size: size.passport, theme: previewTheme, download: true)
+                .frame(maxWidth: size == .small ? 176 : 364).frame(height: size.height)
+                .clipShape(RoundedRectangle(cornerRadius: 24)).overlay(RoundedRectangle(cornerRadius: 24).stroke(theme.border.opacity(0.4), lineWidth: 0.5))
+                .environment(\.colorScheme, previewTheme.dark ? .dark : .light)
+        }
+    }
+    @ViewBuilder private var selectionPicker: some View {
+        if draft.content == .pokemon {
+            Picker("Pokémon", selection: $draft.selectionID) {
+                Text("App selection").tag("")
+                ForEach(store.snapshot.pokemon) { Text($0.displayName).tag($0.id) }
+                if !draft.selectionID.isEmpty && !store.snapshot.pokemon.contains(where: { $0.id == draft.selectionID }) { Text("Selection removed").tag(draft.selectionID) }
+            }
+        } else {
+            Picker("Team", selection: $draft.selectionID) {
+                Text("App selection").tag("")
+                ForEach(eligibleTeams) { Text($0.name).tag($0.id) }
+                if !draft.selectionID.isEmpty && !eligibleTeams.contains(where: { $0.id == draft.selectionID }) { Text("Selection removed").tag(draft.selectionID) }
+            }
+        }
+    }
+    private var detailToggles: some View {
+        VStack(spacing: 10) {
+            Toggle("Shiny icon", isOn: $draft.style.showShiny)
+            Toggle("Level", isOn: $draft.style.showLevel)
+            if draft.content == .showdownTeam {
+                Toggle("Held item", isOn: $draft.style.showItem)
+                Toggle("Ability", isOn: $draft.style.showAbility)
+                Toggle("Tera type", isOn: $draft.style.showTera)
+                Toggle("Nature · large", isOn: $draft.style.showNature)
+                Toggle("Moves · large", isOn: $draft.style.showMoves)
+            } else {
+                Toggle("Equipped title", isOn: $draft.style.showTitle)
+                Toggle("Game", isOn: $draft.style.showGame)
+                Toggle("Origin console", isOn: $draft.style.showConsole)
+                Toggle("Ribbons & marks", isOn: $draft.style.showAwards)
+                if draft.content == .pokemon { Toggle("Generation stamps · large", isOn: $draft.style.showJourney) }
+            }
+        }
+    }
+    private var savedDesigns: some View {
+        VStack(spacing: 10) {
+            RetroHeading(title: "Saved designs", value: "\(store.snapshot.widgetPresets?.count ?? 0)")
+            ForEach(store.snapshot.widgetPresets ?? []) { preset in
+                HStack {
+                    Button {
+                        // Changing the content picker normally starts a new design; restore the whole preset after that update.
+                        draft = preset; savedMessage = ""
+                        if preset.content != .pokemon && size == .small { size = .medium }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(preset.name).font(PixelFont.font(19))
+                            Text(preset.content.name).font(PixelFont.font(12)).foregroundStyle(theme.muted)
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }.buttonStyle(.plain)
+                    if store.snapshot.widgetDefaults?[preset.content.rawValue] == preset.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(theme.accent) }
+                    Button { deleting = preset } label: { Image(systemName: "trash").frame(width: 36, height: 44) }.accessibilityLabel("Delete \(preset.name)")
+                }.retroPanel(padding: 10)
+            }
+        }
+    }
+    @discardableResult private func save(_ makeDefault: Bool) -> Bool {
+        let trimmed = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { savedMessage = "Enter a design name"; return false }
+        draft.name = trimmed; store.savePreset(draft, makeDefault: makeDefault)
+        guard store.error == nil else { return false }
+        savedMessage = makeDefault ? "Default design saved" : "Design saved"; return true
+    }
+}
+
+struct WidgetInstallHelp: View {
+    var preset: WidgetPreset
+    var size: WidgetPreviewSize
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    Text("\(preset.content.name) · \(size.name)").font(PixelFont.font(25))
+                    step(1, "Hold an empty area on the Home Screen.")
+                    step(2, "Edit → Add Widget → Ribbon Passport.")
+                    step(3, "Choose \(preset.content.name), select \(size.name), then Add Widget.")
+                    step(4, "Hold the widget → Edit Widget → Saved design → \(preset.name).")
+                    Text("iOS requires you to complete these steps on the Home Screen.").font(PixelFont.font(15)).foregroundStyle(.secondary)
+                    Link("Apple’s widget instructions", destination: URL(string: "https://support.apple.com/en-gb/118610")!)
+                }.padding(20)
+            }.font(PixelFont.font(18)).navigationTitle("Add widget").navigationBarTitleDisplayMode(.inline)
+                .toolbar { Button("Done") { dismiss() } }
+        }
+    }
+    private func step(_ number: Int, _ text: String) -> some View {
+        HStack(alignment: .top, spacing: 12) { Text("\(number)").font(PixelFont.font(24)).frame(width: 22); Text(text).fixedSize(horizontal: false, vertical: true) }
+    }
+}

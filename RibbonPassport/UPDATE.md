@@ -1,3 +1,5 @@
+For the implemented PC boxes, Stamp Album, Showdown screens and Widget Studio, see **UI-UPDATE.md**. The source in this folder is already updated; open the existing Xcode project to build it.
+
 # Update your working iPhone app to 0.3
 
 Use the included script to apply this update to your **original, configured project**. It keeps your signing Team, app/extension bundle identifiers, App Groups, Info.plist files and entitlements. Changed project files are backed up. Your saved collection uses the same format.

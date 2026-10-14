@@ -7,15 +7,19 @@ final class AppStore: ObservableObject {
     @Published var snapshot = CollectionSnapshot()
     @Published var error: String?
     @Published var notice: String?
+    @Published var tab = 0
+    @Published var openPokemonID: String?
+    @Published var openTeamID: String?
     init() { reload() }
     func reload() {
-        do { snapshot = try SharedStore.load() }
+        do { var loaded = try SharedStore.load(); loaded.storage = loaded.organizedStorage; snapshot = loaded; error = nil }
         catch { self.error = error.localizedDescription }
     }
     func commit(_ value: CollectionSnapshot) {
         do {
             var next = value; next.updatedAt = Date()
-            try SharedStore.save(next); snapshot = next
+            next.storage = next.organizedStorage
+            try SharedStore.save(next); snapshot = next; error = nil
             WidgetCenter.shared.reloadAllTimelines()
         } catch { self.error = error.localizedDescription }
     }
@@ -27,7 +31,9 @@ final class AppStore: ObservableObject {
     func update(_ pokemon: RibbonPokemon) {
         var next = snapshot
         guard let index = next.pokemon.firstIndex(where: { $0.id == pokemon.id }) else { return }
-        next.pokemon[index] = pokemon; commit(next)
+        var clean = pokemon
+        clean.earnedGenerations = clean.earnedGenerations?.filter { clean.ribbons.contains($0.key) }
+        next.pokemon[index] = clean; commit(next)
     }
     func importBackup(_ url: URL) {
         let access = url.startAccessingSecurityScopedResource()
@@ -39,7 +45,10 @@ final class AppStore: ObservableObject {
             for index in incoming.indices {
                 let p = incoming[index]
                 if let prior = existing.first(where: { !used.contains($0.id) && $0.species == p.species && $0.nickname == p.nickname && $0.origingame == p.origingame }) {
-                    incoming[index].id = prior.id; used.insert(prior.id)
+                    incoming[index].id = prior.id
+                    incoming[index].visits = prior.visits
+                    incoming[index].earnedGenerations = prior.earnedGenerations?.filter { incoming[index].ribbons.contains($0.key) }
+                    used.insert(prior.id)
                 } else { incoming[index].id = UUID().uuidString }
             }
             var next = snapshot
@@ -83,8 +92,10 @@ struct RibbonPassportApp: App {
                 .onOpenURL { url in
                     if url.scheme == "ribbonpassport", url.host == "pokemon" {
                         store.choose(url.lastPathComponent)
+                        store.tab = 0; store.openPokemonID = url.lastPathComponent
                     } else if url.scheme == "ribbonpassport", url.host == "team" {
                         store.chooseTeam(url.lastPathComponent)
+                        store.tab = 1; store.openTeamID = url.lastPathComponent
                     } else if url.isFileURL { store.importBackup(url) }
                 }
         }
@@ -93,11 +104,12 @@ struct RibbonPassportApp: App {
 struct RootView: View {
     @EnvironmentObject private var store: AppStore
     var body: some View {
-        TabView {
-            CollectionView().tabItem { Label("Pokémon", systemImage: "rosette") }
-            TeamsView().tabItem { Label("Teams", systemImage: "person.3.fill") }
-            SettingsView().tabItem { Label("Settings", systemImage: "gearshape") }
-        }
+        TabView(selection: $store.tab) {
+            PCStorageView().tabItem { Label("Pokémon", systemImage: "square.grid.3x3") }.tag(0)
+            RetroTeamsView().tabItem { Label("Teams", systemImage: "person.3.fill") }.tag(1)
+            NavigationStack { WidgetStudioView() }.tabItem { Label("Widgets", systemImage: "rectangle.3.group") }.tag(2)
+            SettingsView().tabItem { Label("Settings", systemImage: "gearshape") }.tag(3)
+        }.font(PixelFont.font(17)).tint(Color(hex: "718F4E"))
         .alert("Something needs attention", isPresented: Binding(get: { store.error != nil }, set: { if !$0 { store.error = nil } })) {
             Button("OK") { store.error = nil }
         } message: { Text(store.error ?? "") }
@@ -196,7 +208,7 @@ struct PokemonEditor: View {
                         .frame(height: 180).listRowInsets(EdgeInsets())
                 } else {
                     SinglePassport(pokemon: pokemon, size: .medium, theme: PassportTheme(dark: scheme == .dark, game: pokemon.currentgame), download: true)
-                        .frame(height: 154).listRowInsets(EdgeInsets())
+                        .frame(height: 184).listRowInsets(EdgeInsets())
                 }
                 if pokemon.source == "demo", let note = SharedStore.demoFeature(for: pokemon.species) {
                     Label(note, systemImage: "sparkles").font(.caption).foregroundStyle(.secondary)
@@ -376,8 +388,7 @@ struct SettingsView: View {
                     }
                 }
                 Section("Home Screen widgets") {
-                    Text("Hold your Home Screen → Edit → Add Widget → Ribbon Passport. Choose Pokémon Passport, Ribbon Team or Showdown Team. Hold a widget and choose Edit Widget to select its Pokémon/team and appearance.")
-                    Text("Single widgets: small, medium and large. Team widgets: three Pokémon on medium, six on large. These layouts are for the Home Screen, not the smaller Lock Screen slots.").font(.caption).foregroundStyle(.secondary)
+                    NavigationLink("Widget studio") { WidgetStudioView() }
                     Button("Refresh widgets") { WidgetCenter.shared.reloadAllTimelines() }
                 }
                 Section("Collection") {

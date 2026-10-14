@@ -14,15 +14,52 @@ enum SharedStore {
     static func load() throws -> CollectionSnapshot {
         let url = try root().appendingPathComponent("collection.json")
         guard FileManager.default.fileExists(atPath: url.path) else { return CollectionSnapshot() }
-        return try JSONDecoder().decode(CollectionSnapshot.self, from: Data(contentsOf: url))
+        return restoringDemoHistory(in: try JSONDecoder().decode(CollectionSnapshot.self, from: Data(contentsOf: url)))
     }
     static func save(_ snapshot: CollectionSnapshot) throws {
         let data = try JSONEncoder().encode(snapshot)
         try data.write(to: root().appendingPathComponent("collection.json"), options: .atomic)
     }
+    static func restoringDemoHistory(in snapshot: CollectionSnapshot) -> CollectionSnapshot {
+        guard snapshot.pokemon.contains(where: { $0.source == "demo" && $0.visits == nil }) else { return snapshot }
+        let examples = demo().pokemon
+        var result = snapshot
+        for i in result.pokemon.indices {
+            let p = result.pokemon[i]
+            guard p.source == "demo", p.visits == nil,
+                  let example = examples.first(where: { $0.species == p.species && $0.origingame == p.origingame && $0.currentgame == p.currentgame && Set($0.ribbons) == Set(p.ribbons) }) else { continue }
+            result.pokemon[i].visits = example.visits
+            if p.earnedGenerations == nil { result.pokemon[i].earnedGenerations = example.earnedGenerations }
+        }
+        return result
+    }
     static func demo() -> CollectionSnapshot {
         guard let url = Bundle.main.url(forResource: "demo-backup", withExtension: "json", subdirectory: "RibbonAssets"),
-              let data = try? Data(contentsOf: url), let pokemon = try? BackupImporter.parse(data) else { return CollectionSnapshot() }
+              let data = try? Data(contentsOf: url), var pokemon = try? BackupImporter.parse(data) else { return CollectionSnapshot() }
+        // These are authored demo journeys, never inferred visits for imported collections.
+        let routes = ["pikachu": ["sw"], "lugia": ["xd", "diamond", "white", "as"],
+                      "rayquaza": ["ruby", "xd", "platinum", "white", "as"],
+                      "metagross": ["diamond", "platinum", "white", "x", "as", "sun", "sw", "scar"],
+                      "gardevoir": ["as"], "sylveon": ["vio"]]
+        for i in pokemon.indices {
+            pokemon[i].visits = (routes[pokemon[i].species] ?? []).map { JourneyVisit(game: $0) }
+            var locations: [String: Int] = [:]
+            for award in pokemon[i].ribbons {
+                let species = pokemon[i].species
+                if species == "metagross" {
+                    if RibbonCatalog.shared.merges[award] != nil || award == "sinnoh-champion-ribbon" { locations[award] = 4 }
+                    else if ["kalos-champion-ribbon", "hoenn-champion-ribbon", "skillful-battler-ribbon", "expert-battler-ribbon"].contains(award) { locations[award] = 6 }
+                    else if ["alola-champion-ribbon", "battle-tree-great-ribbon", "battle-tree-master-ribbon"].contains(award) { locations[award] = 7 }
+                    else if ["galar-champion-ribbon", "tower-master-ribbon"].contains(award) { locations[award] = 8 }
+                    else if ["paldea-champion-ribbon", "master-rank-ribbon"].contains(award) { locations[award] = 9 }
+                } else if species == "rayquaza" {
+                    locations[award] = award.hasSuffix("-sinnoh") || award == "sinnoh-champion-ribbon" ? 4 :
+                        award.hasSuffix("-hoenn") || ["earth-ribbon", "artist-ribbon", "champion-ribbon"].contains(award) ? 3 : 6
+                } else if species == "lugia" { locations[award] = ["national-ribbon", "earth-ribbon"].contains(award) ? 3 : 6 }
+                else { locations[award] = RibbonCatalog.shared.gameInfo[pokemon[i].currentgame]?.gen }
+            }
+            pokemon[i].earnedGenerations = locations
+        }
         let team = RibbonTeam(name: "Demo Ribbon Team", memberIDs: pokemon.map(\.id))
         return CollectionSnapshot(pokemon: pokemon, teams: [team], selectedID: pokemon.first?.id ?? "", selectedTeamID: team.id)
     }
@@ -76,7 +113,8 @@ enum Artwork {
     static func sprite(_ p: RibbonPokemon) -> UIImage? {
         if p.spritePath == "regular/lugia-shadow.png" { return image("sprite-lugia-shadow") }
         if let url = try? SharedStore.spriteURL(p), let image = UIImage(contentsOfFile: url.path) { return image }
-        return image("sprite-" + p.spritePath.replacingOccurrences(of: "/", with: "_"))
+        let key = (p.spritePath as NSString).deletingPathExtension.replacingOccurrences(of: "/", with: "_")
+        return image("sprite-" + key)
     }
     static func trimmed(_ image: UIImage) -> UIImage {
         guard let source = image.cgImage else { return image }

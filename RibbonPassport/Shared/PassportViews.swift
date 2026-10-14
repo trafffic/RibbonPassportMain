@@ -4,17 +4,30 @@ import WidgetKit
 struct PassportTheme {
     var dark: Bool
     var game: String
+    var style = WidgetStyle()
     var accent: Color {
+        switch style.palette {
+        case .sage: return Color(hex: dark ? "BEDB8C" : "4B7030")
+        case .ocean: return Color(hex: dark ? "A3D7E0" : "326678")
+        case .parchment: return Color(hex: dark ? "E0BF81" : "856438")
+        case .graphite: return Color(hex: dark ? "C5CADE" : "555D77")
+        case .game: break
+        }
         let colours = ["as": "4A88D8", "or": "DA6157", "ruby": "D74B55", "sapphire": "4A88D8",
             "emerald": "32A383", "scar": "DF6552", "vio": "9872D9", "sun": "DC9A48", "moon": "8D85D1",
             "sw": "55A8DB", "sh": "D7789F", "pla": "78A791", "plza": "4BA992"]
         return Color(hex: colours[game] ?? "69A0CC")
     }
-    var paper: Color { Color(hex: dark ? "101C2C" : "EBF3FA") }
-    var panel: Color { Color(hex: dark ? "192B40" : "FFFFFF") }
-    var ink: Color { Color(hex: dark ? "E8F2FF" : "17384F") }
-    var muted: Color { Color(hex: dark ? "B8CEE4" : "587389") }
-    var board: Color { Color(hex: dark ? "233044" : "FFF6DF") }
+    private func colour(_ light: [String], _ night: [String]) -> Color {
+        let i: Int = switch style.palette { case .sage: 0; case .ocean, .game: 1; case .parchment: 2; case .graphite: 3 }
+        return Color(hex: dark ? night[i] : light[i])
+    }
+    var paper: Color { colour(["E6EDDB", "E5EFF2", "EEE8DA", "E9EAF0"], ["1E2C1F", "1C2C35", "28251D", "232630"]) }
+    var panel: Color { colour(["F7F9EE", "F4F9FC", "FCF6E8", "F7F7FC"], ["2C3D2A", "293D49", "393126", "343947"]) }
+    var ink: Color { colour(["2D412B", "263F4D", "4C3B26", "32384B"], ["EBF3D8", "E4F1F8", "F2E4C7", "E9EDF9"]) }
+    var muted: Color { colour(["566C48", "526A79", "78684D", "626B80"], ["B5C9A3", "ABC5D5", "C4B397", "B9C2D8"]) }
+    var board: Color { colour(["D2DFBA", "D5E7ED", "E4D6B7", "D9DDE8"], ["3C5132", "344E5B", "504329", "424B61"]) }
+    var border: Color { colour(["9BAD80", "8DA9B5", "B3A078", "9DA6BC"], ["667D52", "60808F", "89734D", "68748E"]) }
     var appearance: String { dark ? "dark" : "light" }
 }
 extension Color {
@@ -60,7 +73,7 @@ struct PokemonName: View {
     var size: CGFloat = 17
     var body: some View {
         HStack(spacing: 4) {
-            Text(pokemon.displayName).font(.system(size: size, weight: .bold)).lineLimit(1).minimumScaleFactor(0.6)
+            Text(pokemon.displayName).font(PixelFont.font(size, style: theme.style)).lineLimit(1).minimumScaleFactor(0.6)
                 .frame(maxWidth: .infinity, alignment: .leading)
             if pokemon.shiny { AssetImage(key: "shiny-" + theme.appearance).frame(width: 13, height: 13) }
         }.foregroundStyle(theme.ink)
@@ -73,7 +86,7 @@ struct GameLabel: View {
     var body: some View {
         HStack(spacing: 5) {
             if !game.isEmpty { AssetImage(key: "game-\(game)-\(theme.appearance)").frame(width: size <= 8 ? 12 : size <= 10 ? 16 : 20, height: size <= 8 ? 10 : size <= 10 ? 14 : 18) }
-            Text(RibbonCatalog.shared.compactGameName(game)).font(.system(size: size, weight: .semibold))
+            Text(RibbonCatalog.shared.compactGameName(game)).font(PixelFont.font(size, style: theme.style))
                 .lineLimit(1).minimumScaleFactor(0.65).frame(maxWidth: .infinity, alignment: .leading)
         }.foregroundStyle(theme.accent)
     }
@@ -187,156 +200,22 @@ struct SinglePassport: View {
     var pokemon: RibbonPokemon
     var size: PassportSize
     var theme: PassportTheme
-    var download: Bool = false
-    private var catalog: RibbonCatalog { .shared }
-    var body: some View {
-        VStack(spacing: size == .small ? 2 : 5) {
-            GameLabel(game: pokemon.currentgame, theme: theme, size: size == .small ? 10 : 12)
-                .padding(.horizontal, 6).padding(.vertical, size == .small ? 1 : 3).background(theme.panel, in: RoundedRectangle(cornerRadius: 8))
-            if size == .small {
-                PokemonName(pokemon: pokemon, theme: theme, size: 16)
-                title.font(.system(size: 9))
-                HStack(spacing: 5) {
-                    portrait.frame(maxWidth: .infinity)
-                    VStack(spacing: 1) {
-                        Text("\(catalog.awards(for: pokemon).count)").font(.system(size: 22, weight: .bold)).foregroundStyle(theme.accent)
-                        Text("RIBBONS").font(.system(size: 6, weight: .bold)).foregroundStyle(theme.muted)
-                        HStack(spacing: 6) { Text("Lv.\(pokemon.currentlevel)").font(.system(size: 6.5)); ConsoleIcon(pokemon: pokemon, theme: theme, compact: true) }.foregroundStyle(theme.muted)
-                    }.frame(width: 46)
-                }.frame(maxHeight: .infinity)
-                GameLabel(game: pokemon.origingame, theme: theme, size: 8).frame(height: 13)
-                RibbonTriplet(pokemon: pokemon, theme: theme).frame(height: 21)
-            } else if size == .medium {
-                HStack(alignment: .top, spacing: 9) {
-                    VStack(spacing: 5) {
-                        PokemonName(pokemon: pokemon, theme: theme, size: 17)
-                        title.font(.system(size: 10))
-                        portrait.frame(maxHeight: .infinity)
-                        HStack(spacing: 7) {
-                            Text("Lv.\(pokemon.currentlevel) · \(catalog.awards(for: pokemon).count) ribbons")
-                                .font(.system(size: 8)).lineLimit(1).minimumScaleFactor(0.6).frame(maxWidth: .infinity, alignment: .leading)
-                            ConsoleIcon(pokemon: pokemon, theme: theme)
-                        }.foregroundStyle(theme.muted)
-                    }.frame(maxWidth: .infinity)
-                    RibbonBoard(pokemon: pokemon, theme: theme).frame(maxWidth: .infinity)
-                }.frame(maxHeight: .infinity)
-            } else {
-                PokemonName(pokemon: pokemon, theme: theme, size: 23)
-                title.font(.system(size: 12))
-                HStack(spacing: 12) {
-                    portrait.frame(maxWidth: .infinity)
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("\(catalog.awards(for: pokemon).count)").font(.system(size: 33, weight: .bold)).foregroundStyle(theme.accent)
-                        Text("RIBBONS").font(.system(size: 9, weight: .bold)).foregroundStyle(theme.muted)
-                        HStack(spacing: 10) { Text("Lv.\(pokemon.currentlevel)").font(.caption2); ConsoleIcon(pokemon: pokemon, theme: theme) }.foregroundStyle(theme.muted)
-                    }.frame(maxWidth: .infinity, alignment: .leading)
-                }.frame(height: 82)
-                RibbonBoard(pokemon: pokemon, theme: theme).frame(maxHeight: .infinity)
-            }
-        }.padding(10).background(theme.paper)
-    }
-    private var title: some View {
-        EquippedTitleLabel(pokemon: pokemon, theme: theme, iconSize: size == .small ? 11 : size == .medium ? 13 : 16)
-    }
-    private var portrait: some View {
-        PokemonSprite(pokemon: pokemon, download: download).padding(4)
-            .background(theme.panel, in: RoundedRectangle(cornerRadius: 10))
-    }
+    var download = false
+    var body: some View { ConfiguredWidgetView(pokemon: [pokemon], name: "", content: .pokemon, size: size, theme: theme, download: download) }
 }
 struct TeamPassport: View {
     var pokemon: [RibbonPokemon]
     var name: String
     var large: Bool
     var theme: PassportTheme
-    var download: Bool = false
-    var body: some View {
-        VStack(spacing: 7) {
-            Text(name.uppercased()).font(.system(size: 11, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
-                .foregroundStyle(theme.accent).frame(maxWidth: .infinity, alignment: .leading)
-            VStack(spacing: 7) {
-                ForEach(0..<(large ? 2 : 1), id: \.self) { row in
-                    HStack(spacing: 7) {
-                        ForEach(0..<3, id: \.self) { column in
-                            let index = row * 3 + column
-                            if index < pokemon.count { card(pokemon[index]).frame(maxWidth: .infinity, maxHeight: .infinity) }
-                            else { Text("Add Pokémon").font(.system(size: 9)).foregroundStyle(theme.muted).frame(maxWidth: .infinity, maxHeight: .infinity).background(theme.panel, in: RoundedRectangle(cornerRadius: 9)) }
-                        }
-                    }.frame(maxHeight: .infinity)
-                }
-            }.frame(maxHeight: .infinity)
-        }.padding(10).background(theme.paper)
-    }
-    private func card(_ p: RibbonPokemon) -> some View {
-        let t = PassportTheme(dark: theme.dark, game: p.currentgame)
-        return VStack(spacing: 4) {
-            GameLabel(game: p.currentgame, theme: t, size: large ? 8 : 7)
-            PokemonName(pokemon: p, theme: t, size: large ? 14 : 12)
-            HStack(spacing: 6) {
-                EquippedTitleLabel(pokemon: p, theme: t, iconSize: 10).font(.system(size: large ? 8 : 7))
-                ConsoleIcon(pokemon: p, theme: t)
-            }.foregroundStyle(t.muted)
-            PokemonSprite(pokemon: p, download: download).frame(maxHeight: .infinity)
-            RibbonTriplet(pokemon: p, theme: t).frame(height: large ? 23 : 19)
-        }.padding(6).background(t.panel, in: RoundedRectangle(cornerRadius: 9))
-    }
+    var download = false
+    var body: some View { ConfiguredWidgetView(pokemon: pokemon, name: name, content: .ribbonTeam, size: large ? .large : .medium, theme: theme, download: download) }
 }
-
 struct ShowdownTeamPassport: View {
     var pokemon: [RibbonPokemon]
     var name: String
     var large: Bool
     var theme: PassportTheme
-    var download: Bool = false
-    var body: some View {
-        VStack(spacing: 7) {
-            HStack(spacing: 6) {
-                Image(systemName: "bolt.fill")
-                Text(name.uppercased()).lineLimit(1).minimumScaleFactor(0.7)
-                Spacer(minLength: 0)
-                Text("SHOWDOWN").font(.system(size: 7, weight: .bold))
-            }.font(.system(size: 11, weight: .bold)).foregroundStyle(theme.accent)
-            VStack(spacing: 7) {
-                ForEach(0..<(large ? 2 : 1), id: \.self) { row in
-                    HStack(spacing: 7) {
-                        ForEach(0..<3, id: \.self) { column in
-                            let index = row * 3 + column
-                            if index < pokemon.count {
-                                card(pokemon[index]).frame(maxWidth: .infinity, maxHeight: .infinity)
-                            } else {
-                                Text("Empty slot").font(.system(size: 9)).foregroundStyle(theme.muted)
-                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                    .background(theme.panel, in: RoundedRectangle(cornerRadius: 9))
-                            }
-                        }
-                    }.frame(maxHeight: .infinity)
-                }
-            }.frame(maxHeight: .infinity)
-        }.padding(10).background(theme.paper)
-    }
-    private func card(_ p: RibbonPokemon) -> some View {
-        let build = p.showdownSet ?? ShowdownSet()
-        return VStack(alignment: .leading, spacing: large ? 3 : 4) {
-            PokemonName(pokemon: p, theme: theme, size: large ? 13 : 12)
-            HStack(spacing: 4) {
-                PokemonSprite(pokemon: p, download: download).frame(maxWidth: .infinity, maxHeight: .infinity)
-                Text("Lv.\(p.currentlevel)").font(.system(size: 8, weight: .semibold)).foregroundStyle(theme.muted)
-            }.frame(minHeight: 24, maxHeight: .infinity)
-            HeldItemLabel(item: build.item, theme: theme).font(.system(size: 10, weight: .semibold))
-            detail(build.ability.isEmpty ? "Ability not set" : build.ability, symbol: "bolt.fill", size: 9, colour: theme.muted)
-            detail(build.teraType.isEmpty ? "Tera not set" : "Tera: " + build.teraType, symbol: "diamond.fill", size: 8, colour: theme.accent)
-            if large {
-                if !build.nature.isEmpty { Text(build.nature + " nature").font(.system(size: 8)).foregroundStyle(theme.muted).lineLimit(1).minimumScaleFactor(0.75) }
-                Text(build.moves.isEmpty ? "Moves not set" : build.moves.prefix(4).joined(separator: "\n"))
-                    .font(.system(size: 8, weight: .medium)).foregroundStyle(theme.ink).lineLimit(4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }.padding(6).background(theme.panel, in: RoundedRectangle(cornerRadius: 9))
-    }
-    private func detail(_ text: String, symbol: String, size: CGFloat, colour: Color) -> some View {
-        HStack(spacing: 3) {
-            Image(systemName: symbol).font(.system(size: 7)).frame(width: 9)
-            Text(text).font(.system(size: size, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.75)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }.foregroundStyle(colour)
-    }
+    var download = false
+    var body: some View { ConfiguredWidgetView(pokemon: pokemon, name: name, content: .showdownTeam, size: large ? .large : .medium, theme: theme, download: download) }
 }

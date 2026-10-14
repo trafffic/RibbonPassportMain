@@ -59,7 +59,7 @@ App Groups let the app and widgets read the same local collection and sprite cac
 3. If asked, enable **Settings → Privacy & Security → Developer Mode** on the iPhone, restart it and confirm enabling Developer Mode.
 4. Press **⌘R** or the Run triangle. Xcode builds, signs and installs the app.
 
-This archive contains source, not a pre-signed IPA. Signing uses your Apple developer account on your Mac. A Mac/iOS SDK build and a physical-device run could not be performed in the environment used to prepare this project.
+This archive contains source, not a pre-signed IPA. Signing uses your Apple developer account on your Mac. The UI update has been built and tested with the iOS simulator. See UI-UPDATE.md and TESTING.md; installing on an iPhone uses your existing signing setup.
 
 ## 4. Test the app immediately
 

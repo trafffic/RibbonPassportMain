@@ -18,3 +18,7 @@ Rarity scores are editorial estimates reused from the Scriptable widget. They de
 - Updated DS icon: [ICOOON MONO / TopeconHeroes, icon 12003](https://icooon-mono.com/12003-nintendo-ds%E3%81%A3%E3%81%BD%E3%81%84%E3%82%A2%E3%82%A4%E3%82%B3%E3%83%B3/), recoloured and with slightly thicker shapes for small widget rendering. App incorporation and adaptation are allowed by the [creator’s licence](https://icooon-mono.com/license/); this asset is not covered by the code’s GPL licence. See Licences/ICOOON-MONO.txt.
 
 - Held-item pixel art: [Smogon sprites, src/minisprites/items](https://github.com/smogon/sprites/tree/master/src/minisprites/items), matched to the canonical item IDs in [Pokémon Showdown data/items.ts](https://github.com/smogon/pokemon-showdown/blob/master/data/items.ts). The legacy Stick icon comes from PokeSprite. Item and award label colours are calculated from their artwork and adjusted for light/dark contrast. Pokémon imagery remains copyrighted by its respective owners.
+
+# Pixel font
+
+Pixelify Sans by Stefie Justprince is bundled for offline use in the app and widgets. Source: [Google Fonts](https://github.com/google/fonts/tree/main/ofl/pixelifysans). Licensed under the SIL Open Font License 1.1; see `Licences/PixelifySans-OFL.txt`.

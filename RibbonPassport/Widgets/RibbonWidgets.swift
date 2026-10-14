@@ -51,6 +51,57 @@ struct ShowdownTeamQuery: EntityQuery {
         ((try? SharedStore.load())?.teams(for: .showdown) ?? []).map { ShowdownTeamEntity(id: $0.id, name: $0.name) }
     }
 }
+struct PassportDesignEntity: AppEntity {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Saved design"
+    static var defaultQuery = PassportDesignQuery()
+    var id: String
+    var name: String
+    var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
+}
+struct PassportDesignQuery: EntityQuery {
+    private var designs: [PassportDesignEntity] {
+        ((try? SharedStore.load())?.widgetPresets ?? []).filter { $0.content == .pokemon }.map { PassportDesignEntity(id: $0.id, name: $0.name) }
+    }
+    func entities(for identifiers: [String]) async throws -> [PassportDesignEntity] {
+        identifiers.compactMap { id in designs.first { $0.id == id } }
+    }
+    func suggestedEntities() async throws -> [PassportDesignEntity] { designs }
+}
+
+struct RibbonDesignEntity: AppEntity {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Saved design"
+    static var defaultQuery = RibbonDesignQuery()
+    var id: String
+    var name: String
+    var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
+}
+struct RibbonDesignQuery: EntityQuery {
+    private var designs: [RibbonDesignEntity] {
+        ((try? SharedStore.load())?.widgetPresets ?? []).filter { $0.content == .ribbonTeam }.map { RibbonDesignEntity(id: $0.id, name: $0.name) }
+    }
+    func entities(for identifiers: [String]) async throws -> [RibbonDesignEntity] {
+        identifiers.compactMap { id in designs.first { $0.id == id } }
+    }
+    func suggestedEntities() async throws -> [RibbonDesignEntity] { designs }
+}
+
+struct ShowdownDesignEntity: AppEntity {
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Saved design"
+    static var defaultQuery = ShowdownDesignQuery()
+    var id: String
+    var name: String
+    var displayRepresentation: DisplayRepresentation { DisplayRepresentation(title: "\(name)") }
+}
+struct ShowdownDesignQuery: EntityQuery {
+    private var designs: [ShowdownDesignEntity] {
+        ((try? SharedStore.load())?.widgetPresets ?? []).filter { $0.content == .showdownTeam }.map { ShowdownDesignEntity(id: $0.id, name: $0.name) }
+    }
+    func entities(for identifiers: [String]) async throws -> [ShowdownDesignEntity] {
+        identifiers.compactMap { id in designs.first { $0.id == id } }
+    }
+    func suggestedEntities() async throws -> [ShowdownDesignEntity] { designs }
+}
+
 enum WidgetLook: String, AppEnum, CaseIterable {
     case followApp, light, dark
     static var typeDisplayRepresentation: TypeDisplayRepresentation = "Appearance"
@@ -66,25 +117,37 @@ struct SelectPokemonIntent: WidgetConfigurationIntent {
     static var description = IntentDescription("Choose a Pokémon and appearance. Leave Pokémon unset to follow your app selection.")
     @Parameter(title: "Pokémon") var pokemon: PokemonEntity?
     @Parameter(title: "Appearance", default: .followApp) var appearance: WidgetLook
+    @Parameter(title: "Saved design") var design: PassportDesignEntity?
 }
 struct SelectTeamIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Ribbon Team"
     static var description = IntentDescription("Choose a team and appearance. Leave Team unset to follow your app selection.")
     @Parameter(title: "Team") var team: TeamEntity?
     @Parameter(title: "Appearance", default: .followApp) var appearance: WidgetLook
+    @Parameter(title: "Saved design") var design: RibbonDesignEntity?
 }
 struct SelectShowdownTeamIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Showdown Team"
     static var description = IntentDescription("Choose a Showdown team to display battle builds instead of ribbons.")
     @Parameter(title: "Showdown team") var team: ShowdownTeamEntity?
     @Parameter(title: "Appearance", default: .followApp) var appearance: WidgetLook
+    @Parameter(title: "Saved design") var design: ShowdownDesignEntity?
 }
 struct PassportEntry: TimelineEntry {
     var date: Date
     var snapshot: CollectionSnapshot
     var selection: String?
     var appearance: Appearance
+    var style = WidgetStyle()
 }
+private func configuredEntry(snapshot: CollectionSnapshot, selection: String?, designID: String?, look: WidgetLook, content: WidgetContent) -> PassportEntry {
+    let preset = snapshot.preset(for: content, id: designID)
+    let style = preset?.style ?? WidgetStyle()
+    let appearance = look == .followApp ? (style.appearance == .automatic ? snapshot.appearance : style.appearance) : look.resolved(snapshot)
+    let selected = preset?.selectionID.isEmpty == false ? preset?.selectionID : selection
+    return PassportEntry(date: Date(), snapshot: snapshot, selection: selected, appearance: appearance, style: style)
+}
+
 struct PokemonProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> PassportEntry {
         PassportEntry(date: Date(), snapshot: SharedStore.demo(), selection: nil, appearance: .automatic)
@@ -98,7 +161,7 @@ struct PokemonProvider: AppIntentTimelineProvider {
     private func make(_ config: SelectPokemonIntent, preview: Bool) -> PassportEntry {
         var snapshot = (try? SharedStore.load()) ?? CollectionSnapshot()
         if preview && snapshot.pokemon.isEmpty { snapshot = SharedStore.demo() }
-        return PassportEntry(date: Date(), snapshot: snapshot, selection: config.pokemon?.id, appearance: config.appearance.resolved(snapshot))
+        return configuredEntry(snapshot: snapshot, selection: config.pokemon?.id, designID: config.design?.id, look: config.appearance, content: .pokemon)
     }
 }
 struct TeamProvider: AppIntentTimelineProvider {
@@ -114,7 +177,7 @@ struct TeamProvider: AppIntentTimelineProvider {
     private func make(_ config: SelectTeamIntent, preview: Bool) -> PassportEntry {
         var snapshot = (try? SharedStore.load()) ?? CollectionSnapshot()
         if preview && snapshot.pokemon.isEmpty { snapshot = SharedStore.demo() }
-        return PassportEntry(date: Date(), snapshot: snapshot, selection: config.team?.id, appearance: config.appearance.resolved(snapshot))
+        return configuredEntry(snapshot: snapshot, selection: config.team?.id, designID: config.design?.id, look: config.appearance, content: .ribbonTeam)
     }
 }
 struct ShowdownTeamProvider: AppIntentTimelineProvider {
@@ -130,7 +193,7 @@ struct ShowdownTeamProvider: AppIntentTimelineProvider {
     private func make(_ config: SelectShowdownTeamIntent, preview: Bool) -> PassportEntry {
         var snapshot = (try? SharedStore.load()) ?? CollectionSnapshot()
         if preview && snapshot.teams(for: .showdown).isEmpty { snapshot = SharedStore.showdownPreview() }
-        return PassportEntry(date: Date(), snapshot: snapshot, selection: config.team?.id, appearance: config.appearance.resolved(snapshot))
+        return configuredEntry(snapshot: snapshot, selection: config.team?.id, designID: config.design?.id, look: config.appearance, content: .showdownTeam)
     }
 }
 struct PokemonWidgetView: View {
@@ -138,8 +201,8 @@ struct PokemonWidgetView: View {
     @Environment(\.widgetFamily) private var family
     @Environment(\.colorScheme) private var scheme
     var body: some View {
-        let pokemon = entry.snapshot.pokemon.first(where: { $0.id == (entry.selection ?? entry.snapshot.selectedID) }) ?? entry.snapshot.pokemon.first
-        let theme = PassportTheme(dark: entry.appearance == .dark || (entry.appearance == .automatic && scheme == .dark), game: pokemon?.currentgame ?? "")
+        let pokemon = entry.selection.map { id in entry.snapshot.pokemon.first { $0.id == id } } ?? (entry.snapshot.pokemon.first { $0.id == entry.snapshot.selectedID } ?? entry.snapshot.pokemon.first)
+        let theme = PassportTheme(dark: entry.appearance == .dark || (entry.appearance == .automatic && scheme == .dark), game: pokemon?.currentgame ?? "", style: entry.style)
         Group {
             if let pokemon {
                 SinglePassport(pokemon: pokemon, size: family == .systemSmall ? .small : family == .systemMedium ? .medium : .large, theme: theme)
@@ -157,7 +220,7 @@ struct TeamWidgetView: View {
         let members = team.map { entry.snapshot.members(teamID: $0.id) } ?? []
         let id = team?.id ?? ""
         let name = team?.name ?? "Your Ribbon Team"
-        let theme = PassportTheme(dark: entry.appearance == .dark || (entry.appearance == .automatic && scheme == .dark), game: members.first?.currentgame ?? "")
+        let theme = PassportTheme(dark: entry.appearance == .dark || (entry.appearance == .automatic && scheme == .dark), game: members.first?.currentgame ?? "", style: entry.style)
         Group {
             if members.isEmpty { EmptyWidget(theme: theme) }
             else {
@@ -174,7 +237,7 @@ struct ShowdownTeamWidgetView: View {
     var body: some View {
         let team = entry.snapshot.widgetTeam(for: .showdown, id: entry.selection)
         let members = team.map { entry.snapshot.members(teamID: $0.id) } ?? []
-        let theme = PassportTheme(dark: entry.appearance == .dark || (entry.appearance == .automatic && scheme == .dark), game: members.first?.currentgame ?? "")
+        let theme = PassportTheme(dark: entry.appearance == .dark || (entry.appearance == .automatic && scheme == .dark), game: members.first?.currentgame ?? "", style: entry.style)
         Group {
             if let team, !members.isEmpty {
                 ShowdownTeamPassport(pokemon: Array(members.prefix(family == .systemMedium ? 3 : 6)), name: team.name, large: family == .systemLarge, theme: theme)
@@ -193,8 +256,8 @@ struct EmptyWidget: View {
     var theme: PassportTheme
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Ribbon Passport", systemImage: "rosette").font(.headline).foregroundStyle(theme.accent)
-            Text("Open the app to import a backup or Showdown team.").font(.caption).foregroundStyle(theme.muted)
+            Label("Ribbon Passport", systemImage: "rosette").font(PixelFont.font(18)).foregroundStyle(theme.accent)
+            Text("Choose a Pokémon or team in the app.").font(PixelFont.font(14)).foregroundStyle(theme.muted)
         }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .widgetURL(URL(string: "ribbonpassport://open"))
     }
@@ -203,7 +266,7 @@ struct PokemonPassportWidget: Widget {
     var body: some WidgetConfiguration {
         AppIntentConfiguration(kind: "PokemonPassport", intent: SelectPokemonIntent.self, provider: PokemonProvider()) { entry in PokemonWidgetView(entry: entry) }
             .configurationDisplayName("Pokémon Passport")
-            .description("Your Pokémon, equipped title and ribbon collection.")
+            .description("Pokémon, equipped titles, ribbons and generation stamps.")
             .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
             .contentMarginsDisabled()
     }
