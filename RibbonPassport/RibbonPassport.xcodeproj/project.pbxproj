@@ -29,6 +29,9 @@
 		55974DD25B9F60ED9A8A62C8 /* App/PCScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 787BEDBE68CD2BAD538DD5B9 /* App/PCScreens.swift */; };
 		E5D885E0F02572DA1B0ADB76 /* App/CompetitiveScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1221F5F3AC8BB68ED66C8CCC /* App/CompetitiveScreens.swift */; };
 		81E1225AD15F2E7ECE893B50 /* App/WidgetStudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F224F8797E565966DA8D43 /* App/WidgetStudio.swift */; };
+		8BF5D12C68FD667D88A5622D /* Shared/CustomizationPacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A5E604928BC987D69A7D0FB /* Shared/CustomizationPacks.swift */; };
+		EEA2C89A071EDEAA472B91C0 /* Shared/CustomizationPacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A5E604928BC987D69A7D0FB /* Shared/CustomizationPacks.swift */; };
+		7F51173FC5F4E15BEDACF86F /* App/CollectionEditors.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA73D4B1541034BD1AEF1DF6 /* App/CollectionEditors.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -86,6 +89,8 @@
 		787BEDBE68CD2BAD538DD5B9 /* App/PCScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PCScreens.swift; sourceTree = "<group>"; };
 		1221F5F3AC8BB68ED66C8CCC /* App/CompetitiveScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/CompetitiveScreens.swift; sourceTree = "<group>"; };
 		97F224F8797E565966DA8D43 /* App/WidgetStudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/WidgetStudio.swift; sourceTree = "<group>"; };
+		5A5E604928BC987D69A7D0FB /* Shared/CustomizationPacks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/CustomizationPacks.swift; sourceTree = "<group>"; };
+		EA73D4B1541034BD1AEF1DF6 /* App/CollectionEditors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/CollectionEditors.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +131,8 @@
 		958B6263A0B70C847CDA462B /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				EA73D4B1541034BD1AEF1DF6 /* App/CollectionEditors.swift */,
+				5A5E604928BC987D69A7D0FB /* Shared/CustomizationPacks.swift */,
 				81ADD167DFD716F4A67858D6 /* Shared/RibbonCore.swift */,
 				A8CEE4DA72E93E41B659B79A /* Shared/UserCustomization.swift */,
 				3C96F8CAE7898CF867881B40 /* Shared/RetroStyle.swift */,
@@ -309,6 +316,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EEA2C89A071EDEAA472B91C0 /* Shared/CustomizationPacks.swift in Sources */,
 				EE7CEBF2362C1CC88C7A18AA /* Shared/UserCustomization.swift in Sources */,
 				965D74A497FC5B6DF5D4B126 /* Shared/RetroStyle.swift in Sources */,
 				ED622620CF68FD90933BE19D /* Shared/WidgetLayouts.swift in Sources */,
@@ -323,6 +331,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7F51173FC5F4E15BEDACF86F /* App/CollectionEditors.swift in Sources */,
+				8BF5D12C68FD667D88A5622D /* Shared/CustomizationPacks.swift in Sources */,
 				DBB6847FF4FD04710E67DDF4 /* Shared/UserCustomization.swift in Sources */,
 				7D32ED944972E0D5EE2D3F6C /* Shared/RetroStyle.swift in Sources */,
 				CFDD21E0802F70D767D72BEF /* Shared/WidgetLayouts.swift in Sources */,

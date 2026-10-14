@@ -4,10 +4,13 @@ Open the existing `RibbonPassport.xcodeproj` and build the **RibbonPassport** sc
 
 ## Pokémon
 
+- Add a Pokémon using **+ → Add Pokémon**. Search species/forms by name or Pokédex number, then enter nickname, level, gender, shiny status, origin/current games, ribbons and a title. An optional competitive build includes moves, item, ability, nature, EVs, IVs and Tera type. Entries save directly into the open box; full boxes overflow into available storage. Manual entries survive backup reimports.
+- **Wallpaper** beneath the box opens six bundled starter backgrounds: PC Grid, Meadow, Woodland, Seaside, Desert and Starfield. Each box saves its own design, tint and pattern strength; boxes initially cycle through the starter set.
+- Game menus follow generation/game chronology, ribbons and marks follow their introduction generation, and Pokémon selectors use National Pokédex order. Older contest ribbons identify their generation to distinguish matching names.
 - Classic 30-slot PC boxes, renamed by tapping the box heading. Use **+ → New box** for more storage.
 - The **Party** button in the box heading shows or hides the six-slot party. Add a selected Pokémon to the party, or drag it to the sidebar. Returning a party member to storage preserves its record.
 - Select **Move**, then a destination slot, or drag between slots. Occupied destinations swap their contents.
-- **Passport** opens the Stamp Album. **Edit visits** records games visited; **Assign / move a ribbon** records where an original award was earned. Missing visit history is not guessed. Unchanged demo records receive the authored demo history automatically; imported and edited records do not. Known origin/current games appear automatically.
+- **Passport** opens the Stamp Album. **Edit visits** records games visited; **Assign / move a ribbon** records where an original award was earned. Missing visit history is not guessed. Unchanged demo records receive the authored demo history automatically; imported and edited records do not. Origin and Current stay visible above the album. A generation stamp shows its game count, and selecting it lists every recorded game in that generation, including both endpoints. Adding another visit never replaces either endpoint.
 - Memory Ribbons remain a display of the underlying legacy awards. Their original awards can be assigned to earlier generations independently.
 
 ## Teams
@@ -21,6 +24,10 @@ The **Widgets** tab previews all seven supported Home Screen layouts:
 - Pokémon Passport: small, medium, large.
 - Ribbon Team: medium, large.
 - Showdown Team: medium, large.
+
+Five built-in theme packs work with every widget layout: **Pocket Green**, **Ocean Link**, **Contest Album**, **Midnight Circuit** and **Forest Trail**. They are available in Widget Studio and in the Home Screen widget’s Saved design picker, even before a custom design is saved. Widgets without a chosen/default saved design use Pocket Green for Pokémon, Contest Album for ribbon teams and Midnight Circuit for Showdown. Widget gallery previews use the same defaults.
+
+Choose a pack in Studio to customise it, use **Set default** for that widget type, or **Set [pack] as default pack** for all three types. Existing explicitly selected saved designs stay independent. A default change applies to widgets whose Saved design is unset. Background design, tint and strength can be changed or turned off separately.
 
 Save named designs with separate Pokémon/team selections, light/dark/automatic appearance, five palettes, pixel/system fonts, text scaling, ribbon ordering and visibility controls. Each Home Screen widget can select its own **Saved design**. Editing a saved design updates the widgets using it; **Set default** configures widgets without an explicit design.
 

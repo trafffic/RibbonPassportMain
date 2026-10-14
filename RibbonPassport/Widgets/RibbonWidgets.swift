@@ -16,7 +16,7 @@ struct PokemonQuery: EntityQuery {
     }
     func suggestedEntities() async throws -> [PokemonEntity] {
         let pokemon = (try? SharedStore.load())?.pokemon ?? []
-        return pokemon.enumerated().map { PokemonEntity(id: $0.element.id, name: "\($0.offset + 1). \($0.element.displayName)") }
+        return RibbonCatalog.shared.dexOrdered(pokemon).enumerated().map { PokemonEntity(id: $0.element.id, name: "\($0.offset + 1). \($0.element.displayName)") }
     }
 }
 struct TeamEntity: AppEntity {
@@ -60,7 +60,7 @@ struct PassportDesignEntity: AppEntity {
 }
 struct PassportDesignQuery: EntityQuery {
     private var designs: [PassportDesignEntity] {
-        ((try? SharedStore.load())?.widgetPresets ?? []).filter { $0.content == .pokemon }.map { PassportDesignEntity(id: $0.id, name: $0.name) }
+        ((try? SharedStore.load()) ?? CollectionSnapshot()).availableWidgetPresets.filter { $0.content == .pokemon }.map { PassportDesignEntity(id: $0.id, name: $0.name) }
     }
     func entities(for identifiers: [String]) async throws -> [PassportDesignEntity] {
         identifiers.compactMap { id in designs.first { $0.id == id } }
@@ -77,7 +77,7 @@ struct RibbonDesignEntity: AppEntity {
 }
 struct RibbonDesignQuery: EntityQuery {
     private var designs: [RibbonDesignEntity] {
-        ((try? SharedStore.load())?.widgetPresets ?? []).filter { $0.content == .ribbonTeam }.map { RibbonDesignEntity(id: $0.id, name: $0.name) }
+        ((try? SharedStore.load()) ?? CollectionSnapshot()).availableWidgetPresets.filter { $0.content == .ribbonTeam }.map { RibbonDesignEntity(id: $0.id, name: $0.name) }
     }
     func entities(for identifiers: [String]) async throws -> [RibbonDesignEntity] {
         identifiers.compactMap { id in designs.first { $0.id == id } }
@@ -94,7 +94,7 @@ struct ShowdownDesignEntity: AppEntity {
 }
 struct ShowdownDesignQuery: EntityQuery {
     private var designs: [ShowdownDesignEntity] {
-        ((try? SharedStore.load())?.widgetPresets ?? []).filter { $0.content == .showdownTeam }.map { ShowdownDesignEntity(id: $0.id, name: $0.name) }
+        ((try? SharedStore.load()) ?? CollectionSnapshot()).availableWidgetPresets.filter { $0.content == .showdownTeam }.map { ShowdownDesignEntity(id: $0.id, name: $0.name) }
     }
     func entities(for identifiers: [String]) async throws -> [ShowdownDesignEntity] {
         identifiers.compactMap { id in designs.first { $0.id == id } }
@@ -142,7 +142,7 @@ struct PassportEntry: TimelineEntry {
 }
 private func configuredEntry(snapshot: CollectionSnapshot, selection: String?, designID: String?, look: WidgetLook, content: WidgetContent) -> PassportEntry {
     let preset = snapshot.preset(for: content, id: designID)
-    let style = preset?.style ?? WidgetStyle()
+    let style = preset?.style ?? WidgetThemePack.defaultPack(for: content).style
     let appearance = look == .followApp ? (style.appearance == .automatic ? snapshot.appearance : style.appearance) : look.resolved(snapshot)
     let selected = preset?.selectionID.isEmpty == false ? preset?.selectionID : selection
     return PassportEntry(date: Date(), snapshot: snapshot, selection: selected, appearance: appearance, style: style)
@@ -150,7 +150,7 @@ private func configuredEntry(snapshot: CollectionSnapshot, selection: String?, d
 
 struct PokemonProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> PassportEntry {
-        PassportEntry(date: Date(), snapshot: SharedStore.demo(), selection: nil, appearance: .automatic)
+        configuredEntry(snapshot: SharedStore.demo(), selection: nil, designID: nil, look: .followApp, content: .pokemon)
     }
     func snapshot(for configuration: SelectPokemonIntent, in context: Context) async -> PassportEntry {
         make(configuration, preview: context.isPreview)
@@ -166,7 +166,7 @@ struct PokemonProvider: AppIntentTimelineProvider {
 }
 struct TeamProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> PassportEntry {
-        PassportEntry(date: Date(), snapshot: SharedStore.demo(), selection: nil, appearance: .automatic)
+        configuredEntry(snapshot: SharedStore.demo(), selection: nil, designID: nil, look: .followApp, content: .ribbonTeam)
     }
     func snapshot(for configuration: SelectTeamIntent, in context: Context) async -> PassportEntry {
         make(configuration, preview: context.isPreview)
@@ -182,7 +182,7 @@ struct TeamProvider: AppIntentTimelineProvider {
 }
 struct ShowdownTeamProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> PassportEntry {
-        PassportEntry(date: Date(), snapshot: SharedStore.showdownPreview(), selection: nil, appearance: .automatic)
+        configuredEntry(snapshot: SharedStore.showdownPreview(), selection: nil, designID: nil, look: .followApp, content: .showdownTeam)
     }
     func snapshot(for configuration: SelectShowdownTeamIntent, in context: Context) async -> PassportEntry {
         make(configuration, preview: context.isPreview)
@@ -208,7 +208,10 @@ struct PokemonWidgetView: View {
                 SinglePassport(pokemon: pokemon, size: family == .systemSmall ? .small : family == .systemMedium ? .medium : .large, theme: theme)
                     .widgetURL(URL(string: "ribbonpassport://pokemon/\(pokemon.id)"))
             } else { EmptyWidget(theme: theme) }
-        }.containerBackground(for: .widget) { theme.paper }
+        }.containerBackground(for: .widget) {
+            if let wallpaper = theme.style.wallpaper { PixelWallpaperView(settings: wallpaper, dark: theme.dark, base: theme.paper) }
+            else { theme.paper }
+        }
     }
 }
 struct TeamWidgetView: View {
@@ -227,7 +230,10 @@ struct TeamWidgetView: View {
                 TeamPassport(pokemon: Array(members.prefix(family == .systemMedium ? 3 : 6)), name: name, large: family == .systemLarge, theme: theme)
                     .widgetURL(URL(string: "ribbonpassport://team/\(id)"))
             }
-        }.containerBackground(for: .widget) { theme.paper }
+        }.containerBackground(for: .widget) {
+            if let wallpaper = theme.style.wallpaper { PixelWallpaperView(settings: wallpaper, dark: theme.dark, base: theme.paper) }
+            else { theme.paper }
+        }
     }
 }
 struct ShowdownTeamWidgetView: View {
@@ -244,20 +250,23 @@ struct ShowdownTeamWidgetView: View {
                     .widgetURL(URL(string: "ribbonpassport://team/\(team.id)"))
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Label("Showdown Team", systemImage: "bolt.fill").font(.headline).foregroundStyle(theme.accent)
-                    Text("Open the app and paste a team from Showdown’s Teambuilder → Import/Export.").font(.caption).foregroundStyle(theme.muted)
+                    Label("Showdown Team", systemImage: "bolt.fill").font(PixelFont.font(18, style: theme.style)).foregroundStyle(theme.accent)
+                    Text("Choose a Showdown team in the app.").font(PixelFont.font(14, style: theme.style)).foregroundStyle(theme.muted)
                 }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                     .widgetURL(URL(string: "ribbonpassport://open"))
             }
-        }.containerBackground(for: .widget) { theme.paper }
+        }.containerBackground(for: .widget) {
+            if let wallpaper = theme.style.wallpaper { PixelWallpaperView(settings: wallpaper, dark: theme.dark, base: theme.paper) }
+            else { theme.paper }
+        }
     }
 }
 struct EmptyWidget: View {
     var theme: PassportTheme
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label("Ribbon Passport", systemImage: "rosette").font(PixelFont.font(18)).foregroundStyle(theme.accent)
-            Text("Choose a Pokémon or team in the app.").font(PixelFont.font(14)).foregroundStyle(theme.muted)
+            Label("Ribbon Passport", systemImage: "rosette").font(PixelFont.font(18, style: theme.style)).foregroundStyle(theme.accent)
+            Text("Choose a Pokémon or team in the app.").font(PixelFont.font(14, style: theme.style)).foregroundStyle(theme.muted)
         }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .widgetURL(URL(string: "ribbonpassport://open"))
     }

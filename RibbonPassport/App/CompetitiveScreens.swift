@@ -255,7 +255,7 @@ struct RetroTeamArrangeView: View {
             .sheet(isPresented: $adding) {
                 NavigationStack {
                     List {
-                        ForEach(store.snapshot.pokemon.filter { ($0.showdownSet != nil) == showdown }) { p in
+                        ForEach(RibbonCatalog.shared.dexOrdered(store.snapshot.pokemon).filter { ($0.showdownSet != nil) == showdown }) { p in
                             Button {
                                 if team.memberIDs.contains(p.id) { team.memberIDs.removeAll { $0 == p.id } }
                                 else if team.memberIDs.count < 6 { team.memberIDs.append(p.id) }

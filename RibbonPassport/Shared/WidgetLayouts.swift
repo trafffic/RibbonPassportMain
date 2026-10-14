@@ -33,7 +33,10 @@ struct ConfiguredWidgetView: View {
                     }
                 }
             }
-        }.padding(size == .small ? 10 : 12).background(theme.paper).foregroundStyle(theme.ink)
+        }.padding(size == .small ? 10 : 12).background {
+            if let wallpaper = style.wallpaper { PixelWallpaperView(settings: wallpaper, dark: theme.dark, base: theme.paper) }
+            else { theme.paper }
+        }.foregroundStyle(theme.ink)
             .font(font(13)).dynamicTypeSize(.medium)
     }
     private func pokemonName(_ p: RibbonPokemon, size: CGFloat = 15) -> some View {

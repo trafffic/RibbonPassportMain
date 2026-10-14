@@ -16,9 +16,11 @@ struct WidgetStudioView: View {
     @State private var size: WidgetPreviewSize = .large
     @State private var showInstall = false
     @State private var savedMessage = ""
+    @State private var loadedDefault = false
+    @State private var selectedPack: WidgetThemePack?
     @State private var deleting: WidgetPreset?
     init(initialContent: WidgetContent = .pokemon, initialSelection: String = "") {
-        _draft = State(initialValue: WidgetPreset(name: initialContent.name, content: initialContent, selectionID: initialSelection))
+        _draft = State(initialValue: WidgetPreset(name: initialContent.name, content: initialContent, selectionID: initialSelection, style: WidgetThemePack.defaultPack(for: initialContent).style))
     }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
     private var previewTheme: PassportTheme {
@@ -51,6 +53,7 @@ struct WidgetStudioView: View {
                     draft = WidgetPreset(name: content.name, content: content, style: draft.style); savedMessage = ""
                     if content != .pokemon && size == .small { size = .medium }
                 })) { ForEach(WidgetContent.allCases) { Text($0.name).tag($0) } }
+                themePacks
                 Picker("Size", selection: $size) {
                     ForEach(WidgetPreviewSize.allCases.filter { draft.content == .pokemon || $0 != .small }) { Text($0.name).tag($0) }
                 }.pickerStyle(.segmented)
@@ -69,6 +72,10 @@ struct WidgetStudioView: View {
                     TextField("Design name", text: $draft.name).font(PixelFont.font(20)).textFieldStyle(.roundedBorder)
                     selectionPicker
                     Picker("Palette", selection: $draft.style.palette) { ForEach(WidgetPalette.allCases) { Text($0.name).tag($0) } }
+                    Toggle("Wallpaper", isOn: Binding(get: { draft.style.wallpaper != nil }, set: { draft.style.wallpaper = $0 ? WallpaperSettings() : nil }))
+                    if draft.style.wallpaper != nil {
+                        WallpaperControls(settings: Binding(get: { draft.style.wallpaper ?? WallpaperSettings() }, set: { draft.style.wallpaper = $0 }))
+                    }
                     Picker("Font", selection: $draft.style.typeface) { ForEach(WidgetTypeface.allCases) { Text($0.name).tag($0) } }
                     HStack { Text("Text size"); Spacer(); Text("\(Int((draft.style.textScale * 100).rounded()))%") }
                     Slider(value: $draft.style.textScale, in: 0.85...1.15, step: 0.05).accessibilityLabel("Widget text size")
@@ -86,16 +93,59 @@ struct WidgetStudioView: View {
                 if !savedMessage.isEmpty { Text(savedMessage).font(PixelFont.font(14)).foregroundStyle(theme.accent).accessibilityAddTraits(.updatesFrequently) }
                 if !(store.snapshot.widgetPresets ?? []).isEmpty { savedDesigns }
                 Button("New design") {
-                    draft = WidgetPreset(name: draft.content.name, content: draft.content); savedMessage = ""
+                    draft = WidgetPreset(name: draft.content.name, content: draft.content, style: WidgetThemePack.defaultPack(for: draft.content).style); selectedPack = nil; savedMessage = ""
                 }.buttonStyle(RetroAction())
             }.padding(16)
         }.background(theme.paper).navigationTitle("Widgets").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+            .onAppear {
+                guard !loadedDefault else { return }; loadedDefault = true
+                let selection = draft.selectionID
+                if var preset = store.snapshot.preset(for: draft.content) {
+                    preset.id = UUID().uuidString
+                    if !selection.isEmpty { preset.selectionID = selection }
+                    draft = preset
+                    selectedPack = WidgetThemePack.allCases.first { $0.style == preset.style }
+                }
+            }
             .sheet(isPresented: $showInstall) { WidgetInstallHelp(preset: draft, size: size) }
             .confirmationDialog("Delete this design?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
                 Button("Delete design", role: .destructive) {
                     if let deleting { store.deletePreset(deleting.id) }; deleting = nil
                 }
             }
+    }
+    private var themePacks: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Theme packs").font(PixelFont.font(20))
+            ScrollView(.horizontal) {
+                HStack(spacing: 10) {
+                    ForEach(WidgetThemePack.allCases) { pack in
+                        Button {
+                            selectedPack = pack
+                            draft = WidgetPreset(name: pack.name, content: draft.content, selectionID: draft.selectionID, style: pack.style)
+                            savedMessage = ""
+                        } label: {
+                            let packTheme = PassportTheme(dark: pack.style.appearance == .dark || (pack.style.appearance == .automatic && scheme == .dark), game: "", style: pack.style)
+                            VStack(spacing: 6) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: "square.grid.3x3.fill").font(.system(size: 22))
+                                    Text("PC").font(PixelFont.font(29))
+                                }.frame(height: 59).frame(maxWidth: .infinity)
+                                Text(pack.name).font(PixelFont.font(15)).lineLimit(1).minimumScaleFactor(0.8)
+                            }.padding(9).frame(width: 132).foregroundStyle(packTheme.ink)
+                                .background { PixelWallpaperView(settings: pack.style.wallpaper ?? WallpaperSettings(), dark: packTheme.dark, base: packTheme.paper) }
+                                .overlay(Rectangle().stroke(selectedPack == pack ? theme.accent : packTheme.border, lineWidth: selectedPack == pack ? 3 : 1))
+                        }.buttonStyle(.plain).accessibilityLabel("\(pack.name) theme pack")
+                    }
+                }.padding(3)
+            }
+            if let selectedPack {
+                Button("Set \(selectedPack.name) as default pack") {
+                    store.useThemePack(selectedPack)
+                    if store.error == nil { savedMessage = "\(selectedPack.name) set for all widget types" }
+                }.buttonStyle(RetroAction()).font(PixelFont.font(15))
+            }
+        }
     }
     @ViewBuilder private var preview: some View {
         if previewPokemon.isEmpty {
@@ -111,7 +161,7 @@ struct WidgetStudioView: View {
         if draft.content == .pokemon {
             Picker("Pokémon", selection: $draft.selectionID) {
                 Text("App selection").tag("")
-                ForEach(store.snapshot.pokemon) { Text($0.displayName).tag($0.id) }
+                ForEach(RibbonCatalog.shared.dexOrdered(store.snapshot.pokemon)) { Text($0.displayName).tag($0.id) }
                 if !draft.selectionID.isEmpty && !store.snapshot.pokemon.contains(where: { $0.id == draft.selectionID }) { Text("Selection removed").tag(draft.selectionID) }
             }
         } else {
@@ -148,7 +198,7 @@ struct WidgetStudioView: View {
                 HStack {
                     Button {
                         // Changing the content picker normally starts a new design; restore the whole preset after that update.
-                        draft = preset; savedMessage = ""
+                        draft = preset; selectedPack = WidgetThemePack.allCases.first { $0.style == preset.style }; savedMessage = ""
                         if preset.content != .pokemon && size == .small { size = .medium }
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {

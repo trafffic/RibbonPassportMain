@@ -187,7 +187,7 @@ struct GamePicker: View {
     var body: some View {
         Picker(title, selection: $value) {
             Text("Not set").tag("")
-            ForEach(RibbonCatalog.shared.games.keys.sorted { RibbonCatalog.shared.gameName($0) < RibbonCatalog.shared.gameName($1) }, id: \.self) { id in
+            ForEach(RibbonCatalog.shared.chronologicalGames, id: \.self) { id in
                 Text(RibbonCatalog.shared.gameName(id)).tag(id)
             }
         }
@@ -244,8 +244,8 @@ struct PokemonEditor: View {
                 Button("Choose awards (\(pokemon.ribbons.count) saved)") { awards = true }
                 Picker("Equipped title", selection: $pokemon.title) {
                     Text("None").tag("None")
-                    ForEach(Array(Set(pokemon.ribbons + (pokemon.title == "None" ? [] : [pokemon.title]))).sorted(), id: \.self) { id in
-                        Text(RibbonCatalog.shared.ribbons[id] ?? id).tag(id)
+                    ForEach(RibbonCatalog.shared.chronologicalAwards(pokemon.ribbons + (pokemon.title == "None" ? [] : [pokemon.title])), id: \.self) { id in
+                        Text(RibbonCatalog.shared.awardPickerName(id)).tag(id)
                     }
                 }.onChange(of: pokemon.title) { _, _ in pokemon.titleText = "" }
                 Text("The displayed total includes marks and uses Memory Ribbons from Gen 6 onward.").font(.caption).foregroundStyle(.secondary)
@@ -263,18 +263,27 @@ struct AwardPicker: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
     @State private var search = ""
+    private var matching: [String] {
+        RibbonCatalog.shared.chronologicalAwards(Array(RibbonCatalog.shared.ribbons.keys)).filter {
+            search.isEmpty || RibbonCatalog.shared.awardPickerName($0).localizedCaseInsensitiveContains(search)
+        }
+    }
     var body: some View {
         NavigationStack {
             List {
-                ForEach(RibbonCatalog.shared.ranked(Array(RibbonCatalog.shared.ribbons.keys)).filter { search.isEmpty || (RibbonCatalog.shared.ribbons[$0] ?? $0).localizedCaseInsensitiveContains(search) }, id: \.self) { id in
-                    Button {
-                        if selection.contains(id) { selection.removeAll { $0 == id } } else { selection.append(id) }
-                    } label: {
-                        HStack(spacing: 10) {
-                            AssetImage(key: "award-" + id).frame(width: 30, height: 30)
-                            Text(RibbonCatalog.shared.ribbons[id] ?? id).foregroundStyle(.primary)
-                            Spacer()
-                            if selection.contains(id) { Image(systemName: "checkmark.circle.fill") }
+                ForEach(Array(Set(matching.map { CatalogOrder.awardGeneration($0) })).sorted(), id: \.self) { generation in
+                    Section("Generation \(generation.roman)") {
+                        ForEach(matching.filter { CatalogOrder.awardGeneration($0) == generation }, id: \.self) { id in
+                            Button {
+                                if selection.contains(id) { selection.removeAll { $0 == id } } else { selection.append(id) }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    AssetImage(key: "award-" + id).frame(width: 30, height: 30)
+                                    Text(RibbonCatalog.shared.awardPickerName(id)).foregroundStyle(.primary)
+                                    Spacer()
+                                    if selection.contains(id) { Image(systemName: "checkmark.circle.fill") }
+                                }
+                            }
                         }
                     }
                 }

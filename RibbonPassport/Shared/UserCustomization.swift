@@ -9,14 +9,14 @@ struct JourneyVisit: Codable, Identifiable, Equatable {
 extension RibbonPokemon {
     /// Only recorded visits and known endpoints appear; transfers are never guessed.
     var recordedVisits: [JourneyVisit] {
-        var result = visits ?? []
+        var seen = Set<String>()
+        var result = (visits ?? []).filter { !$0.game.isEmpty && seen.insert($0.game).inserted }
         for game in [origingame, currentgame] where !game.isEmpty {
-            if !result.contains(where: { $0.game == game }) { result.append(JourneyVisit(game: game)) }
+            if !result.contains(where: { $0.game == game }) { result.append(JourneyVisit(id: "endpoint-" + game, game: game)) }
         }
-        return result.enumerated().sorted {
-            $0.element.generation == $1.element.generation ? $0.offset < $1.offset : $0.element.generation < $1.element.generation
-        }.map(\.element)
+        return result.sorted { CatalogOrder.gameIndex($0.game) < CatalogOrder.gameIndex($1.game) }
     }
+    func games(in generation: Int) -> [String] { recordedVisits.filter { $0.generation == generation }.map(\.game) }
     var visitedGenerations: [Int] { Array(Set(recordedVisits.map(\.generation).filter { $0 > 0 })).sorted() }
     func awards(earnedIn generation: Int) -> [String] {
         RibbonCatalog.shared.ranked(ribbons.filter { earnedGenerations?[$0] == generation })
@@ -32,10 +32,15 @@ struct PCBox: Codable, Identifiable, Equatable {
     var id: String = UUID().uuidString
     var name: String = "Box 01"
     var slots: [String?] = Array(repeating: nil, count: 30)
+    var wallpaper: WallpaperSettings? = nil
 }
 struct StorageLayout: Codable, Equatable {
     var boxes: [PCBox] = [PCBox()]
     var partyIDs: [String] = []
+
+    func wallpaper(for box: PCBox) -> WallpaperSettings {
+        box.wallpaper ?? WallpaperSettings(design: PixelWallpaper.allCases[(boxes.firstIndex { $0.id == box.id } ?? 0) % PixelWallpaper.allCases.count])
+    }
 
     mutating func reconcile(pokemonIDs: [String]) {
         let valid = Set(pokemonIDs)
@@ -100,11 +105,12 @@ enum WidgetTypeface: String, Codable, CaseIterable, Identifiable {
     var name: String { rawValue.capitalized }
 }
 enum AwardOrdering: String, Codable, CaseIterable, Identifiable {
-    case rarity, name
+    case chronological, rarity, name
     var id: String { rawValue }
     var name: String { rawValue.capitalized }
 }
 struct WidgetStyle: Codable, Equatable {
+    var wallpaper: WallpaperSettings? = nil
     var appearance: Appearance = .automatic
     var palette: WidgetPalette = .sage
     var typeface: WidgetTypeface = .pixel
@@ -125,6 +131,7 @@ struct WidgetStyle: Codable, Equatable {
     func orderedAwards(_ pokemon: RibbonPokemon, ribbonsOnly: Bool = false) -> [String] {
         let catalog = RibbonCatalog.shared
         let awards = catalog.awards(for: pokemon).filter { !ribbonsOnly || !$0.hasSuffix("-mark") }
+        if awardOrdering == .chronological { return catalog.chronologicalAwards(awards) }
         return awardOrdering == .rarity ? catalog.ranked(awards) : awards.sorted { (catalog.ribbons[$0] ?? $0) < (catalog.ribbons[$1] ?? $1) }
     }
 }
@@ -137,8 +144,15 @@ struct WidgetPreset: Codable, Identifiable, Equatable {
 }
 extension CollectionSnapshot {
     func preset(for content: WidgetContent, id: String? = nil) -> WidgetPreset? {
-        let target = id ?? widgetDefaults?[content.rawValue]
-        return widgetPresets?.first { $0.id == target && $0.content == content }
+        if let id { return availableWidgetPresets.first { $0.id == id && $0.content == content } }
+        let target = widgetDefaults?[content.rawValue]
+        if let target, let chosen = availableWidgetPresets.first(where: { $0.id == target && $0.content == content }) { return chosen }
+        return WidgetThemePack.defaultPack(for: content).preset(for: content)
+    }
+    var availableWidgetPresets: [WidgetPreset] {
+        let saved = widgetPresets ?? []
+        let ids = Set(saved.map(\.id))
+        return saved + WidgetContent.allCases.flatMap { content in WidgetThemePack.allCases.map { $0.preset(for: content) }.filter { !ids.contains($0.id) } }
     }
     var organizedStorage: StorageLayout {
         var result = storage ?? StorageLayout(); result.reconcile(pokemonIDs: pokemon.map(\.id)); return result

@@ -225,7 +225,7 @@ final class CustomizationTests: XCTestCase {
         XCTAssertEqual(restored.preset(for: .pokemon), a)
         XCTAssertEqual(restored.preset(for: .showdownTeam, id: b.id), b)
         XCTAssertNil(restored.preset(for: .pokemon, id: b.id))
-        XCTAssertNil(restored.preset(for: .showdownTeam))
+        XCTAssertEqual(restored.preset(for: .showdownTeam), WidgetThemePack.midnightCircuit.preset(for: .showdownTeam))
         XCTAssertFalse(restored.preset(for: .showdownTeam, id: b.id)!.style.showMoves)
     }
     func testJourneyAndWidgetSettingsRoundTrip() throws {
@@ -286,6 +286,168 @@ final class CustomizationTests: XCTestCase {
             let renderer = ImageRenderer(content: view); renderer.scale = 2
             let image = try XCTUnwrap(renderer.uiImage)
             let attachment = XCTAttachment(image: image); attachment.name = label; attachment.lifetime = .keepAlways; add(attachment)
+        }
+    }
+}
+
+final class CollectionUpdateTests: XCTestCase {
+    func testStarterPacksAreAvailableWithoutReplacingSavedDefaults() throws {
+        let blank = CollectionSnapshot()
+        XCTAssertEqual(blank.availableWidgetPresets.count, 15)
+        XCTAssertEqual(Set(blank.availableWidgetPresets.map(\.id)).count, 15)
+        for content in WidgetContent.allCases {
+            XCTAssertEqual(blank.preset(for: content)?.style, WidgetThemePack.defaultPack(for: content).style)
+            for pack in WidgetThemePack.allCases {
+                let preset = pack.preset(for: content)
+                XCTAssertEqual(blank.preset(for: content, id: preset.id), preset)
+            }
+        }
+        var custom = WidgetPreset(name: "My design", content: .pokemon, selectionID: "my-pokemon")
+        custom.style.palette = .game; custom.style.wallpaper = nil
+        let snapshot = CollectionSnapshot(widgetPresets: [custom], widgetDefaults: ["pokemon": custom.id])
+        let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
+        XCTAssertEqual(restored.preset(for: .pokemon), custom)
+        XCTAssertEqual(restored.widgetPresets, [custom])
+        XCTAssertEqual(restored.availableWidgetPresets.count, 16)
+        XCTAssertNil(restored.preset(for: .showdownTeam, id: custom.id))
+        var stale = restored; stale.widgetDefaults?["pokemon"] = "deleted"
+        XCTAssertEqual(stale.preset(for: .pokemon), WidgetThemePack.pocketGreen.preset(for: .pokemon))
+    }
+    func testPassportRetainsEndpointsWithMultipleGamesInSameGeneration() throws {
+        var p = RibbonPokemon(species: "metagross", currentgame: "vio", origingame: "ruby")
+        p.visits = [JourneyVisit(game: "scar"), JourneyVisit(game: "emerald"), JourneyVisit(game: "scar"), JourneyVisit(game: "as")]
+        let stableIDs = p.recordedVisits.map(\.id)
+        XCTAssertEqual(p.recordedVisits.map(\.id), stableIDs, "Endpoint IDs must remain stable while SwiftUI recomputes the view.")
+        XCTAssertEqual(p.games(in: 3), ["ruby", "emerald"])
+        XCTAssertEqual(p.games(in: 9), ["scar", "vio"])
+        XCTAssertEqual(p.visitedGenerations, [3, 6, 9])
+        let restored = try JSONDecoder().decode(RibbonPokemon.self, from: JSONEncoder().encode(p))
+        XCTAssertEqual(restored.origingame, "ruby"); XCTAssertEqual(restored.currentgame, "vio")
+        XCTAssertEqual(restored.games(in: 3), ["ruby", "emerald"])
+        XCTAssertEqual(restored.games(in: 9), ["scar", "vio"])
+        p.visits = []; XCTAssertEqual(p.recordedVisits.map(\.game), ["ruby", "vio"])
+    }
+    func testChronologyCoversEntireCatalogAndKeepsRanksInOrder() {
+        let c = RibbonCatalog.shared
+        XCTAssertTrue(c.games.keys.allSatisfy { CatalogOrder.gameIndex($0) != Int.max })
+        XCTAssertTrue(c.ribbons.keys.allSatisfy { CatalogOrder.awardIndex($0) != Int.max })
+        XCTAssertEqual(c.chronologicalGames.count, c.games.count)
+        let visits = ["vio", "sun", "ruby", "platinum", "as", "sw", "white", "x"]
+        XCTAssertEqual(visits.sorted { CatalogOrder.gameIndex($0) < CatalogOrder.gameIndex($1) }, ["ruby", "platinum", "white", "x", "as", "sun", "sw", "vio"])
+        XCTAssertEqual(c.chronologicalAwards(["paldea-champion-ribbon", "cool-ribbon-master-hoenn", "cool-ribbon-hoenn", "kalos-champion-ribbon", "sinnoh-champion-ribbon", "galar-champion-ribbon"]),
+                       ["cool-ribbon-hoenn", "cool-ribbon-master-hoenn", "sinnoh-champion-ribbon", "kalos-champion-ribbon", "galar-champion-ribbon", "paldea-champion-ribbon"])
+        let species = c.nationalDexSpecies
+        XCTAssertEqual(species.count, c.pokemon.count)
+        XCTAssertEqual(species.first, "bulbasaur")
+        XCTAssertEqual(c.dexOrdered([RibbonPokemon(species: "lugia"), RibbonPokemon(species: "pikachu")]).map(\.species), ["pikachu", "lugia"])
+        XCTAssertEqual(c.dexNumber(for: "alcremie-caramel-berry"), 869)
+        XCTAssertNotEqual(c.speciesPickerName("alcremie-caramel-berry"), c.speciesPickerName("alcremie"))
+        let generations = c.chronologicalAwards(Array(c.ribbons.keys)).map { CatalogOrder.awardGeneration($0) }
+        XCTAssertEqual(generations, generations.sorted())
+    }
+    func testOldBoxAndStyleDecodeAndIndependentWallpapersRoundTrip() throws {
+        let oldBox = PCBox(name: "Old box")
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(oldBox)) as? [String: Any])
+        object.removeValue(forKey: "wallpaper")
+        let decoded = try JSONDecoder().decode(PCBox.self, from: JSONSerialization.data(withJSONObject: object))
+        XCTAssertNil(decoded.wallpaper); XCTAssertEqual(decoded.slots.count, 30)
+        var oldStyle = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(WidgetStyle())) as? [String: Any])
+        oldStyle.removeValue(forKey: "wallpaper")
+        XCTAssertNil(try JSONDecoder().decode(WidgetStyle.self, from: JSONSerialization.data(withJSONObject: oldStyle)).wallpaper)
+        var layout = StorageLayout(boxes: [decoded, PCBox(name: "Second")])
+        XCTAssertNotEqual(layout.wallpaper(for: layout.boxes[0]).design, layout.wallpaper(for: layout.boxes[1]).design)
+        layout.boxes[0].wallpaper = WallpaperSettings(design: .seaside, tint: "3679B3", strength: 0.8)
+        layout.boxes[1].wallpaper = WallpaperSettings(design: .starfield)
+        layout.reconcile(pokemonIDs: ["a", "b"])
+        let restored = try JSONDecoder().decode(StorageLayout.self, from: JSONEncoder().encode(layout))
+        XCTAssertEqual(restored, layout)
+        XCTAssertEqual(restored.boxes[0].wallpaper?.tint, "3679B3")
+        XCTAssertEqual(restored.boxes[1].wallpaper?.design, .starfield)
+    }
+    func testManualPokemonGoesToChosenBoxAndKeepsAllDetails() throws {
+        let imported = RibbonPokemon(id: "import", species: "lugia", source: "ribbons.guide")
+        var snapshot = CollectionSnapshot(pokemon: [imported])
+        var layout = snapshot.organizedStorage
+        let chosen = PCBox(name: "Favourites"); layout.boxes.append(chosen); snapshot.storage = layout
+        let entry = RibbonPokemon(species: "pikachu", nickname: " Sparky ", gender: "female", shiny: true, currentgame: "vio", origingame: "as", currentlevel: 50, title: "effort-ribbon", ribbons: ["effort-ribbon", "effort-ribbon"], showdownSet: ShowdownSet(item: "Light Ball", moves: ["Thunderbolt"]))
+        try snapshot.addManualPokemon(entry, toBox: chosen.id)
+        let added = try XCTUnwrap(snapshot.pokemon.last)
+        XCTAssertEqual(added.id, entry.id); XCTAssertEqual(added.source, "manual"); XCTAssertEqual(added.nickname, "Sparky")
+        XCTAssertEqual(added.showdownSet, entry.showdownSet); XCTAssertEqual(added.gender, "female"); XCTAssertTrue(added.shiny)
+        XCTAssertEqual(added.ribbons, ["effort-ribbon"]); XCTAssertEqual(added.title, "effort-ribbon")
+        XCTAssertEqual(added.recordedVisits.map(\.game), ["as", "vio"])
+        XCTAssertEqual(snapshot.organizedStorage.boxes.first { $0.id == chosen.id }?.slots[0], entry.id)
+        XCTAssertEqual(snapshot.pokemon.first, imported)
+        XCTAssertEqual(snapshot.selectedID, entry.id)
+        let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
+        XCTAssertEqual(restored.pokemon, snapshot.pokemon); XCTAssertEqual(restored.storage, snapshot.storage)
+        XCTAssertThrowsError(try snapshot.addManualPokemon(entry, toBox: chosen.id))
+    }
+    func testManualCreationRejectsInvalidEntriesAndExpandsFullStorage() throws {
+        var snapshot = CollectionSnapshot()
+        XCTAssertThrowsError(try snapshot.addManualPokemon(RibbonPokemon(species: "unknown"), toBox: nil))
+        XCTAssertThrowsError(try snapshot.addManualPokemon(RibbonPokemon(species: "pikachu", currentlevel: 101), toBox: nil))
+        XCTAssertThrowsError(try snapshot.addManualPokemon(RibbonPokemon(species: "pikachu", currentgame: "unknown"), toBox: nil))
+        XCTAssertTrue(snapshot.pokemon.isEmpty)
+        for _ in 0..<30 { try snapshot.addManualPokemon(RibbonPokemon(species: "pikachu"), toBox: nil) }
+        let full = snapshot.organizedStorage.boxes[0].id
+        let extra = RibbonPokemon(species: "eevee")
+        try snapshot.addManualPokemon(extra, toBox: full)
+        XCTAssertEqual(snapshot.organizedStorage.boxes.count, 2)
+        XCTAssertEqual(snapshot.organizedStorage.boxes[1].slots[0], extra.id)
+        XCTAssertEqual(Set(snapshot.organizedStorage.boxes.flatMap { $0.slots.compactMap { $0 } }).count, 31)
+    }
+    @MainActor func testThemePacksAndWallpaperPreviewsRender() throws {
+        for pack in WidgetThemePack.allCases {
+            for content in WidgetContent.allCases {
+                let records = content == .showdownTeam ? SharedStore.showdownPreview().pokemon : SharedStore.demo().pokemon
+                let members = content == .pokemon ? records.filter { $0.species == "metagross" } : records
+                let sizes: [(PassportSize, CGFloat, CGFloat, String)] = content == .pokemon ? [(.small, 176, 176, "small"), (.medium, 364, 184, "medium"), (.large, 364, 384, "large")] : [(.medium, 364, 184, "medium"), (.large, 364, 384, "large")]
+                for (size, width, height, label) in sizes {
+                    let dark = pack.style.appearance == .dark
+                    let view = ConfiguredWidgetView(pokemon: members, name: "Main team", content: content, size: size, theme: PassportTheme(dark: dark, game: "scar", style: pack.style))
+                        .frame(width: width, height: height).environment(\.colorScheme, dark ? .dark : .light)
+                    let renderer = ImageRenderer(content: view); renderer.scale = 2
+                    let image = try XCTUnwrap(renderer.uiImage)
+                    let attachment = XCTAttachment(image: image); attachment.name = "pack-\(pack.rawValue)-\(content.rawValue)-\(label)"; attachment.lifetime = .keepAlways; add(attachment)
+                }
+            }
+        }
+        for wallpaper in PixelWallpaper.allCases {
+            let view = PixelWallpaperView(settings: WallpaperSettings(design: wallpaper, strength: 0.9), dark: false, base: PassportTheme(dark: false, game: "").board).frame(width: 364, height: 290)
+            let renderer = ImageRenderer(content: view); renderer.scale = 2
+            let image = try XCTUnwrap(renderer.uiImage)
+            let attachment = XCTAttachment(image: image); attachment.name = "wallpaper-\(wallpaper.rawValue)"; attachment.lifetime = .keepAlways; add(attachment)
+        }
+    }
+}
+
+extension CollectionUpdateTests {
+    @MainActor func testCollectionScreensRenderWithSharedGenerationEndpoints() throws {
+        let store = AppStore()
+        var p = try XCTUnwrap(SharedStore.demo().pokemon.first { $0.species == "metagross" })
+        p.origingame = "diamond"; p.currentgame = "scar"
+        p.visits = [JourneyVisit(game: "pearl"), JourneyVisit(game: "platinum"), JourneyVisit(game: "vio"), JourneyVisit(game: "as")]
+        store.snapshot = CollectionSnapshot(pokemon: [p], selectedID: p.id)
+        store.snapshot.storage = store.snapshot.organizedStorage
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let previous = scene.windows.first { $0.isKeyWindow }
+        let window = UIWindow(windowScene: scene)
+        window.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
+        defer { window.isHidden = true; previous?.makeKey() }
+        let screens: [(String, AnyView)] = [
+            ("updated-pc-box", AnyView(PCStorageView().environmentObject(store))),
+            ("passport-multiple-games", AnyView(NavigationStack { StampAlbumView(pokemonID: p.id) }.environmentObject(store))),
+            ("add-pokemon-form", AnyView(AddPokemonView(boxID: store.snapshot.organizedStorage.boxes[0].id).environmentObject(store))),
+            ("theme-pack-studio", AnyView(NavigationStack { WidgetStudioView() }.environmentObject(store)))
+        ]
+        for (name, view) in screens {
+            let controller = UIHostingController(rootView: view.environment(\.colorScheme, .light))
+            window.rootViewController = controller; window.makeKeyAndVisible()
+            controller.view.frame = window.bounds; controller.view.setNeedsLayout(); controller.view.layoutIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+            let image = UIGraphicsImageRenderer(size: window.bounds.size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+            let attachment = XCTAttachment(image: image); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
         }
     }
 }

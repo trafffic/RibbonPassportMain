@@ -20,6 +20,20 @@ extension AppStore {
         }
         commit(next)
     }
+    func useThemePack(_ pack: WidgetThemePack) {
+        var next = snapshot
+        if next.widgetDefaults == nil { next.widgetDefaults = [:] }
+        for content in WidgetContent.allCases { next.widgetDefaults?[content.rawValue] = pack.preset(for: content).id }
+        commit(next)
+    }
+    func addPokemon(_ pokemon: RibbonPokemon, toBox boxID: String?) -> Bool {
+        do {
+            var next = snapshot
+            try next.addManualPokemon(pokemon, toBox: boxID)
+            commit(next)
+            return error == nil
+        } catch { self.error = error.localizedDescription; return false }
+    }
     func deletePreset(_ id: String) {
         var next = snapshot
         next.widgetPresets?.removeAll { $0.id == id }
@@ -33,6 +47,8 @@ struct PCStorageView: View {
     @Environment(\.colorScheme) private var scheme
     @AppStorage("pc.partyVisible") private var partyVisible = false
     @State private var boxIndex = 0
+    @State private var adding = false
+    @State private var editingWallpaper = false
     @State private var importing = false
     @State private var showdown = false
     @State private var moving = false
@@ -51,6 +67,7 @@ struct PCStorageView: View {
                         Text("RIBBON PASSPORT").font(PixelFont.font(29))
                         Spacer(minLength: 4)
                         Menu {
+                            Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
                             Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
                             Button("Showdown team", systemImage: "doc.on.clipboard") { showdown = true }
                             Button("Refresh demo", systemImage: "sparkles") { store.demo() }
@@ -66,10 +83,12 @@ struct PCStorageView: View {
                         HStack(alignment: .top, spacing: 7) {
                             if partyVisible { partyBar }
                             boxGrid
-                        }.padding(7).background(theme.board).overlay(Rectangle().stroke(theme.border, lineWidth: 2))
+                        }.padding(7).background { PixelWallpaperView(settings: layout.wallpaper(for: box), dark: theme.dark, base: theme.board) }.overlay(Rectangle().stroke(theme.border, lineWidth: 2))
                     }
                     HStack {
                         Text("\(box.slots.compactMap { $0 }.count) / 30")
+                        Spacer()
+                        Button("Wallpaper") { editingWallpaper = true }.foregroundStyle(theme.accent)
                         Spacer()
                         Text("Box \(min(boxIndex + 1, layout.boxes.count)) / \(layout.boxes.count)")
                     }.font(PixelFont.font(13)).foregroundStyle(theme.muted)
@@ -93,6 +112,10 @@ struct PCStorageView: View {
                 .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                     switch result { case .success(let url): store.importBackup(url); case .failure(let e): store.error = e.localizedDescription }
                 }
+                .sheet(isPresented: $adding) { AddPokemonView(boxID: box.id) { id in
+                    if let index = layout.boxes.firstIndex(where: { $0.slots.contains(id) }) { boxIndex = index }
+                } }
+                .sheet(isPresented: $editingWallpaper) { BoxWallpaperEditor(box: box, settings: layout.wallpaper(for: box)) }
                 .sheet(isPresented: $showdown) { RetroShowdownImportView() }
                 .alert("Box name", isPresented: $renaming) {
                     TextField("Name", text: $boxName)
@@ -108,6 +131,7 @@ struct PCStorageView: View {
     private var emptyCollection: some View {
         VStack(spacing: 10) {
             Text("No Pokémon").font(PixelFont.font(22))
+            Button("Add Pokémon") { adding = true }
             Button("Import backup") { importing = true }
             Button("Showdown team") { showdown = true }
             Button("Try demo") { store.demo() }
@@ -230,15 +254,20 @@ struct StampAlbumView: View {
                             Text("Lv. \(p.currentlevel) · \(RibbonCatalog.shared.awards(for: p).count) awards").font(PixelFont.font(14)).foregroundStyle(theme.muted)
                         }
                     }.retroPanel()
+                    HStack(alignment: .top, spacing: 10) {
+                        endpoint("ORIGIN", game: p.origingame)
+                        endpoint("CURRENT", game: p.currentgame)
+                    }.retroPanel()
                     RetroHeading(title: "Stamp album", value: "\(p.visitedGenerations.count) generations")
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 9) {
                         ForEach(p.visitedGenerations, id: \.self) { gen in
-                            let visit = p.recordedVisits.last { $0.generation == gen }
+                            let games = p.games(in: gen)
+                            let representative = games.contains(p.currentgame) ? p.currentgame : games.first ?? ""
                             Button { generation = gen } label: {
                                 VStack(spacing: 5) {
                                     Text("GEN \(gen.roman)").font(PixelFont.font(12))
-                                    if let visit { GameMascot(game: visit.game, size: visit.game == "scar" ? 48 : 64).frame(height: 64) }
-                                    Text(visit.map { RibbonCatalog.shared.compactGameName($0.game) } ?? "").font(PixelFont.font(14)).lineLimit(2)
+                                    GameMascot(game: representative, size: representative == "scar" ? 42 : 52).frame(height: 54)
+                                    Text("\(games.count) \(games.count == 1 ? "game" : "games")").font(PixelFont.font(14))
                                     Text("\(p.awards(earnedIn: gen).count) earned").font(PixelFont.font(12)).foregroundStyle(theme.muted)
                                 }.frame(maxWidth: .infinity).padding(.vertical, 10).padding(.horizontal, 3)
                                     .background(gen == active ? theme.board : theme.panel)
@@ -249,6 +278,18 @@ struct StampAlbumView: View {
                     if active > 0 {
                         VStack(alignment: .leading, spacing: 12) {
                             RetroHeading(title: "Generation \(active.roman)", value: "\(p.awards(earnedIn: active).count) earned")
+                            ForEach(p.games(in: active), id: \.self) { game in
+                                HStack(spacing: 8) {
+                                    GameMascot(game: game, size: 25)
+                                    Text(RibbonCatalog.shared.gameName(game)).font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true)
+                                    Spacer(minLength: 3)
+                                    if game == p.origingame || game == p.currentgame {
+                                        Text(game == p.origingame && game == p.currentgame ? "Origin · Current" : game == p.origingame ? "Origin" : "Current")
+                                            .font(PixelFont.font(12)).foregroundStyle(theme.accent).fixedSize(horizontal: false, vertical: true)
+                                    }
+                                }
+                            }
+                            Divider()
                             if p.awards(earnedIn: active).isEmpty { Text("No ribbons assigned").font(PixelFont.font(15)).foregroundStyle(theme.muted) }
                             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 6), spacing: 8) {
                                 ForEach(p.awards(earnedIn: active), id: \.self) { id in
@@ -278,6 +319,15 @@ struct StampAlbumView: View {
             .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
             .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }
     }
+    private func endpoint(_ title: String, game: String) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(title).font(PixelFont.font(12)).foregroundStyle(theme.muted)
+            HStack(alignment: .center, spacing: 6) {
+                if !game.isEmpty { GameMascot(game: game, size: 27) }
+                Text(RibbonCatalog.shared.gameName(game)).font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true)
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
+    }
 }
 
 struct AwardLocationEditor: View {
@@ -293,8 +343,8 @@ struct AwardLocationEditor: View {
             Form {
                 if let p {
                     Picker("Ribbon", selection: $award) {
-                        ForEach(RibbonCatalog.shared.ranked(p.ribbons), id: \.self) { id in
-                            Text(RibbonCatalog.shared.ribbons[id] ?? id).tag(id)
+                        ForEach(RibbonCatalog.shared.chronologicalAwards(p.ribbons), id: \.self) { id in
+                            Text(RibbonCatalog.shared.awardPickerName(id)).tag(id)
                         }
                     }.onChange(of: award) { _, id in generation = p.earnedGenerations?[id] ?? 0 }
                     if !award.isEmpty { AssetImage(key: "award-" + award).frame(height: 64).frame(maxWidth: .infinity) }

@@ -3,7 +3,7 @@
 Ribbon Passport is an unofficial Pokémon fan app. It is not affiliated with Pokémon, Niantic, Pokémon Showdown or ribbons.guide.
 
 - Native application code in this project: GPL-3.0, matching the source catalogue's licence. Full text: Licences/GPL-3.0.txt.
-- ribbons.guide species/game/ribbon catalogue and title data: [SlyAceZeta/Ribbons.Guide](https://github.com/SlyAceZeta/Ribbons.Guide), GPL-3.0. Catalogue snapshot: 14 October 2026.
+- ribbons.guide species/game/ribbon catalogue and title data: [SlyAceZeta/Ribbons.Guide](https://github.com/SlyAceZeta/Ribbons.Guide), GPL-3.0. Catalogue snapshot: 14 October 2026. Ribbon introduction-generation metadata in `RibbonAssets/catalog-order.json` was checked against the same upstream [ribbon data](https://github.com/SlyAceZeta/Ribbons.Guide/blob/main/data/ribbons.json) on 15 October 2026.
 - Pokémon pixel sprites and cover-mascot images: [msikma/PokeSprite](https://github.com/msikma/pokesprite), MIT repository licence in Licences/PokeSprite-MIT.txt. This includes the decorative Shadow Lugia fan sprite used for XD-origin Lugia.
 - Gen 9 pixel sprites and fallback source: [PokeAPI/sprites](https://github.com/PokeAPI/sprites), repository CC0 notice in Licences/PokeAPI-CC0.txt. Pokémon imagery remains copyrighted by its respective owners.
 - Showdown species/form names: [smogon/pokemon-showdown/data/pokedex.ts](https://github.com/smogon/pokemon-showdown/blob/master/data/pokedex.ts). Showdown static pixel sprites are an additional fallback source. The Showdown repository uses MIT; see Licences/Pokemon-Showdown-MIT.txt.
@@ -22,3 +22,5 @@ Rarity scores are editorial estimates reused from the Scriptable widget. They de
 # Pixel font
 
 Pixelify Sans by Stefie Justprince is bundled for offline use in the app and widgets. Source: [Google Fonts](https://github.com/google/fonts/tree/main/ofl/pixelifysans). Licensed under the SIL Open Font License 1.1; see `Licences/PixelifySans-OFL.txt`.
+
+- PC wallpapers and widget theme pack scenery: original code-drawn pixel backgrounds included under the project’s GPL-3.0 licence.

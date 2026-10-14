@@ -1,16 +1,20 @@
 # Current UI update validation
 
-The app and widget extension build with Xcode 27.0 for the iOS 27.0 simulator. All 22 native tests pass. The native suite covers existing imports and demo refresh, old-format collection decoding, PC box reconciliation/swaps, the six-member party limit, ribbon locations, named widget designs, font loading and Showdown export/import. Widget render attachments cover all seven layouts in light/dark plus narrow layouts at 115% text size.
+The app and widget extension build with Xcode 27.0 for the iOS 27.0 simulator. All 30 native tests pass. The native suite covers existing imports and demo refresh, old-format collection decoding, PC box reconciliation/swaps, the six-member party limit, ribbon locations, named widget designs, font loading and Showdown export/import. Widget render attachments cover all seven layouts in light/dark, narrow layouts at 115% text size, all five theme packs across seven layouts, six PC wallpapers, and the PC, passport, add-Pokémon and Widget Studio screens. New regressions cover same-generation origin/current visits, complete chronological catalogue coverage, zero-number alternate forms, built-in themes with preserved custom defaults, older box/style decoding, independent wallpapers, manual entries and storage overflow.
 
 Run **Command + U** in the RibbonPassport scheme with an iPhone simulator selected. Signing settings in the project are preserved. The bundled pixel font is available in both targets without a network connection.
 
-Live Simulator interaction could not be inspected because macOS declined screen-capture access. The generated widget images were visually checked. Check these flows on an iPhone:
+The generated widget images and in-app screen renders were visually checked. Live Simulator interaction is not covered; macOS previously declined screen-capture access. Check these flows on an iPhone:
 
-1. Toggle Party in the box header; move between box slots and the party, then reopen the app.
-2. Open a passport, add a visited game, assign an original ribbon to a generation, and confirm that Memory Ribbon totals stay unchanged.
-3. Import a Showdown team, edit a build, reorder members and share the export.
-4. Save two widget designs with different selections/appearances. Choose each design on a separate Home Screen widget and edit one to confirm the other stays independent.
-5. Check long nicknames/moves, both appearances and text-size settings. iOS controls when widget timelines refresh.
+1. Add a Pokémon with **+ → Add Pokémon**, including a form, ribbons and optional competitive build. Confirm the selected box receives it, and test a full box. Reopen the app and reimport a backup to confirm the manual entry stays.
+2. Set different wallpapers and custom tints on two boxes; navigate between them and reopen the app.
+3. Toggle Party in the box header; move between box slots and the party, then reopen the app.
+4. Open a passport, add another game from the origin/current generation, confirm both endpoint labels and all games remain visible, assign an original ribbon to a generation, and confirm that Memory Ribbon totals stay unchanged.
+5. Import a Showdown team, edit a build, reorder members and share the export.
+6. Save two widget designs with different selections/appearances. Choose each design on a separate Home Screen widget and edit one to confirm the other stays independent.
+7. Check long nicknames/moves, both appearances and text-size settings. iOS controls when widget timelines refresh.
+
+The physical iPhone build also compiles with signing disabled; installation and widget refresh remain device checks.
 
 See UI-UPDATE.md for the implemented screens and Home Screen setup.
 
