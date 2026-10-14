@@ -76,6 +76,7 @@ enum PixelWallpaper: String, Codable, CaseIterable, Identifiable {
     }
 }
 struct WallpaperSettings: Codable, Equatable {
+    var sunMoon: SunMoonWallpaper? = nil
     var design: PixelWallpaper = .classic
     var tint: String? = nil
     var strength: Double = 0.65
@@ -121,11 +122,81 @@ extension CollectionSnapshot {
         entry.ribbons = catalog.chronologicalAwards(entry.ribbons.filter { catalog.ribbons[$0] != nil })
         entry.earnedGenerations = entry.earnedGenerations?.filter { entry.ribbons.contains($0.key) }
         if entry.title != "None" && !entry.ribbons.contains(entry.title) { entry.title = "None"; entry.titleText = "" }
-        var layout = organizedStorage
+        let kind: TeamKind = entry.showdownSet == nil ? .ribbon : .showdown
+        var layout = storage(for: kind)
         self.pokemon.append(entry); selectedID = entry.id
+        if kind == .ribbon { selectedRibbonID = entry.id } else { selectedCompetitiveID = entry.id }
         if let boxID, let i = layout.boxes.firstIndex(where: { $0.id == boxID }), let slot = layout.boxes[i].slots.firstIndex(where: { $0 == nil }) {
             layout.boxes[i].slots[slot] = entry.id
         } else { layout.placeInFirstSlot(entry.id) }
-        storage = layout
+        if kind == .ribbon { storage = layout } else { competitiveStorage = layout }
     }
+}
+
+enum SunMoonWallpaper: String, Codable, CaseIterable, Identifiable {
+    case forest = "sm01", city = "sm02", desert = "sm03", savanna = "sm04"
+    case crag = "sm05", volcano = "sm06", snow = "sm07", cave = "sm08"
+    case beach = "sm09", seafloor = "sm10", river = "sm11", sky = "sm12"
+    case pokemonCenter = "sm13", machine = "sm14", checks = "sm15", simple = "sm16"
+    var id: String { rawValue }
+    var name: String {
+        switch self {
+        case .forest: "Forest"; case .city: "City"; case .desert: "Desert"; case .savanna: "Savanna"
+        case .crag: "Crag"; case .volcano: "Volcano"; case .snow: "Snow"; case .cave: "Cave"
+        case .beach: "Beach"; case .seafloor: "Seafloor"; case .river: "River"; case .sky: "Sky"
+        case .pokemonCenter: "Pokémon Center"; case .machine: "Machine"; case .checks: "Checks"; case .simple: "Simple"
+        }
+    }
+    var filename: String { "sm-" + rawValue.suffix(2) }
+}
+
+struct SearchChoice: Identifiable, Equatable {
+    var id: String
+    var name: String
+    var aliases: [String] = []
+    func matches(_ search: String) -> Bool {
+        let query = RibbonCatalog.normalise(search)
+        return query.isEmpty || ([name, id] + aliases).contains { RibbonCatalog.normalise($0).contains(query) }
+    }
+}
+extension RibbonCatalog {
+    var gameChoices: [SearchChoice] {
+        chronologicalGames.map { SearchChoice(id: $0, name: gameName($0), aliases: [compactGameName($0)]) }
+    }
+    func awardChoices(_ ids: [String]) -> [SearchChoice] {
+        chronologicalAwards(ids).map { SearchChoice(id: $0, name: awardPickerName($0)) }
+    }
+}
+
+extension TeamKind {
+    var title: String { self == .ribbon ? "Ribbon Masters" : "Competitive" }
+    var key: String { self == .ribbon ? "ribbon" : "competitive" }
+    var widgetContents: [WidgetContent] { self == .ribbon ? [.pokemon, .ribbonTeam] : [.showdownTeam] }
+}
+extension CollectionSnapshot {
+    func pokemon(for kind: TeamKind) -> [RibbonPokemon] { pokemon.filter { ($0.showdownSet != nil) == (kind == .showdown) } }
+    func storage(for kind: TeamKind) -> StorageLayout {
+        // Split legacy boxes without creating empty copies of the other section's boxes.
+        var layout = (kind == .ribbon ? storage : competitiveStorage ?? storage) ?? StorageLayout()
+        if competitiveStorage == nil, let legacy = storage {
+            let ribbonIDs = Set(pokemon(for: .ribbon).map(\.id)), battleIDs = Set(pokemon(for: .showdown).map(\.id))
+            layout.boxes = legacy.boxes.filter { box in
+                let contents = Set(box.slots.compactMap { $0 })
+                if kind == .showdown { return !contents.isDisjoint(with: battleIDs) }
+                return contents.isEmpty || !contents.isDisjoint(with: ribbonIDs)
+            }
+        }
+        layout.reconcile(pokemonIDs: pokemon(for: kind).map(\.id))
+        return layout
+    }
+    mutating func organizeSections() {
+        let ribbon = storage(for: .ribbon), competitive = storage(for: .showdown)
+        storage = ribbon; competitiveStorage = competitive
+    }
+    func selectedPokemonID(for kind: TeamKind) -> String {
+        let preferred = kind == .ribbon ? selectedRibbonID : selectedCompetitiveID
+        let records = pokemon(for: kind)
+        return records.first { $0.id == preferred }?.id ?? records.first { $0.id == selectedID }?.id ?? records.first?.id ?? ""
+    }
+    func section(forPokemon id: String) -> TeamKind? { pokemon.first { $0.id == id }.map { $0.showdownSet == nil ? .ribbon : .showdown } }
 }

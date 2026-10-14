@@ -39,7 +39,9 @@ struct StorageLayout: Codable, Equatable {
     var partyIDs: [String] = []
 
     func wallpaper(for box: PCBox) -> WallpaperSettings {
-        box.wallpaper ?? WallpaperSettings(design: PixelWallpaper.allCases[(boxes.firstIndex { $0.id == box.id } ?? 0) % PixelWallpaper.allCases.count])
+        var settings = box.wallpaper ?? WallpaperSettings()
+        if settings.sunMoon == nil { settings.sunMoon = SunMoonWallpaper.allCases[(boxes.firstIndex { $0.id == box.id } ?? 0) % SunMoonWallpaper.allCases.count] }
+        return settings
     }
 
     mutating func reconcile(pokemonIDs: [String]) {
@@ -155,7 +157,7 @@ extension CollectionSnapshot {
         return saved + WidgetContent.allCases.flatMap { content in WidgetThemePack.allCases.map { $0.preset(for: content) }.filter { !ids.contains($0.id) } }
     }
     var organizedStorage: StorageLayout {
-        var result = storage ?? StorageLayout(); result.reconcile(pokemonIDs: pokemon.map(\.id)); return result
+        storage(for: .ribbon)
     }
 }
 

@@ -11,11 +11,11 @@ struct PokemonEntity: AppEntity {
 }
 struct PokemonQuery: EntityQuery {
     func entities(for identifiers: [String]) async throws -> [PokemonEntity] {
-        let pokemon = (try? SharedStore.load())?.pokemon ?? []
+        let pokemon = (try? SharedStore.load())?.pokemon(for: .ribbon) ?? []
         return identifiers.compactMap { id in pokemon.first(where: { $0.id == id }).map { PokemonEntity(id: $0.id, name: $0.displayName) } }
     }
     func suggestedEntities() async throws -> [PokemonEntity] {
-        let pokemon = (try? SharedStore.load())?.pokemon ?? []
+        let pokemon = (try? SharedStore.load())?.pokemon(for: .ribbon) ?? []
         return RibbonCatalog.shared.dexOrdered(pokemon).enumerated().map { PokemonEntity(id: $0.element.id, name: "\($0.offset + 1). \($0.element.displayName)") }
     }
 }
@@ -201,7 +201,7 @@ struct PokemonWidgetView: View {
     @Environment(\.widgetFamily) private var family
     @Environment(\.colorScheme) private var scheme
     var body: some View {
-        let pokemon = entry.selection.map { id in entry.snapshot.pokemon.first { $0.id == id } } ?? (entry.snapshot.pokemon.first { $0.id == entry.snapshot.selectedID } ?? entry.snapshot.pokemon.first)
+        let pokemon = entry.selection.map { id in entry.snapshot.pokemon.first { $0.id == id } } ?? (entry.snapshot.pokemon(for: .ribbon).first { $0.id == entry.snapshot.selectedPokemonID(for: .ribbon) } ?? entry.snapshot.pokemon(for: .ribbon).first)
         let theme = PassportTheme(dark: entry.appearance == .dark || (entry.appearance == .automatic && scheme == .dark), game: pokemon?.currentgame ?? "", style: entry.style)
         Group {
             if let pokemon {

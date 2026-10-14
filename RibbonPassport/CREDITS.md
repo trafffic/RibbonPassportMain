@@ -23,4 +23,5 @@ Rarity scores are editorial estimates reused from the Scriptable widget. They de
 
 Pixelify Sans by Stefie Justprince is bundled for offline use in the app and widgets. Source: [Google Fonts](https://github.com/google/fonts/tree/main/ofl/pixelifysans). Licensed under the SIL Open Font License 1.1; see `Licences/PixelifySans-OFL.txt`.
 
-- PC wallpapers and widget theme pack scenery: original code-drawn pixel backgrounds included under the project’s GPL-3.0 licence.
+- Widget theme pack scenery: original code-drawn pixel backgrounds included under the project’s GPL-3.0 licence.
+- The 16 standard Sun/Moon PC wallpapers: original game artwork extracted by Tiddlywinks and hosted by [Bulbagarden Archives](https://archives.bulbagarden.net/wiki/Category:Sun_and_Moon_Box_wallpapers). The original 208 × 192 PNGs are bundled unchanged in `RibbonAssets/Wallpapers`; the app displays their interior grid area below its own box heading. Individual source URLs are recorded in `RibbonAssets/Wallpapers/sources.json`. Pokémon artwork remains © Nintendo/Creatures Inc./Game Freak and is not covered by the application code’s GPL licence.

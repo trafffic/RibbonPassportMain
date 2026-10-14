@@ -12,19 +12,28 @@ final class AppStore: ObservableObject {
     @Published var openTeamID: String?
     init() { reload() }
     func reload() {
-        do { var loaded = try SharedStore.load(); loaded.storage = loaded.organizedStorage; snapshot = loaded; error = nil }
+        do { var loaded = try SharedStore.load(); loaded.organizeSections(); snapshot = loaded; error = nil }
         catch { self.error = error.localizedDescription }
     }
     func commit(_ value: CollectionSnapshot) {
         do {
             var next = value; next.updatedAt = Date()
-            next.storage = next.organizedStorage
+            next.organizeSections()
             try SharedStore.save(next); snapshot = next; error = nil
             WidgetCenter.shared.reloadAllTimelines()
         } catch { self.error = error.localizedDescription }
     }
-    func choose(_ id: String) { var next = snapshot; next.selectedID = id; commit(next) }
-    func chooseTeam(_ id: String) { var next = snapshot; next.selectedTeamID = id; commit(next) }
+    func choose(_ id: String) {
+        var next = snapshot; next.selectedID = id
+        if next.section(forPokemon: id) == .showdown { next.selectedCompetitiveID = id } else { next.selectedRibbonID = id }
+        commit(next)
+    }
+    func chooseTeam(_ id: String) {
+        var next = snapshot; next.selectedTeamID = id
+        if let team = next.teams.first(where: { $0.id == id }), next.kind(of: team) == .showdown { next.selectedCompetitiveTeamID = id }
+        else { next.selectedRibbonTeamID = id }
+        commit(next)
+    }
     func deletePokemon(_ id: String) {
         var next = snapshot; next.removePokemon(id: id); commit(next)
     }
@@ -66,14 +75,16 @@ final class AppStore: ObservableObject {
         var next = snapshot
         let team = RibbonTeam(name: name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Showdown Team" : name, memberIDs: pokemon.map(\.id))
         next.pokemon.append(contentsOf: pokemon); next.teams.append(team)
-        next.selectedTeamID = team.id; next.selectedID = pokemon.first?.id ?? next.selectedID
+        next.selectedTeamID = team.id; next.selectedCompetitiveTeamID = team.id; next.selectedCompetitiveID = pokemon.first?.id; next.selectedID = pokemon.first?.id ?? next.selectedID
         commit(next)
     }
     func saveTeam(_ team: RibbonTeam) {
         var next = snapshot
         if let index = next.teams.firstIndex(where: { $0.id == team.id }) { next.teams[index] = team }
         else { next.teams.append(team) }
-        next.selectedTeamID = team.id; commit(next)
+        next.selectedTeamID = team.id
+        if next.kind(of: team) == .showdown { next.selectedCompetitiveTeamID = team.id } else { next.selectedRibbonTeamID = team.id }
+        commit(next)
     }
     func demo() {
         var next = snapshot
@@ -92,10 +103,10 @@ struct RibbonPassportApp: App {
                 .onOpenURL { url in
                     if url.scheme == "ribbonpassport", url.host == "pokemon" {
                         store.choose(url.lastPathComponent)
-                        store.tab = 0; store.openPokemonID = url.lastPathComponent
+                        store.tab = store.snapshot.section(forPokemon: url.lastPathComponent) == .showdown ? 1 : 0; store.openPokemonID = url.lastPathComponent
                     } else if url.scheme == "ribbonpassport", url.host == "team" {
                         store.chooseTeam(url.lastPathComponent)
-                        store.tab = 1; store.openTeamID = url.lastPathComponent
+                        store.tab = store.snapshot.teams.first(where: { $0.id == url.lastPathComponent }).map { store.snapshot.kind(of: $0) == .showdown ? 1 : 0 } ?? 0; store.openTeamID = url.lastPathComponent
                     } else if url.isFileURL { store.importBackup(url) }
                 }
         }
@@ -105,10 +116,9 @@ struct RootView: View {
     @EnvironmentObject private var store: AppStore
     var body: some View {
         TabView(selection: $store.tab) {
-            PCStorageView().tabItem { Label("Pokémon", systemImage: "square.grid.3x3") }.tag(0)
-            RetroTeamsView().tabItem { Label("Teams", systemImage: "person.3.fill") }.tag(1)
-            NavigationStack { WidgetStudioView() }.tabItem { Label("Widgets", systemImage: "rectangle.3.group") }.tag(2)
-            SettingsView().tabItem { Label("Settings", systemImage: "gearshape") }.tag(3)
+            PCStorageView(kind: .ribbon).tabItem { Label("Ribbons", systemImage: "rosette") }.tag(0)
+            PCStorageView(kind: .showdown).tabItem { Label("Competitive", systemImage: "bolt.fill") }.tag(1)
+            SettingsView().tabItem { Label("Settings", systemImage: "gearshape") }.tag(2)
         }.font(PixelFont.font(17)).tint(Color(hex: "718F4E"))
         .alert("Something needs attention", isPresented: Binding(get: { store.error != nil }, set: { if !$0 { store.error = nil } })) {
             Button("OK") { store.error = nil }
@@ -185,12 +195,7 @@ struct GamePicker: View {
     var title: String
     @Binding var value: String
     var body: some View {
-        Picker(title, selection: $value) {
-            Text("Not set").tag("")
-            ForEach(RibbonCatalog.shared.chronologicalGames, id: \.self) { id in
-                Text(RibbonCatalog.shared.gameName(id)).tag(id)
-            }
-        }
+        SearchableChoicePicker(title: title, value: $value, choices: RibbonCatalog.shared.gameChoices, emptyLabel: "Not set")
     }
 }
 struct PokemonEditor: View {
@@ -242,12 +247,8 @@ struct PokemonEditor: View {
             }
             Section("Ribbons and marks") {
                 Button("Choose awards (\(pokemon.ribbons.count) saved)") { awards = true }
-                Picker("Equipped title", selection: $pokemon.title) {
-                    Text("None").tag("None")
-                    ForEach(RibbonCatalog.shared.chronologicalAwards(pokemon.ribbons + (pokemon.title == "None" ? [] : [pokemon.title])), id: \.self) { id in
-                        Text(RibbonCatalog.shared.awardPickerName(id)).tag(id)
-                    }
-                }.onChange(of: pokemon.title) { _, _ in pokemon.titleText = "" }
+                SearchableChoicePicker(title: "Equipped title", value: $pokemon.title,
+                                       choices: RibbonCatalog.shared.awardChoices(pokemon.ribbons + (pokemon.title == "None" ? [] : [pokemon.title])), emptyLabel: "None", emptyID: "None").onChange(of: pokemon.title) { _, _ in pokemon.titleText = "" }
                 Text("The displayed total includes marks and uses Memory Ribbons from Gen 6 onward.").font(.caption).foregroundStyle(.secondary)
             }
             Section {
@@ -397,7 +398,8 @@ struct SettingsView: View {
                     }
                 }
                 Section("Home Screen widgets") {
-                    NavigationLink("Widget studio") { WidgetStudioView() }
+                    NavigationLink("Ribbon widgets") { WidgetStudioView(section: .ribbon) }
+                    NavigationLink("Competitive widgets") { WidgetStudioView(initialContent: .showdownTeam, section: .showdown) }
                     Button("Refresh widgets") { WidgetCenter.shared.reloadAllTimelines() }
                 }
                 Section("Collection") {

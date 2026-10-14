@@ -6,27 +6,23 @@ struct RetroTeamsView: View {
     @Environment(\.colorScheme) private var scheme
     @State private var showdown = false
     @State private var creating = false
-    @State private var filter = "Showdown"
-    private var kind: TeamKind { filter == "Showdown" ? .showdown : .ribbon }
+    var kind: TeamKind = .showdown
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
     var body: some View {
-        NavigationStack {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 16) {
                     HStack {
                         Text("Teams").font(PixelFont.font(31))
                         Spacer()
                         Menu {
-                            Button("Import Showdown team") { showdown = true }
-                            Button("Create ribbon team") { creating = true }
+                            Button("Create team") { creating = true }
+                            if kind == .showdown { Button("Import Showdown team") { showdown = true } }
                         } label: { Label("Add", systemImage: "plus") }.buttonStyle(RetroAction())
                     }
-                    Picker("Teams", selection: $filter) { Text("Showdown").tag("Showdown"); Text("Ribbon teams").tag("Ribbons") }
-                        .pickerStyle(.segmented)
                     if store.snapshot.teams(for: kind).isEmpty {
                         VStack(spacing: 12) {
                             Text("No teams").font(PixelFont.font(22))
-                            Button(filter == "Showdown" ? "Import team" : "Create team") { if filter == "Showdown" { showdown = true } else { creating = true } }
+                            Button("Create team") { creating = true }
                                 .buttonStyle(RetroAction(prominent: true))
                         }.frame(maxWidth: .infinity).retroPanel()
                     }
@@ -36,8 +32,8 @@ struct RetroTeamsView: View {
                                 HStack {
                                     Text(team.name).font(PixelFont.font(24)).lineLimit(1)
                                     Spacer()
-                                    if team.id == store.snapshot.selectedTeamID { Image(systemName: "checkmark.circle.fill").foregroundStyle(theme.accent) }
-                                    Text("\(team.memberIDs.count)").font(PixelFont.font(14)).foregroundStyle(theme.muted)
+                                    if team.id == store.snapshot.widgetTeam(for: kind)?.id { Image(systemName: "checkmark.circle.fill").foregroundStyle(theme.accent) }
+                                    Text("\(store.snapshot.members(teamID: team.id).count)").font(PixelFont.font(14)).foregroundStyle(theme.muted)
                                     Image(systemName: "chevron.right").font(.system(size: 12))
                                 }
                                 HStack(spacing: 3) {
@@ -47,11 +43,9 @@ struct RetroTeamsView: View {
                         }.buttonStyle(.plain)
                     }
                 }.padding(16)
-            }.background(theme.paper).toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(item: $store.openTeamID) { id in RetroTeamDetailView(teamID: id) }
+            }.background(theme.paper).navigationTitle(kind == .showdown ? "Competitive teams" : "Ribbon teams").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
                 .sheet(isPresented: $showdown) { RetroShowdownImportView() }
-                .sheet(isPresented: $creating) { NavigationStack { RetroTeamArrangeView(team: RibbonTeam(name: "Ribbon team", memberIDs: []), showdown: false) } }
-        }
+                .sheet(isPresented: $creating) { NavigationStack { RetroTeamArrangeView(team: RibbonTeam(name: kind == .ribbon ? "Ribbon team" : "Showdown team", memberIDs: []), showdown: kind == .showdown) } }
     }
 }
 

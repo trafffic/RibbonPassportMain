@@ -2,13 +2,13 @@ import SwiftUI
 
 struct AddPokemonView: View {
     var boxID: String
+    var kind: TeamKind = .ribbon
     var onAdded: (String) -> Void = { _ in }
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @State private var pokemon = RibbonPokemon(species: "", currentlevel: 5)
     @State private var speciesPicker = false
     @State private var awards = false
-    @State private var competitive = false
     @State private var build = ShowdownSet()
     @State private var moves = Array(repeating: "", count: 4)
     var body: some View {
@@ -36,19 +36,13 @@ struct AddPokemonView: View {
                     GamePicker(title: "Origin game", value: $pokemon.origingame)
                     GamePicker(title: "Current game", value: $pokemon.currentgame)
                 }
-                Section("Ribbons & marks") {
-                    Button("Choose awards (\(pokemon.ribbons.count))") { awards = true }
-                    Picker("Equipped title", selection: $pokemon.title) {
-                        Text("None").tag("None")
-                        ForEach(RibbonCatalog.shared.chronologicalAwards(pokemon.ribbons), id: \.self) { id in
-                            Text(RibbonCatalog.shared.awardPickerName(id)).tag(id)
-                        }
+                if kind == .ribbon {
+                    Section("Ribbons & marks") {
+                        Button("Choose awards (\(pokemon.ribbons.count))") { awards = true }
+                        SearchableChoicePicker(title: "Equipped title", value: $pokemon.title, choices: RibbonCatalog.shared.awardChoices(pokemon.ribbons), emptyLabel: "None", emptyID: "None")
                     }
                 }
-                Section {
-                    Toggle("Competitive build", isOn: $competitive)
-                }
-                if competitive {
+                if kind == .showdown {
                     Section("Build") {
                         TextField("Held item", text: $build.item)
                         TextField("Ability", text: $build.ability)
@@ -67,7 +61,7 @@ struct AddPokemonView: View {
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Add") {
                             var entry = pokemon
-                            if competitive {
+                            if kind == .showdown {
                                 var details = build
                                 details.moves = moves.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
                                 entry.showdownSet = details
@@ -141,6 +135,7 @@ extension Color {
 struct BoxWallpaperEditor: View {
     var box: PCBox
     @State var settings: WallpaperSettings
+    var kind: TeamKind = .ribbon
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
@@ -150,38 +145,102 @@ struct BoxWallpaperEditor: View {
             Form {
                 Section {
                     ZStack {
-                        PixelWallpaperView(settings: settings, dark: theme.dark, base: theme.board)
+                        BoxWallpaperView(settings: settings)
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 8) {
                             ForEach(Array(SharedStore.demo().pokemon.prefix(6))) { p in PokemonSprite(pokemon: p).frame(height: 58) }
                         }.padding(14)
                     }.frame(height: 180).listRowInsets(EdgeInsets()).overlay(Rectangle().stroke(theme.border, lineWidth: 2))
                 }
-                Section("Starter wallpapers") {
+                Section("Sun / Moon · 16 wallpapers") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 10) {
-                        ForEach(PixelWallpaper.allCases) { design in
-                            Button { settings.design = design; settings.tint = nil } label: {
+                        ForEach(SunMoonWallpaper.allCases) { design in
+                            Button { settings.sunMoon = design; settings.tint = nil } label: {
                                 VStack(spacing: 6) {
-                                    PixelWallpaperView(settings: WallpaperSettings(design: design, strength: 1), dark: theme.dark, base: theme.board).frame(height: 70)
-                                        .overlay(Rectangle().stroke(settings.design == design ? theme.accent : theme.border, lineWidth: settings.design == design ? 3 : 1))
+                                    BoxWallpaperView(settings: WallpaperSettings(sunMoon: design)).frame(height: 70)
+                                        .overlay(Rectangle().stroke(settings.sunMoon == design ? theme.accent : theme.border, lineWidth: settings.sunMoon == design ? 3 : 1))
                                     Text(design.name).font(PixelFont.font(16)).foregroundStyle(theme.ink)
                                 }
                             }.buttonStyle(.plain)
                         }
                     }.padding(.vertical, 5)
                 }
-                Section("Customise") { WallpaperControls(settings: $settings) }
+                Section("Customise") {
+                    Toggle("Custom tint", isOn: Binding(get: { settings.tint != nil }, set: { settings.tint = $0 ? "719957" : nil }))
+                    if settings.tint != nil {
+                        ColorPicker("Tint", selection: Binding(get: { Color(hex: settings.colorHex) }, set: { settings.tint = $0.rgbHex }), supportsOpacity: false)
+                        Text("Tint strength")
+                        Slider(value: $settings.strength, in: 0...1, step: 0.05).accessibilityLabel("Tint strength")
+                    }
+                }
             }.font(PixelFont.font(17)).navigationTitle(box.name + " wallpaper").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                     ToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
-                            store.editStorage { layout in
+                            store.editStorage(kind: kind) { layout in
                                 if let i = layout.boxes.firstIndex(where: { $0.id == box.id }) { layout.boxes[i].wallpaper = settings }
                             }
                             if store.error == nil { dismiss() }
                         }
                     }
                 }
+        }
+    }
+}
+
+struct SearchableChoicePicker: View {
+    var title: String
+    @Binding var value: String
+    var choices: [SearchChoice]
+    var emptyLabel: String? = nil
+    var emptyID = ""
+    @State private var presented = false
+    private var selectedName: String { choices.first { $0.id == value }?.name ?? (value == emptyID ? emptyLabel ?? "Choose" : value) }
+    var body: some View {
+        Button { presented = true } label: {
+            HStack(spacing: 12) {
+                Text(title).foregroundStyle(.primary)
+                Spacer(minLength: 8)
+                Text(selectedName).foregroundStyle(.secondary).multilineTextAlignment(.trailing).lineLimit(2)
+                Image(systemName: "chevron.down").font(.system(size: 11)).foregroundStyle(.secondary)
+            }.frame(minHeight: 32).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityLabel(title + ": " + selectedName)
+            .sheet(isPresented: $presented) {
+                SearchableChoiceList(title: title, value: $value, choices: choices, emptyLabel: emptyLabel, emptyID: emptyID)
+            }
+    }
+}
+struct SearchableChoiceList: View {
+    var title: String
+    @Binding var value: String
+    var choices: [SearchChoice]
+    var emptyLabel: String? = nil
+    var emptyID = ""
+    @Environment(\.dismiss) private var dismiss
+    @State private var search = ""
+    private var results: [SearchChoice] { choices.filter { $0.matches(search) } }
+    var body: some View {
+        NavigationStack {
+            List {
+                if let emptyLabel, search.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    choice(emptyID, name: emptyLabel)
+                }
+                ForEach(results) { item in choice(item.id, name: item.name) }
+            }.font(PixelFont.font(17))
+                .overlay { if results.isEmpty && !search.isEmpty { ContentUnavailableView.search(text: search) } }
+                .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search " + title.lowercased())
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+                .toolbar { Button("Cancel") { dismiss() } }
+        }
+    }
+    private func choice(_ id: String, name: String) -> some View {
+        Button { value = id; dismiss() } label: {
+            HStack {
+                Text(name).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                if value == id { Image(systemName: "checkmark").accessibilityLabel("Selected") }
+            }.frame(minHeight: 34).contentShape(Rectangle())
         }
     }
 }

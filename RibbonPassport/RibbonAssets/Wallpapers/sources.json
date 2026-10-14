@@ -1,0 +1,98 @@
+[
+  {
+    "id": "sm01",
+    "name": "Forest",
+    "file": "sm-01.png",
+    "source": "https://archives.bulbagarden.net/media/upload/b/b8/Box_Forest_VII.png"
+  },
+  {
+    "id": "sm02",
+    "name": "City",
+    "file": "sm-02.png",
+    "source": "https://archives.bulbagarden.net/media/upload/5/51/Box_City_VII.png"
+  },
+  {
+    "id": "sm03",
+    "name": "Desert",
+    "file": "sm-03.png",
+    "source": "https://archives.bulbagarden.net/media/upload/1/1f/Box_Desert_VII.png"
+  },
+  {
+    "id": "sm04",
+    "name": "Savanna",
+    "file": "sm-04.png",
+    "source": "https://archives.bulbagarden.net/media/upload/4/42/Box_Savanna_VII.png"
+  },
+  {
+    "id": "sm05",
+    "name": "Crag",
+    "file": "sm-05.png",
+    "source": "https://archives.bulbagarden.net/media/upload/7/75/Box_Crag_VII.png"
+  },
+  {
+    "id": "sm06",
+    "name": "Volcano",
+    "file": "sm-06.png",
+    "source": "https://archives.bulbagarden.net/media/upload/d/dd/Box_Volcano_VII.png"
+  },
+  {
+    "id": "sm07",
+    "name": "Snow",
+    "file": "sm-07.png",
+    "source": "https://archives.bulbagarden.net/media/upload/2/22/Box_Snow_VII.png"
+  },
+  {
+    "id": "sm08",
+    "name": "Cave",
+    "file": "sm-08.png",
+    "source": "https://archives.bulbagarden.net/media/upload/d/dc/Box_Cave_VII.png"
+  },
+  {
+    "id": "sm09",
+    "name": "Beach",
+    "file": "sm-09.png",
+    "source": "https://archives.bulbagarden.net/media/upload/2/2c/Box_Beach_VII.png"
+  },
+  {
+    "id": "sm10",
+    "name": "Seafloor",
+    "file": "sm-10.png",
+    "source": "https://archives.bulbagarden.net/media/upload/d/dc/Box_Seafloor_VII.png"
+  },
+  {
+    "id": "sm11",
+    "name": "River",
+    "file": "sm-11.png",
+    "source": "https://archives.bulbagarden.net/media/upload/a/a1/Box_River_VII.png"
+  },
+  {
+    "id": "sm12",
+    "name": "Sky",
+    "file": "sm-12.png",
+    "source": "https://archives.bulbagarden.net/media/upload/d/de/Box_Sky_VII.png"
+  },
+  {
+    "id": "sm13",
+    "name": "Pok\u00e9mon Center",
+    "file": "sm-13.png",
+    "source": "https://archives.bulbagarden.net/media/upload/b/b2/Box_Pok%C3%A9mon_Center_VII.png"
+  },
+  {
+    "id": "sm14",
+    "name": "Machine",
+    "file": "sm-14.png",
+    "source": "https://archives.bulbagarden.net/media/upload/1/11/Box_Machine_VII.png"
+  },
+  {
+    "id": "sm15",
+    "name": "Checks",
+    "file": "sm-15.png",
+    "source": "https://archives.bulbagarden.net/media/upload/f/f3/Box_Checks_VII.png"
+  },
+  {
+    "id": "sm16",
+    "name": "Simple",
+    "file": "sm-16.png",
+    "source": "https://archives.bulbagarden.net/media/upload/2/2a/Box_Simple_VII.png"
+  }
+]

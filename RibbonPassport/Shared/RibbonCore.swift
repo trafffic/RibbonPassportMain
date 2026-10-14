@@ -144,12 +144,18 @@ struct CollectionSnapshot: Codable {
     var appearance: Appearance = .automatic
     var updatedAt: Date = Date()
     var storage: StorageLayout? = nil
+    var competitiveStorage: StorageLayout? = nil
+    var selectedRibbonID: String? = nil
+    var selectedCompetitiveID: String? = nil
+    var selectedRibbonTeamID: String? = nil
+    var selectedCompetitiveTeamID: String? = nil
     var widgetPresets: [WidgetPreset]? = nil
     var widgetDefaults: [String: String]? = nil
     func members(teamID: String? = nil) -> [RibbonPokemon] {
         let id = teamID ?? selectedTeamID
         guard let team = teams.first(where: { $0.id == id }) else { return Array(pokemon.prefix(6)) }
-        return team.memberIDs.compactMap { id in pokemon.first { $0.id == id } }
+        let kind = kind(of: team)
+        return team.memberIDs.compactMap { id in pokemon.first { $0.id == id } }.filter { ($0.showdownSet != nil) == (kind == .showdown) }
     }
     func kind(of team: RibbonTeam) -> TeamKind {
         let members = team.memberIDs.compactMap { id in pokemon.first { $0.id == id } }
@@ -159,7 +165,8 @@ struct CollectionSnapshot: Codable {
     func widgetTeam(for kind: TeamKind, id: String? = nil) -> RibbonTeam? {
         let eligible = teams(for: kind)
         if let id { return eligible.first { $0.id == id } }
-        return eligible.first { $0.id == selectedTeamID } ?? eligible.first
+        let selected = kind == .ribbon ? selectedRibbonTeamID : selectedCompetitiveTeamID
+        return eligible.first { $0.id == selected } ?? eligible.first { $0.id == selectedTeamID } ?? eligible.first
     }
     mutating func removePokemon(id: String) {
         pokemon.removeAll { $0.id == id }

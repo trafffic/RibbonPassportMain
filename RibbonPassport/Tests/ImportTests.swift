@@ -355,7 +355,7 @@ final class CollectionUpdateTests: XCTestCase {
         oldStyle.removeValue(forKey: "wallpaper")
         XCTAssertNil(try JSONDecoder().decode(WidgetStyle.self, from: JSONSerialization.data(withJSONObject: oldStyle)).wallpaper)
         var layout = StorageLayout(boxes: [decoded, PCBox(name: "Second")])
-        XCTAssertNotEqual(layout.wallpaper(for: layout.boxes[0]).design, layout.wallpaper(for: layout.boxes[1]).design)
+        XCTAssertNotEqual(layout.wallpaper(for: layout.boxes[0]).sunMoon, layout.wallpaper(for: layout.boxes[1]).sunMoon)
         layout.boxes[0].wallpaper = WallpaperSettings(design: .seaside, tint: "3679B3", strength: 0.8)
         layout.boxes[1].wallpaper = WallpaperSettings(design: .starfield)
         layout.reconcile(pokemonIDs: ["a", "b"])
@@ -368,7 +368,7 @@ final class CollectionUpdateTests: XCTestCase {
         let imported = RibbonPokemon(id: "import", species: "lugia", source: "ribbons.guide")
         var snapshot = CollectionSnapshot(pokemon: [imported])
         var layout = snapshot.organizedStorage
-        let chosen = PCBox(name: "Favourites"); layout.boxes.append(chosen); snapshot.storage = layout
+        let chosen = PCBox(name: "Favourites"); layout.boxes.append(chosen); snapshot.competitiveStorage = layout
         let entry = RibbonPokemon(species: "pikachu", nickname: " Sparky ", gender: "female", shiny: true, currentgame: "vio", origingame: "as", currentlevel: 50, title: "effort-ribbon", ribbons: ["effort-ribbon", "effort-ribbon"], showdownSet: ShowdownSet(item: "Light Ball", moves: ["Thunderbolt"]))
         try snapshot.addManualPokemon(entry, toBox: chosen.id)
         let added = try XCTUnwrap(snapshot.pokemon.last)
@@ -376,7 +376,7 @@ final class CollectionUpdateTests: XCTestCase {
         XCTAssertEqual(added.showdownSet, entry.showdownSet); XCTAssertEqual(added.gender, "female"); XCTAssertTrue(added.shiny)
         XCTAssertEqual(added.ribbons, ["effort-ribbon"]); XCTAssertEqual(added.title, "effort-ribbon")
         XCTAssertEqual(added.recordedVisits.map(\.game), ["as", "vio"])
-        XCTAssertEqual(snapshot.organizedStorage.boxes.first { $0.id == chosen.id }?.slots[0], entry.id)
+        XCTAssertEqual(snapshot.storage(for: .showdown).boxes.first { $0.id == chosen.id }?.slots[0], entry.id)
         XCTAssertEqual(snapshot.pokemon.first, imported)
         XCTAssertEqual(snapshot.selectedID, entry.id)
         let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
@@ -429,14 +429,18 @@ extension CollectionUpdateTests {
         p.origingame = "diamond"; p.currentgame = "scar"
         p.visits = [JourneyVisit(game: "pearl"), JourneyVisit(game: "platinum"), JourneyVisit(game: "vio"), JourneyVisit(game: "as")]
         store.snapshot = CollectionSnapshot(pokemon: [p], selectedID: p.id)
-        store.snapshot.storage = store.snapshot.organizedStorage
+        store.snapshot.pokemon.append(SharedStore.showdownPreview().pokemon[0])
+        store.snapshot.organizeSections()
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
         let previous = scene.windows.first { $0.isKeyWindow }
         let window = UIWindow(windowScene: scene)
         window.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
         defer { window.isHidden = true; previous?.makeKey() }
         let screens: [(String, AnyView)] = [
-            ("updated-pc-box", AnyView(PCStorageView().environmentObject(store))),
+            ("updated-pc-box", AnyView(RootView().environmentObject(store))),
+            ("competitive-section", AnyView(PCStorageView(kind: .showdown).environmentObject(store))),
+            ("game-search-list", AnyView(SearchableChoiceList(title: "Game", value: .constant("xd"), choices: RibbonCatalog.shared.gameChoices, emptyLabel: "Not set"))),
+            ("sunmoon-wallpaper-picker", AnyView(BoxWallpaperEditor(box: store.snapshot.storage(for: .ribbon).boxes[0], settings: WallpaperSettings(sunMoon: .forest)).environmentObject(store))),
             ("passport-multiple-games", AnyView(NavigationStack { StampAlbumView(pokemonID: p.id) }.environmentObject(store))),
             ("add-pokemon-form", AnyView(AddPokemonView(boxID: store.snapshot.organizedStorage.boxes[0].id).environmentObject(store))),
             ("theme-pack-studio", AnyView(NavigationStack { WidgetStudioView() }.environmentObject(store)))
@@ -448,6 +452,70 @@ extension CollectionUpdateTests {
             RunLoop.main.run(until: Date().addingTimeInterval(0.3))
             let image = UIGraphicsImageRenderer(size: window.bounds.size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
             let attachment = XCTAttachment(image: image); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+        }
+    }
+}
+
+final class NavigationAndSearchTests: XCTestCase {
+    func testSearchFindsAbbreviationsAndNamesWithoutChangingChronology() throws {
+        let choices = RibbonCatalog.shared.gameChoices
+        XCTAssertTrue(choices.filter { $0.matches("XD") }.contains { $0.id == "xd" })
+        XCTAssertTrue(choices.filter { $0.matches("gale of darkness") }.contains { $0.id == "xd" })
+        XCTAssertTrue(choices.filter { $0.matches(" oras ") }.contains { $0.id == "oras" })
+        XCTAssertTrue(choices.filter { $0.matches("hgss") }.contains { $0.id == "hgss" })
+        XCTAssertTrue(choices.filter { $0.matches("alpha sapphire") }.contains { $0.id == "as" })
+        XCTAssertTrue(choices.filter { $0.matches("not-a-real-game") }.isEmpty)
+        XCTAssertEqual(choices.filter { $0.matches("") }.map(\.id), RibbonCatalog.shared.chronologicalGames)
+        let ribbons = RibbonCatalog.shared.awardChoices(Array(RibbonCatalog.shared.ribbons.keys))
+        XCTAssertTrue(ribbons.filter { $0.matches("champion") }.contains { $0.id == "paldea-champion-ribbon" })
+        XCTAssertTrue(ribbons.filter { $0.matches("gen iii") }.contains { $0.id == "cool-ribbon-hoenn" })
+    }
+    func testLegacyMixedStorageSplitsWithoutLosingPositionsOrWallpapers() throws {
+        let ribbon = RibbonPokemon(id: "r", species: "lugia")
+        let battle = RibbonPokemon(id: "b", species: "pikachu", showdownSet: ShowdownSet(item: "Light Ball"))
+        var box = PCBox(name: "Old favourites", wallpaper: WallpaperSettings(sunMoon: .volcano))
+        box.slots[4] = ribbon.id; box.slots[17] = battle.id
+        var onlyBattle = PCBox(name: "Battle builds"); onlyBattle.slots[2] = "party-battle"
+        let partyRibbon = RibbonPokemon(id: "party-ribbon", species: "eevee")
+        let partyBattle = RibbonPokemon(id: "party-battle", species: "rayquaza", showdownSet: ShowdownSet())
+        let legacy = StorageLayout(boxes: [box, onlyBattle], partyIDs: [partyRibbon.id])
+        var snapshot = CollectionSnapshot(pokemon: [ribbon, battle, partyRibbon, partyBattle], storage: legacy)
+        snapshot.organizeSections()
+        let r = snapshot.storage(for: .ribbon), b = snapshot.storage(for: .showdown)
+        XCTAssertEqual(r.boxes.count, 1); XCTAssertEqual(b.boxes.count, 2)
+        XCTAssertEqual(r.boxes[0].slots[4], ribbon.id); XCTAssertNil(r.boxes[0].slots[17])
+        XCTAssertEqual(b.boxes[0].slots[17], battle.id); XCTAssertNil(b.boxes[0].slots[4])
+        XCTAssertEqual(r.wallpaper(for: r.boxes[0]).sunMoon, .volcano); XCTAssertEqual(b.wallpaper(for: b.boxes[0]).sunMoon, .volcano)
+        XCTAssertEqual(r.partyIDs, [partyRibbon.id]); XCTAssertTrue(b.partyIDs.isEmpty)
+        let beforeR = r, beforeB = b
+        snapshot.organizeSections()
+        XCTAssertEqual(snapshot.storage(for: .ribbon), beforeR); XCTAssertEqual(snapshot.storage(for: .showdown), beforeB)
+        let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
+        XCTAssertEqual(restored.pokemon, snapshot.pokemon); XCTAssertEqual(restored.storage, r); XCTAssertEqual(restored.competitiveStorage, b)
+        let all = [r, b].flatMap { $0.partyIDs + $0.boxes.flatMap { $0.slots.compactMap { $0 } } }
+        XCTAssertEqual(Set(all), Set(snapshot.pokemon.map(\.id))); XCTAssertEqual(all.count, 4)
+    }
+    func testSelectionsAndDefaultsStayWithinEachSection() {
+        let a = RibbonPokemon(id: "r", species: "lugia"), b = RibbonPokemon(id: "b", species: "pikachu", showdownSet: ShowdownSet())
+        let rt = RibbonTeam(id: "rt", name: "Ribbon team", memberIDs: [a.id]), bt = RibbonTeam(id: "bt", name: "Battle team", memberIDs: [b.id])
+        var snapshot = CollectionSnapshot(pokemon: [a, b], teams: [rt, bt], selectedID: b.id, selectedTeamID: bt.id)
+        snapshot.selectedRibbonID = a.id; snapshot.selectedCompetitiveID = b.id
+        snapshot.selectedRibbonTeamID = rt.id; snapshot.selectedCompetitiveTeamID = bt.id
+        XCTAssertEqual(snapshot.selectedPokemonID(for: .ribbon), a.id); XCTAssertEqual(snapshot.selectedPokemonID(for: .showdown), b.id)
+        XCTAssertEqual(snapshot.widgetTeam(for: .ribbon), rt); XCTAssertEqual(snapshot.widgetTeam(for: .showdown), bt)
+        XCTAssertEqual(snapshot.pokemon(for: .ribbon), [a]); XCTAssertEqual(snapshot.pokemon(for: .showdown), [b])
+        XCTAssertEqual(TeamKind.ribbon.widgetContents, [.pokemon, .ribbonTeam]); XCTAssertEqual(TeamKind.showdown.widgetContents, [.showdownTeam])
+        XCTAssertEqual(snapshot.section(forPokemon: b.id), .showdown)
+    }
+    @MainActor func testAllSixteenSunMoonWallpapersAreBundledAndRender() throws {
+        XCTAssertEqual(SunMoonWallpaper.allCases.count, 16)
+        for wallpaper in SunMoonWallpaper.allCases {
+            let image = try XCTUnwrap(BoxWallpaperView.image(for: wallpaper), wallpaper.name)
+            XCTAssertEqual(image.size, CGSize(width: 208, height: 192))
+            let renderer = ImageRenderer(content: BoxWallpaperView(settings: WallpaperSettings(sunMoon: wallpaper)).frame(width: 364, height: 290))
+            renderer.scale = 2
+            let rendered = try XCTUnwrap(renderer.uiImage)
+            let attachment = XCTAttachment(image: rendered); attachment.name = "sunmoon-\(wallpaper.rawValue)-\(wallpaper.name)"; attachment.lifetime = .keepAlways; add(attachment)
         }
     }
 }

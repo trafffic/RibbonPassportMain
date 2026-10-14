@@ -2,12 +2,12 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 extension AppStore {
-    func editStorage(_ change: (inout StorageLayout) -> Void) {
+    func editStorage(kind: TeamKind = .ribbon, _ change: (inout StorageLayout) -> Void) {
         var next = snapshot
-        var layout = next.organizedStorage
+        var layout = next.storage(for: kind)
         change(&layout)
-        layout.reconcile(pokemonIDs: next.pokemon.map(\.id))
-        next.storage = layout; commit(next)
+        layout.reconcile(pokemonIDs: next.pokemon(for: kind).map(\.id))
+        if kind == .ribbon { next.storage = layout } else { next.competitiveStorage = layout }; commit(next)
     }
     func savePreset(_ preset: WidgetPreset, makeDefault: Bool = false) {
         var next = snapshot
@@ -20,10 +20,10 @@ extension AppStore {
         }
         commit(next)
     }
-    func useThemePack(_ pack: WidgetThemePack) {
+    func useThemePack(_ pack: WidgetThemePack, section: TeamKind? = nil) {
         var next = snapshot
         if next.widgetDefaults == nil { next.widgetDefaults = [:] }
-        for content in WidgetContent.allCases { next.widgetDefaults?[content.rawValue] = pack.preset(for: content).id }
+        for content in section?.widgetContents ?? WidgetContent.allCases { next.widgetDefaults?[content.rawValue] = pack.preset(for: content).id }
         commit(next)
     }
     func addPokemon(_ pokemon: RibbonPokemon, toBox boxID: String?) -> Bool {
@@ -45,7 +45,12 @@ extension AppStore {
 struct PCStorageView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.colorScheme) private var scheme
-    @AppStorage("pc.partyVisible") private var partyVisible = false
+    var kind: TeamKind = .ribbon
+    @AppStorage private var partyVisible: Bool
+    init(kind: TeamKind = .ribbon) {
+        self.kind = kind
+        _partyVisible = AppStorage(wrappedValue: false, "pc.\(kind.key).partyVisible")
+    }
     @State private var boxIndex = 0
     @State private var adding = false
     @State private var editingWallpaper = false
@@ -55,35 +60,53 @@ struct PCStorageView: View {
     @State private var renaming = false
     @State private var boxName = ""
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
-    private var layout: StorageLayout { store.snapshot.organizedStorage }
+    private var layout: StorageLayout { store.snapshot.storage(for: kind) }
     private var box: PCBox { layout.boxes[min(boxIndex, layout.boxes.count - 1)] }
-    private var selection: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == store.snapshot.selectedID } }
-    private func pokemon(_ id: String?) -> RibbonPokemon? { store.snapshot.pokemon.first { $0.id == id } }
+    private var selection: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == store.snapshot.selectedPokemonID(for: kind) } }
+    private func pokemon(_ id: String?) -> RibbonPokemon? { store.snapshot.pokemon(for: kind).first { $0.id == id } }
+    private var pokemonRoute: Binding<String?> {
+        Binding(get: { store.snapshot.section(forPokemon: store.openPokemonID ?? "") == kind ? store.openPokemonID : nil }, set: { id in
+            if id != nil || store.snapshot.section(forPokemon: store.openPokemonID ?? "") == kind { store.openPokemonID = id }
+        })
+    }
+    private var teamRoute: Binding<String?> {
+        Binding(get: {
+            guard let team = store.snapshot.teams.first(where: { $0.id == store.openTeamID }) else { return nil }
+            return store.snapshot.kind(of: team) == kind ? team.id : nil
+        }, set: { id in
+            if id != nil || store.snapshot.teams.first(where: { $0.id == store.openTeamID }).map({ store.snapshot.kind(of: $0) == kind }) == true { store.openTeamID = id }
+        })
+    }
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
                     HStack {
-                        Text("RIBBON PASSPORT").font(PixelFont.font(29))
+                        Text(kind.title.uppercased()).font(PixelFont.font(29))
                         Spacer(minLength: 4)
                         Menu {
                             Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
-                            Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
-                            Button("Showdown team", systemImage: "doc.on.clipboard") { showdown = true }
-                            Button("Refresh demo", systemImage: "sparkles") { store.demo() }
+                            if kind == .ribbon {
+                                Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
+                                Button("Refresh demo", systemImage: "sparkles") { store.demo() }
+                            } else { Button("Import Showdown team", systemImage: "doc.on.clipboard") { showdown = true } }
                             Button("New box", systemImage: "plus.square") {
-                                store.editStorage { $0.boxes.append(PCBox(name: String(format: "Box %02d", $0.boxes.count + 1))) }
+                                store.editStorage(kind: kind) { $0.boxes.append(PCBox(name: String(format: "Box %02d", $0.boxes.count + 1))) }
                                 boxIndex = layout.boxes.count - 1
                             }
                         } label: { Image(systemName: "plus").frame(width: 44, height: 44) }.buttonStyle(RetroAction())
                     }
-                    if store.snapshot.pokemon.isEmpty { emptyCollection }
+                    HStack(spacing: 10) {
+                        NavigationLink { RetroTeamsView(kind: kind) } label: { Label("Teams", systemImage: "person.3") }.frame(maxWidth: .infinity)
+                        NavigationLink { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) } label: { Label("Widgets", systemImage: "rectangle.3.group") }.frame(maxWidth: .infinity)
+                    }.buttonStyle(RetroAction())
+                    if store.snapshot.pokemon(for: kind).isEmpty { emptyCollection }
                     VStack(spacing: 0) {
                         boxHeader
                         HStack(alignment: .top, spacing: 7) {
                             if partyVisible { partyBar }
                             boxGrid
-                        }.padding(7).background { PixelWallpaperView(settings: layout.wallpaper(for: box), dark: theme.dark, base: theme.board) }.overlay(Rectangle().stroke(theme.border, lineWidth: 2))
+                        }.padding(7).background { BoxWallpaperView(settings: layout.wallpaper(for: box)) }.overlay(Rectangle().stroke(theme.border, lineWidth: 2))
                     }
                     HStack {
                         Text("\(box.slots.compactMap { $0 }.count) / 30")
@@ -93,36 +116,39 @@ struct PCStorageView: View {
                         Text("Box \(min(boxIndex + 1, layout.boxes.count)) / \(layout.boxes.count)")
                     }.font(PixelFont.font(13)).foregroundStyle(theme.muted)
                     if let p = selection { selectionStrip(p) }
-                    HStack(spacing: 9) {
-                        Button(moving ? "Cancel move" : "Move") { moving.toggle() }
-                            .frame(maxWidth: .infinity).disabled(selection == nil)
-                        Button("Add to party") {
-                            guard let p = selection else { return }
-                            if layout.partyIDs.count >= 6 { store.error = "The party already has six Pokémon."; return }
-                            store.editStorage { _ = $0.moveToParty(p.id) }; partyVisible = true
-                        }.frame(maxWidth: .infinity).disabled(selection == nil || layout.partyIDs.contains(selection?.id ?? ""))
-                    }.buttonStyle(RetroAction())
+                    if selection != nil {
+                        HStack(spacing: 9) {
+                            Button(moving ? "Cancel move" : "Move") { moving.toggle() }
+                                .frame(maxWidth: .infinity).disabled(selection == nil)
+                            Button("Add to party") {
+                                guard let p = selection else { return }
+                                if layout.partyIDs.count >= 6 { store.error = "The party already has six Pokémon."; return }
+                                store.editStorage(kind: kind) { _ = $0.moveToParty(p.id) }; partyVisible = true
+                            }.frame(maxWidth: .infinity).disabled(selection == nil || layout.partyIDs.contains(selection?.id ?? ""))
+                        }.buttonStyle(RetroAction())
+                    }
                     if moving { Text("Select a destination slot").font(PixelFont.font(14)).foregroundStyle(theme.accent) }
                 }.padding(16)
             }.background(theme.paper).toolbar(.hidden, for: .navigationBar)
-                .navigationDestination(item: $store.openPokemonID) { id in
+                .navigationDestination(item: pokemonRoute) { id in
                     if let p = pokemon(id), p.showdownSet != nil { CompetitiveBuildView(pokemonID: id) }
                     else { StampAlbumView(pokemonID: id) }
                 }
+                .navigationDestination(item: teamRoute) { id in RetroTeamDetailView(teamID: id) }
                 .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
                     switch result { case .success(let url): store.importBackup(url); case .failure(let e): store.error = e.localizedDescription }
                 }
-                .sheet(isPresented: $adding) { AddPokemonView(boxID: box.id) { id in
+                .sheet(isPresented: $adding) { AddPokemonView(boxID: box.id, kind: kind) { id in
                     if let index = layout.boxes.firstIndex(where: { $0.slots.contains(id) }) { boxIndex = index }
                 } }
-                .sheet(isPresented: $editingWallpaper) { BoxWallpaperEditor(box: box, settings: layout.wallpaper(for: box)) }
+                .sheet(isPresented: $editingWallpaper) { BoxWallpaperEditor(box: box, settings: layout.wallpaper(for: box), kind: kind) }
                 .sheet(isPresented: $showdown) { RetroShowdownImportView() }
                 .alert("Box name", isPresented: $renaming) {
                     TextField("Name", text: $boxName)
                     Button("Save") {
                         let id = box.id, name = boxName.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !name.isEmpty else { return }
-                        store.editStorage { l in if let i = l.boxes.firstIndex(where: { $0.id == id }) { l.boxes[i].name = name } }
+                        store.editStorage(kind: kind) { l in if let i = l.boxes.firstIndex(where: { $0.id == id }) { l.boxes[i].name = name } }
                     }
                     Button("Cancel", role: .cancel) { }
                 }
@@ -132,9 +158,6 @@ struct PCStorageView: View {
         VStack(spacing: 10) {
             Text("No Pokémon").font(PixelFont.font(22))
             Button("Add Pokémon") { adding = true }
-            Button("Import backup") { importing = true }
-            Button("Showdown team") { showdown = true }
-            Button("Try demo") { store.demo() }
         }.buttonStyle(RetroAction()).frame(maxWidth: .infinity).retroPanel()
     }
     private var boxHeader: some View {
@@ -187,7 +210,7 @@ struct PCStorageView: View {
                 let p = i < layout.partyIDs.count ? pokemon(layout.partyIDs[i]) : nil
                 Button {
                     if let p { store.choose(p.id) }
-                    else if let id = selection?.id { store.editStorage { _ = $0.moveToParty(id) } }
+                    else if let id = selection?.id { store.editStorage(kind: kind) { _ = $0.moveToParty(id) } }
                 } label: {
                     Group {
                         if let p { PokemonSprite(pokemon: p, download: true) }
@@ -195,18 +218,18 @@ struct PCStorageView: View {
                     }.frame(width: 39, height: 43).background(theme.board)
                         .overlay(Rectangle().stroke(theme.border, style: StrokeStyle(lineWidth: 1, dash: [2])))
                 }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty party slot")
-                    .contextMenu { if let p { Button("Return to box") { store.editStorage { $0.returnToBox(p.id) } }; pokemonMenu(p) } }
+                    .contextMenu { if let p { Button("Return to box") { store.editStorage(kind: kind) { $0.returnToBox(p.id) } }; pokemonMenu(p) } }
                     .draggable(p?.id ?? "")
                     .dropDestination(for: String.self) { ids, _ in
                         guard let id = ids.first, pokemon(id) != nil, layout.partyIDs.count < 6 else { return false }
-                        store.editStorage { _ = $0.moveToParty(id) }; return true
+                        store.editStorage(kind: kind) { _ = $0.moveToParty(id) }; return true
                     }
             }
         }.padding(5).background(theme.panel).overlay(Rectangle().stroke(theme.border, lineWidth: 1))
     }
     @ViewBuilder private func pokemonMenu(_ p: RibbonPokemon) -> some View {
-        Button("Open passport") { store.openPokemonID = p.id }
-        Button("Add to party") { store.editStorage { _ = $0.moveToParty(p.id) }; partyVisible = true }
+        Button(kind == .ribbon ? "Open passport" : "Open build") { store.openPokemonID = p.id }
+        Button("Add to party") { store.editStorage(kind: kind) { _ = $0.moveToParty(p.id) }; partyVisible = true }
             .disabled(layout.partyIDs.count >= 6 || layout.partyIDs.contains(p.id))
         Button("Delete", role: .destructive) { store.deletePokemon(p.id) }
     }
@@ -221,12 +244,12 @@ struct PCStorageView: View {
                         .font(PixelFont.font(12)).lineLimit(1).minimumScaleFactor(0.75).foregroundStyle(theme.muted)
                 }
             }
-            Button("Passport ▸") { store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
+            Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
         }.retroPanel(padding: 9)
     }
     private func move(_ id: String, slot: Int) {
         let boxID = box.id
-        store.editStorage { _ = $0.move(id, toBox: boxID, slot: slot) }; moving = false
+        store.editStorage(kind: kind) { _ = $0.move(id, toBox: boxID, slot: slot) }; moving = false
     }
 }
 
@@ -342,11 +365,7 @@ struct AwardLocationEditor: View {
         NavigationStack {
             Form {
                 if let p {
-                    Picker("Ribbon", selection: $award) {
-                        ForEach(RibbonCatalog.shared.chronologicalAwards(p.ribbons), id: \.self) { id in
-                            Text(RibbonCatalog.shared.awardPickerName(id)).tag(id)
-                        }
-                    }.onChange(of: award) { _, id in generation = p.earnedGenerations?[id] ?? 0 }
+                    SearchableChoicePicker(title: "Ribbon", value: $award, choices: RibbonCatalog.shared.awardChoices(p.ribbons)).onChange(of: award) { _, id in generation = p.earnedGenerations?[id] ?? 0 }
                     if !award.isEmpty { AssetImage(key: "award-" + award).frame(height: 64).frame(maxWidth: .infinity) }
                     Picker("Earned in", selection: $generation) {
                         Text("Not specified").tag(0)

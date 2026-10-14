@@ -19,7 +19,9 @@ struct WidgetStudioView: View {
     @State private var loadedDefault = false
     @State private var selectedPack: WidgetThemePack?
     @State private var deleting: WidgetPreset?
-    init(initialContent: WidgetContent = .pokemon, initialSelection: String = "") {
+    var section: TeamKind
+    init(initialContent: WidgetContent = .pokemon, initialSelection: String = "", section: TeamKind? = nil) {
+        self.section = section ?? (initialContent == .showdownTeam ? .showdown : .ribbon)
         _draft = State(initialValue: WidgetPreset(name: initialContent.name, content: initialContent, selectionID: initialSelection, style: WidgetThemePack.defaultPack(for: initialContent).style))
     }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
@@ -30,9 +32,9 @@ struct WidgetStudioView: View {
     private var eligibleTeams: [RibbonTeam] { store.snapshot.teams(for: draft.content == .showdownTeam ? .showdown : .ribbon) }
     private var previewPokemon: [RibbonPokemon] {
         if draft.content == .pokemon {
-            if !draft.selectionID.isEmpty { return store.snapshot.pokemon.filter { $0.id == draft.selectionID } }
-            if store.snapshot.pokemon.isEmpty { return Array(SharedStore.demo().pokemon.prefix(1)) }
-            return [store.snapshot.pokemon.first { $0.id == store.snapshot.selectedID } ?? store.snapshot.pokemon[0]]
+            if !draft.selectionID.isEmpty { return store.snapshot.pokemon(for: .ribbon).filter { $0.id == draft.selectionID } }
+            if store.snapshot.pokemon(for: .ribbon).isEmpty { return Array(SharedStore.demo().pokemon.prefix(1)) }
+            return [store.snapshot.pokemon(for: .ribbon).first { $0.id == store.snapshot.selectedPokemonID(for: .ribbon) } ?? store.snapshot.pokemon(for: .ribbon)[0]]
         }
         if let team = store.snapshot.widgetTeam(for: draft.content == .showdownTeam ? .showdown : .ribbon, id: draft.selectionID.isEmpty ? nil : draft.selectionID) {
             return store.snapshot.members(teamID: team.id)
@@ -44,7 +46,7 @@ struct WidgetStudioView: View {
         if let t = eligibleTeams.first(where: { $0.id == draft.selectionID }) { return t.name }
         return store.snapshot.widgetTeam(for: draft.content == .showdownTeam ? .showdown : .ribbon)?.name ?? draft.content.name
     }
-    private var isDemo: Bool { draft.selectionID.isEmpty && (draft.content == .pokemon ? store.snapshot.pokemon.isEmpty : eligibleTeams.isEmpty) }
+    private var isDemo: Bool { draft.selectionID.isEmpty && (draft.content == .pokemon ? store.snapshot.pokemon(for: .ribbon).isEmpty : eligibleTeams.isEmpty) }
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -52,7 +54,7 @@ struct WidgetStudioView: View {
                 Picker("Widget", selection: Binding(get: { draft.content }, set: { content in
                     draft = WidgetPreset(name: content.name, content: content, style: draft.style); savedMessage = ""
                     if content != .pokemon && size == .small { size = .medium }
-                })) { ForEach(WidgetContent.allCases) { Text($0.name).tag($0) } }
+                })) { ForEach(section.widgetContents) { Text($0.name).tag($0) } }
                 themePacks
                 Picker("Size", selection: $size) {
                     ForEach(WidgetPreviewSize.allCases.filter { draft.content == .pokemon || $0 != .small }) { Text($0.name).tag($0) }
@@ -91,7 +93,7 @@ struct WidgetStudioView: View {
                 Button("Add to Home Screen") { if save(false) { showInstall = true } }
                     .buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("widgets.addToHomeScreen")
                 if !savedMessage.isEmpty { Text(savedMessage).font(PixelFont.font(14)).foregroundStyle(theme.accent).accessibilityAddTraits(.updatesFrequently) }
-                if !(store.snapshot.widgetPresets ?? []).isEmpty { savedDesigns }
+                if !sectionPresets.isEmpty { savedDesigns }
                 Button("New design") {
                     draft = WidgetPreset(name: draft.content.name, content: draft.content, style: WidgetThemePack.defaultPack(for: draft.content).style); selectedPack = nil; savedMessage = ""
                 }.buttonStyle(RetroAction())
@@ -140,9 +142,9 @@ struct WidgetStudioView: View {
                 }.padding(3)
             }
             if let selectedPack {
-                Button("Set \(selectedPack.name) as default pack") {
-                    store.useThemePack(selectedPack)
-                    if store.error == nil { savedMessage = "\(selectedPack.name) set for all widget types" }
+                Button("Set \(selectedPack.name) as section default") {
+                    store.useThemePack(selectedPack, section: section)
+                    if store.error == nil { savedMessage = "\(selectedPack.name) set for \(section.title.lowercased())" }
                 }.buttonStyle(RetroAction()).font(PixelFont.font(15))
             }
         }
@@ -159,19 +161,14 @@ struct WidgetStudioView: View {
     }
     @ViewBuilder private var selectionPicker: some View {
         if draft.content == .pokemon {
-            Picker("Pokémon", selection: $draft.selectionID) {
-                Text("App selection").tag("")
-                ForEach(RibbonCatalog.shared.dexOrdered(store.snapshot.pokemon)) { Text($0.displayName).tag($0.id) }
-                if !draft.selectionID.isEmpty && !store.snapshot.pokemon.contains(where: { $0.id == draft.selectionID }) { Text("Selection removed").tag(draft.selectionID) }
-            }
+            SearchableChoicePicker(title: "Pokémon", value: $draft.selectionID,
+                choices: RibbonCatalog.shared.dexOrdered(store.snapshot.pokemon(for: .ribbon)).map { SearchChoice(id: $0.id, name: $0.displayName, aliases: [$0.species]) }, emptyLabel: "App selection")
         } else {
-            Picker("Team", selection: $draft.selectionID) {
-                Text("App selection").tag("")
-                ForEach(eligibleTeams) { Text($0.name).tag($0.id) }
-                if !draft.selectionID.isEmpty && !eligibleTeams.contains(where: { $0.id == draft.selectionID }) { Text("Selection removed").tag(draft.selectionID) }
-            }
+            SearchableChoicePicker(title: "Team", value: $draft.selectionID,
+                choices: eligibleTeams.map { SearchChoice(id: $0.id, name: $0.name) }, emptyLabel: "App selection")
         }
     }
+
     private var detailToggles: some View {
         VStack(spacing: 10) {
             Toggle("Shiny icon", isOn: $draft.style.showShiny)
@@ -191,10 +188,11 @@ struct WidgetStudioView: View {
             }
         }
     }
+    private var sectionPresets: [WidgetPreset] { (store.snapshot.widgetPresets ?? []).filter { section.widgetContents.contains($0.content) } }
     private var savedDesigns: some View {
         VStack(spacing: 10) {
-            RetroHeading(title: "Saved designs", value: "\(store.snapshot.widgetPresets?.count ?? 0)")
-            ForEach(store.snapshot.widgetPresets ?? []) { preset in
+            RetroHeading(title: "Saved designs", value: "\(sectionPresets.count)")
+            ForEach(sectionPresets) { preset in
                 HStack {
                     Button {
                         // Changing the content picker normally starts a new design; restore the whole preset after that update.

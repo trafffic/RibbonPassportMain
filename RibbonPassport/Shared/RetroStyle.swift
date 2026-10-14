@@ -111,3 +111,26 @@ struct PixelWallpaperView: View {
         }.clipped().allowsHitTesting(false).accessibilityHidden(true)
     }
 }
+
+private enum SunMoonArtwork {
+    static let images: [SunMoonWallpaper: UIImage] = Dictionary(uniqueKeysWithValues: SunMoonWallpaper.allCases.compactMap { wallpaper in
+        guard let url = Bundle.main.url(forResource: wallpaper.filename, withExtension: "png", subdirectory: "RibbonAssets/Wallpapers"),
+              let image = UIImage(contentsOfFile: url.path) else { return nil }
+        return (wallpaper, image)
+    })
+}
+struct BoxWallpaperView: View {
+    var settings: WallpaperSettings
+    static func image(for wallpaper: SunMoonWallpaper) -> UIImage? { SunMoonArtwork.images[wallpaper] }
+    var body: some View {
+        GeometryReader { geometry in
+            if let artwork = Self.image(for: settings.sunMoon ?? .forest) {
+                // Show the wallpaper's grid area; the app supplies its own box heading and border.
+                Image(uiImage: artwork).resizable().interpolation(.none)
+                    .frame(width: geometry.size.width * 208 / 196, height: geometry.size.height * 192 / 152)
+                    .offset(x: -geometry.size.width * 6 / 196, y: -geometry.size.height * 36 / 152)
+                if let tint = settings.tint { Color(hex: tint).opacity(min(1, max(0, settings.strength)) * 0.5) }
+            }
+        }.clipped().allowsHitTesting(false).accessibilityHidden(true)
+    }
+}
