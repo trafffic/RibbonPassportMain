@@ -1,5 +1,13 @@
 # UI update
 
+## Local recovery history
+
+Open **Settings → Recovery history** to browse **All**, **Deleted** or **Versions**. Choose a Pokémon or team, choose a saved version, and review its details and the changes before restoring. Edits, deletions and replaced imports are captured automatically when the collection saves. History starts with changes saved after this update; earlier deleted items cannot be recovered retroactively.
+
+Recovery preserves the Pokémon's ID, ribbons/marks, earning locations, journey, equipped title and competitive build. Deleted Pokémon return to their original box/party position and teams where space is available; an occupied slot or full party is preserved and the Pokémon goes into available box storage. Missing original boxes can be recreated. Restoring earlier details of an existing Pokémon keeps its current position. Teams restore available compatible members in their saved order; missing Pokémon can be recovered separately first.
+
+Restoring a version also saves the details it replaces, so another restore can reverse it. History and the changed collection are written together atomically; failed saves leave the live collection unchanged. Selection, PC moves, wallpaper and widget changes do not create Pokémon/team versions. History is kept on the device with up to 20 versions per Pokémon/team and 500 versions total; oldest entries are removed when those limits are reached. Online backup is excluded.
+
 ## Ribbon manager
 
 The transfer bar above **Owned ribbons** uses a large **!** beside **Not safe to leave Gen …**, and changes to a green check when the last required ribbon is recorded. **Review** opens the Transfer check drawer. It checks all compatible games in the selected generation, independently of the grid's filters or page. **Earn before leaving** has four ribbons per page; **Can wait** lists compatible later generations. Add directly in the selected game or choose a specific earning game from that generation. Undo updates the warning immediately; Save commits the manager's draft. A different selected generation is labelled **Planning view**.

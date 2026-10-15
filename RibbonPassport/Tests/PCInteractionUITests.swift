@@ -78,3 +78,57 @@ final class RibbonTransferUITests: XCTestCase {
         XCTAssertTrue(app.buttons["ribbons.transfer.add.legend-ribbon"].exists)
     }
 }
+
+final class RecoveryHistoryUITests: XCTestCase {
+    private var app: XCUIApplication!
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "recovery"; app.launch()
+        app.tabBars.buttons["Settings"].tap()
+        let history = app.buttons["recovery.open"]
+        XCTAssertTrue(history.waitForExistence(timeout: 5)); history.tap()
+    }
+    override func tearDownWithError() throws { app.terminate(); app = nil }
+    private func preview(_ id: String) {
+        let item = app.buttons["recovery.item.pokemon.\(id)"]
+        XCTAssertTrue(item.waitForExistence(timeout: 5)); item.tap()
+        let version = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "recovery.version.")).firstMatch
+        XCTAssertTrue(version.waitForExistence(timeout: 5)); version.tap()
+    }
+    private func restore() {
+        let button = app.buttons["recovery.restore"]
+        for _ in 0..<8 {
+            if button.exists && button.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(button.isHittable); button.tap()
+        XCTAssertTrue(app.staticTexts["recovery.restored"].waitForExistence(timeout: 5))
+    }
+    func testRecoverDeletedPokemonReturnsToPCBox() {
+        preview("drag-b"); restore()
+        app.tabBars.buttons["Ribbons"].tap()
+        let slot = app.buttons["pc.box.slot.1"]
+        XCTAssertTrue(slot.waitForExistence(timeout: 5)); XCTAssertEqual(slot.value as? String, "drag-b")
+    }
+    func testFiltersSeparateDeletedItemsAndSavedVersions() {
+        app.buttons["Deleted"].tap()
+        XCTAssertTrue(app.buttons["recovery.item.pokemon.drag-b"].exists)
+        XCTAssertFalse(app.buttons["recovery.item.pokemon.drag-a"].exists)
+        app.buttons["Versions"].tap()
+        XCTAssertTrue(app.buttons["recovery.item.pokemon.drag-a"].exists)
+        XCTAssertFalse(app.buttons["recovery.item.pokemon.drag-b"].exists)
+        app.buttons["All"].tap()
+        XCTAssertTrue(app.buttons["recovery.item.pokemon.drag-a"].exists)
+        XCTAssertTrue(app.buttons["recovery.item.pokemon.drag-b"].exists)
+        let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = "recovery-from-settings"; attachment.lifetime = .keepAlways; add(attachment)
+    }
+    func testRestoreEarlierDetailsKeepsReplacedVersion() {
+        preview("drag-a"); restore()
+        app.navigationBars.buttons["Saved versions"].tap()
+        XCTAssertTrue(app.staticTexts["Before restore"].waitForExistence(timeout: 5))
+        let version = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "recovery.version.")).firstMatch
+        version.tap()
+        XCTAssertTrue(app.staticTexts["Edited Metagross"].waitForExistence(timeout: 5))
+        restore()
+    }
+}

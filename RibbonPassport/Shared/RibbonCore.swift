@@ -156,6 +156,7 @@ struct CollectionSnapshot: Codable {
     var selectedCompetitiveTeamID: String? = nil
     var widgetPresets: [WidgetPreset]? = nil
     var widgetDefaults: [String: String]? = nil
+    var recoveryHistory: [RecoveryEntry]? = nil
     func members(teamID: String? = nil) -> [RibbonPokemon] {
         let id = teamID ?? selectedTeamID
         guard let team = teams.first(where: { $0.id == id }) else { return Array(pokemon.prefix(6)) }

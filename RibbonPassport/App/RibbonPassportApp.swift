@@ -10,15 +10,20 @@ final class AppStore: ObservableObject {
     @Published var tab = 0
     @Published var openPokemonID: String?
     @Published var openTeamID: String?
+    private let saveSnapshot: (CollectionSnapshot) throws -> Void
+    private let refreshWidgets: Bool
     static var interactionTesting: Bool {
         #if DEBUG
-        return ["1", "transfer"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
+        return ["1", "transfer", "recovery"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
         #else
         return false
         #endif
     }
     var preferences: UserDefaults { Self.interactionTesting ? UserDefaults(suiteName: "RibbonPassport.InteractionTests")! : .standard }
-    init() {
+    init(snapshot initial: CollectionSnapshot? = nil, save: @escaping (CollectionSnapshot) throws -> Void = SharedStore.save) {
+        saveSnapshot = save
+        refreshWidgets = initial == nil
+        if var initial { initial.organizeSections(); snapshot = initial; return }
         #if DEBUG
         if Self.interactionTesting {
             preferences.removePersistentDomain(forName: "RibbonPassport.InteractionTests")
@@ -36,6 +41,15 @@ final class AppStore: ObservableObject {
             var first = PCBox(id: "drag-box-a", name: "Box 01"); first.slots[0] = a.id; first.slots[1] = b.id
             snapshot = CollectionSnapshot(pokemon: [a, b, c], selectedID: a.id, storage: StorageLayout(boxes: [first, PCBox(id: "drag-box-b", name: "Box 02")], partyIDs: [c.id]), selectedRibbonID: a.id)
             snapshot.organizeSections()
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "recovery" {
+                var edited = snapshot
+                edited.pokemon[0].nickname = "Edited Metagross"
+                edited.captureRecovery(from: snapshot)
+                var deleted = edited
+                deleted.removePokemon(id: b.id); deleted.organizeSections()
+                deleted.captureRecovery(from: edited)
+                snapshot = deleted
+            }
             return
         }
         #endif
@@ -45,13 +59,14 @@ final class AppStore: ObservableObject {
         do { var loaded = try SharedStore.load(); loaded.organizeSections(); snapshot = loaded; error = nil }
         catch { self.error = error.localizedDescription }
     }
-    func commit(_ value: CollectionSnapshot) {
+    func commit(_ value: CollectionSnapshot, recoveryAction: RecoveryAction = .edited) {
         do {
             var next = value; next.updatedAt = Date()
             next.organizeSections()
+            next.captureRecovery(from: snapshot, action: recoveryAction)
             if Self.interactionTesting { snapshot = next; error = nil; return }
-            try SharedStore.save(next); snapshot = next; error = nil
-            WidgetCenter.shared.reloadAllTimelines()
+            try saveSnapshot(next); snapshot = next; error = nil
+            if refreshWidgets { WidgetCenter.shared.reloadAllTimelines() }
         } catch { self.error = error.localizedDescription }
     }
     func choose(_ id: String) {
@@ -67,6 +82,14 @@ final class AppStore: ObservableObject {
     }
     func deletePokemon(_ id: String) {
         var next = snapshot; next.removePokemon(id: id); commit(next)
+    }
+    @discardableResult func restoreHistory(_ id: String) -> Bool {
+        do {
+            var next = snapshot
+            try next.restoreRecoveryEntry(id)
+            commit(next, recoveryAction: .restored)
+            return error == nil
+        } catch { self.error = error.localizedDescription; return false }
     }
     func update(_ pokemon: RibbonPokemon) {
         var next = snapshot
@@ -99,7 +122,7 @@ final class AppStore: ObservableObject {
             if !next.pokemon.contains(where: { $0.id == next.selectedID }) { next.selectedID = next.pokemon.first?.id ?? "" }
             let valid = Set(next.pokemon.map(\.id))
             for index in next.teams.indices { next.teams[index].memberIDs.removeAll { !valid.contains($0) } }
-            commit(next)
+            commit(next, recoveryAction: .imported)
             if error == nil { notice = "Imported \(incoming.count) Pokémon. Your Showdown teams have been kept." }
         } catch { self.error = error.localizedDescription }
     }
@@ -442,6 +465,8 @@ struct SettingsView: View {
                     Button("Refresh widgets") { WidgetCenter.shared.reloadAllTimelines() }
                 }
                 Section("Collection") {
+                    NavigationLink { RecoveryHistoryView() } label: { Text("Recovery history").font(PixelFont.font(17)) }
+                        .accessibilityIdentifier("recovery.open")
                     Button("Reload saved collection") { store.reload() }
                     Text("Your collection stays on this device. Reimport your ribbons.guide backup after changes. Showdown teams are preserved when backups are reimported.").font(.caption).foregroundStyle(.secondary)
                 }

@@ -1,5 +1,13 @@
 # Current UI update validation
 
+## Local recovery history
+
+The recovery update passed **21 focused unit/render checks** (13 recovery cases and eight existing collection/storage/export regressions), **three simulator interaction tests**, and an unsigned **Release iPhone app/widget build**. The final runs completed with **TEST SUCCEEDED** and the device build with **BUILD SUCCEEDED**. Native screen renders were inspected at 320- and 390-point widths in light/dark. The simulator screenshot from Settings also confirms the recovery navigation and filter layout.
+
+Coverage includes full record preservation, deleted Pokémon/teams, stable identities, no-op selections/storage moves, occupied-slot and full-party fallbacks, recreated boxes/teams, missing team members, competitive/ribbon separation, reversible version restores, history limits, import replacements, legacy collection decoding, JSON persistence and failure-before-save handling. The store tests inject snapshots and a save closure; UI tests use the isolated in-memory Debug fixture and separate defaults suite. They do not modify the user's collection. Simulator taps exercise Deleted/Versions/All filters, recovery back into the original PC slot, and restoring/reversing earlier details.
+
+On device, use **Settings → Recovery history** after a saved edit or deletion. Confirm the saved preview and changes, restore, then close/reopen the app. Verify that the latest details replaced by a restore remain available as **Before restore**. History begins with saves after this update and is limited to 20 versions per Pokémon/team and 500 total, with the oldest removed at the limits. Online backup is excluded; signing details are unchanged.
+
 ## Transfer checklist
 
 The transfer update passed **15 focused unit/render tests** and **1 simulator interaction test**. A final focused run rechecked the Footprint boundary and the complete drawer interaction with **TEST SUCCEEDED**. The tests use the isolated in-memory Debug fixture, without reading or writing the user's collection. Native renders cover the warning/safe drawer states at 320- and 390-point widths in light/dark, alongside the manager's 12/16/32 layouts.
