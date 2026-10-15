@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct AddPokemonView: View {
     var boxID: String
@@ -35,6 +36,13 @@ struct AddPokemonView: View {
                 Section("Journey") {
                     GamePicker(title: "Origin game", value: $pokemon.origingame)
                     GamePicker(title: "Current game", value: $pokemon.currentgame)
+                }
+                Section {
+                    DisclosureGroup("Capture details") {
+                        SearchableChoicePicker(title: "Ball", value: Binding(get: { pokemon.ball ?? "" }, set: { pokemon.ball = $0.isEmpty ? nil : $0 }), choices: RibbonsGuideExporter.balls, emptyLabel: "Not specified")
+                        SearchableChoicePicker(title: "Language", value: Binding(get: { pokemon.language ?? "" }, set: { pokemon.language = $0.isEmpty ? nil : $0 }), choices: RibbonsGuideExporter.languages, emptyLabel: "Not specified")
+                        TextField("Original trainer", text: Binding(get: { pokemon.trainername ?? "" }, set: { pokemon.trainername = $0 }))
+                    }
                 }
                 if kind == .ribbon {
                     Section("Ribbons & marks") {
@@ -242,5 +250,117 @@ struct SearchableChoiceList: View {
                 if value == id { Image(systemName: "checkmark").accessibilityLabel("Selected") }
             }.frame(minHeight: 34).contentShape(Rectangle())
         }
+    }
+}
+
+enum PokemonExportTarget: String, CaseIterable, Identifiable {
+    case showdown, ribbonsGuide
+    var id: String { rawValue }
+    var name: String { self == .showdown ? "Showdown" : "ribbons.guide" }
+    var contentType: UTType { self == .showdown ? .plainText : .json }
+    var filename: String { self == .showdown ? "ShowdownTeam" : "RibbonBackup" }
+}
+struct PokemonExportSelection: Identifiable {
+    var id = UUID()
+    var pokemon: [RibbonPokemon]
+    var target: PokemonExportTarget
+}
+struct PokemonExportDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json, .plainText] }
+    var data: Data
+    init(data: Data) { self.data = data }
+    init(configuration: ReadConfiguration) throws { data = configuration.file.regularFileContents ?? Data() }
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper { FileWrapper(regularFileWithContents: data) }
+}
+struct PokemonExportView: View {
+    var selection: PokemonExportSelection
+    @Environment(\.dismiss) private var dismiss
+    @State private var target: PokemonExportTarget
+    @State private var data = Data()
+    @State private var failure = ""
+    @State private var saving = false
+    @State private var importingBackup = false
+    @State private var baseBackup: Data?
+    @State private var fallbackBall = ""
+    @State private var fallbackLanguage = ""
+    @State private var fallbackTrainer = ""
+    @State private var message = ""
+    init(selection: PokemonExportSelection) {
+        self.selection = selection; _target = State(initialValue: selection.target)
+    }
+    private var text: String { String(data: data, encoding: .utf8) ?? "" }
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    Text("\(selection.pokemon.count) Pokémon").font(PixelFont.font(23))
+                    Picker("Export to", selection: $target) { ForEach(PokemonExportTarget.allCases) { Text($0.name).tag($0) } }.pickerStyle(.segmented)
+                }
+                if target == .ribbonsGuide {
+                    Section("ribbons.guide backup") {
+                        Text("Species, nickname, gender, shiny status, level, games, ribbons, title, Gigantamax and Shadow status.").font(PixelFont.font(15))
+                        if selection.pokemon.contains(where: RibbonsGuideExporter.needsBall) {
+                            SearchableChoicePicker(title: "Ball for missing entries", value: $fallbackBall, choices: RibbonsGuideExporter.balls)
+                        }
+                        if selection.pokemon.contains(where: RibbonsGuideExporter.needsLanguage) {
+                            SearchableChoicePicker(title: "Language for missing entries", value: $fallbackLanguage, choices: RibbonsGuideExporter.languages)
+                        }
+                        if selection.pokemon.contains(where: { $0.title == "partner-ribbon" && ($0.trainername ?? "").isEmpty }) {
+                            TextField("Original trainer name", text: $fallbackTrainer)
+                        }
+                        if selection.pokemon.contains(where: { RibbonsGuideExporter.speciesID(for: $0) != $0.species }) {
+                            Text("Unsupported forms use ribbons.guide’s matching species.").font(PixelFont.font(14)).foregroundStyle(.secondary)
+                        }
+                        Button(baseBackup == nil ? "Append to an existing website backup…" : "Change existing backup…") { importingBackup = true }
+                        if baseBackup != nil {
+                            Text("Existing website records and settings are kept. Exported Pokémon are appended.").font(PixelFont.font(14)).foregroundStyle(.secondary)
+                            Button("Export without existing backup") { baseBackup = nil; prepare() }
+                        }
+                        Text("On ribbons.guide, open Settings → Data → Restore Backup. Restoring replaces the website’s collection with this file.").font(PixelFont.font(14)).foregroundStyle(.secondary)
+                    }
+                } else {
+                    Section("Showdown import text") {
+                        Text("In Showdown’s Teambuilder, open Import/Export and paste this text.").font(PixelFont.font(15))
+                        Button("Copy Showdown text") { UIPasteboard.general.string = text; message = "Copied" }.disabled(!failure.isEmpty || data.isEmpty)
+                    }
+                }
+                if !failure.isEmpty { Section { Text(failure).foregroundStyle(.red) } }
+                Section {
+                    Button("Save \(target == .showdown ? "text" : "JSON") file") { saving = true }.disabled(!failure.isEmpty || data.isEmpty)
+                    if target == .showdown && failure.isEmpty && !data.isEmpty { ShareLink("Share Showdown text", item: text) }
+                    if !message.isEmpty { Text(message).font(PixelFont.font(14)).foregroundStyle(.secondary) }
+                }
+                if failure.isEmpty && !data.isEmpty {
+                    Section {
+                        DisclosureGroup("Preview") {
+                            Text(text).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
+                        }
+                    }
+                }
+            }.font(PixelFont.font(17)).navigationTitle("Export Pokémon").navigationBarTitleDisplayMode(.inline)
+                .toolbar { Button("Done") { dismiss() } }
+                .onAppear { prepare() }
+                .onChange(of: target) { _, _ in prepare() }
+                .onChange(of: fallbackBall) { _, _ in prepare() }
+                .onChange(of: fallbackLanguage) { _, _ in prepare() }
+                .onChange(of: fallbackTrainer) { _, _ in prepare() }
+                .fileExporter(isPresented: $saving, document: PokemonExportDocument(data: data), contentType: target.contentType, defaultFilename: target.filename) { result in
+                    switch result { case .success: message = "File saved"; case .failure(let error): failure = error.localizedDescription }
+                }
+                .fileImporter(isPresented: $importingBackup, allowedContentTypes: [.json]) { result in
+                    do {
+                        let url = try result.get(), granted = url.startAccessingSecurityScopedResource()
+                        defer { if granted { url.stopAccessingSecurityScopedResource() } }
+                        let candidate = try Data(contentsOf: url)
+                        baseBackup = candidate; prepare()
+                    } catch { failure = error.localizedDescription }
+                }
+        }
+    }
+    private func prepare() {
+        do {
+            data = target == .showdown ? Data(try ShowdownExporter.validatedExport(selection.pokemon).utf8) : try RibbonsGuideExporter.export(selection.pokemon, merging: baseBackup, fallbackBall: fallbackBall, fallbackLanguage: fallbackLanguage, fallbackTrainer: fallbackTrainer)
+            failure = ""; message = ""
+        } catch { data = Data(); failure = error.localizedDescription }
     }
 }

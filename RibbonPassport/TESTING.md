@@ -1,20 +1,23 @@
 # Current UI update validation
 
-The app and widget extension build with Xcode 27.0 for the iOS 27.0 simulator. All 34 native tests pass. The native suite covers existing imports and demo refresh, old-format collection decoding, PC box reconciliation/swaps, the six-member party limit, ribbon locations, named widget designs, font loading and Showdown export/import. Widget render attachments cover all seven layouts in light/dark, narrow layouts at 115% text size, all five theme packs across seven layouts, the six widget backgrounds, all 16 Sun/Moon PC wallpapers, and the PC, passport, add-Pokémon and Widget Studio screens. New regressions cover same-generation origin/current visits, complete chronological catalogue coverage, zero-number alternate forms, built-in themes with preserved custom defaults, older box/style decoding, independent wallpapers, manual entries and storage overflow. Additional regressions cover game abbreviations, chronological search results, splitting legacy mixed boxes without losing records, independent selections/default teams, and all 16 original wallpaper assets.
+The app and widget extension build with Xcode 27.0 for the iOS 27.0 simulator. All 42 native tests pass. The native suite covers existing imports and demo refresh, old-format collection decoding, PC box reconciliation/swaps, the six-member party limit, ribbon locations, named widget designs, font loading and Showdown export/import. Widget render attachments cover all seven layouts in light/dark, narrow layouts at 115% text size, all five theme packs across seven layouts, the six widget backgrounds, all 16 Sun/Moon PC wallpapers, and the PC, passport, add-Pokémon and Widget Studio screens. New regressions cover same-generation origin/current visits, complete chronological catalogue coverage, zero-number alternate forms, built-in themes with preserved custom defaults, older box/style decoding, independent wallpapers, manual entries and storage overflow. Additional regressions cover game abbreviations, chronological search results, splitting legacy mixed boxes without losing records, independent selections/default teams, and all 16 original wallpaper assets. Further checks cover the actual wallpaper tile boundaries, cross-box swaps and section boundaries, visited-game stamps, manual Pokémon exported to Showdown, EV/IV validation, version 5 ribbons.guide round trips, required capture fields, supported-form mapping, omitted app metadata and preservation of an appended website backup.
 
 Run **Command + U** in the RibbonPassport scheme with an iPhone simulator selected. Signing settings in the project are preserved. The bundled pixel font is available in both targets without a network connection.
 
-The generated widget images and in-app screen renders were visually checked. Live Simulator interaction is not covered; macOS previously declined screen-capture access. Check these flows on an iPhone:
+The generated widget images and in-app screen renders were visually checked, including all 30 occupied PC slots, the party sidebar, individual game stamps and both export screens. A generated JSON fixture was also accepted by the upstream ribbons.guide `loadBackupFile` and `applyLocalBackup` functions in an isolated JavaScript test; no website or account data was modified. Live Simulator interaction is not covered; macOS previously declined screen-capture access. Check these flows on an iPhone:
 
 1. Check the Ribbons and Competitive tabs have separate Pokémon, boxes, parties, teams and widget designs. Open each from a widget link.
 2. Search games with **xd**, **gale of darkness**, **oras** and **hgss**. Select one, reopen the selector and clear it with Not set.
-3. Add a Pokémon with **+ → Add Pokémon**, including a form and ribbons in Ribbons, or build details in Competitive. Confirm the selected box receives it, and test a full box. Reopen the app and reimport a backup to confirm the manual entry stays.
-4. Set different Sun/Moon wallpapers and custom tints on two boxes; navigate between them and reopen the app.
-5. Toggle Party in the box header; move between box slots and the party, then reopen the app.
-6. Open a passport, add another game from the origin/current generation, confirm both endpoint labels and all games remain visible, assign an original ribbon to a generation, and confirm that Memory Ribbon totals stay unchanged.
-7. Import a Showdown team, edit a build, reorder members and share the export.
-8. Save two widget designs with different selections/appearances. Choose each design on a separate Home Screen widget and edit one to confirm the other stays independent.
-9. Check long nicknames/moves, both appearances and text-size settings. iOS controls when widget timelines refresh.
+3. Drag Pokémon between empty/occupied slots, hold over the box arrows to cross boxes, and reopen the app to check positions. Confirm outlines match the Sun/Moon checkerboard with Party shown and hidden.
+4. Switch the Stamp Album to Games; confirm multiple visited games in one generation appear separately.
+5. Export a manual competitive Pokémon and a six-member team to Showdown’s Import/Export. Export a Ribbon Master as JSON, optionally append an existing website backup, then restore into a separate test browser profile to inspect it without replacing real website data.
+6. Add a Pokémon with **+ → Add Pokémon**, including a form and ribbons in Ribbons, or build details in Competitive. Confirm the selected box receives it, and test a full box. Reopen the app and reimport a backup to confirm the manual entry stays.
+7. Set different Sun/Moon wallpapers and custom tints on two boxes; navigate between them and reopen the app.
+8. Toggle Party in the box header; move between box slots and the party, then reopen the app.
+9. Open a passport, add another game from the origin/current generation, confirm both endpoint labels and all games remain visible, assign an original ribbon to a generation, and confirm that Memory Ribbon totals stay unchanged.
+10. Import a Showdown team, edit a build, reorder members and share the export.
+11. Save two widget designs with different selections/appearances. Choose each design on a separate Home Screen widget and edit one to confirm the other stays independent.
+12. Check long nicknames/moves, both appearances and text-size settings. iOS controls when widget timelines refresh.
 
 The physical iPhone build also compiles with signing disabled; installation and widget refresh remain device checks.
 

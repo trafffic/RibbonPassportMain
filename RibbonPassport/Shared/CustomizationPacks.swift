@@ -200,3 +200,28 @@ extension CollectionSnapshot {
     }
     func section(forPokemon id: String) -> TeamKind? { pokemon.first { $0.id == id }.map { $0.showdownSet == nil ? .ribbon : .showdown } }
 }
+
+/// Sun/Moon's interior is six 32-pixel columns by five 30-pixel rows.
+enum PCGridMetrics {
+    static let columns = 6, rows = 5
+    static let artworkWidth: Double = 208, artworkHeight: Double = 192
+    static let originX: Double = 8, originY: Double = 36
+    static let gridWidth: Double = 192, gridHeight: Double = 150
+    static var aspectRatio: Double { gridWidth / gridHeight }
+}
+enum AlbumGrouping: String, CaseIterable, Identifiable {
+    case generations, games
+    var id: String { rawValue }
+    var name: String { rawValue.capitalized }
+}
+
+extension CollectionSnapshot {
+    @discardableResult mutating func movePokemon(_ id: String, in kind: TeamKind, toBox boxID: String, slot: Int) -> Bool {
+        guard section(forPokemon: id) == kind else { return false }
+        var layout = storage(for: kind)
+        guard layout.move(id, toBox: boxID, slot: slot) else { return false }
+        if kind == .ribbon { storage = layout; selectedRibbonID = id } else { competitiveStorage = layout; selectedCompetitiveID = id }
+        selectedID = id
+        return true
+    }
+}

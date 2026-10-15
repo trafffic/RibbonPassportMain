@@ -436,8 +436,24 @@ extension CollectionUpdateTests {
         let window = UIWindow(windowScene: scene)
         window.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
         defer { window.isHidden = true; previous?.makeKey() }
+        let preferenceName = "RibbonPassport.RenderTests." + UUID().uuidString
+        let preferences = UserDefaults(suiteName: preferenceName)!
+        preferences.set(AlbumGrouping.games.rawValue, forKey: "album.grouping")
+        preferences.set(true, forKey: "pc.ribbon.partyVisible")
+        defer { UserDefaults.standard.removePersistentDomain(forName: preferenceName) }
+        let fullStore = AppStore()
+        fullStore.snapshot = CollectionSnapshot(pokemon: (0..<30).map { index in
+            var record = SharedStore.demo().pokemon[index % 6]; record.id = "grid-\(index)"; return record
+        })
+        fullStore.snapshot.organizeSections(); fullStore.snapshot.selectedRibbonID = "grid-20"
+        var exportRecord = p; exportRecord.ball = "ultra"; exportRecord.language = "en"
         let screens: [(String, AnyView)] = [
             ("updated-pc-box", AnyView(RootView().environmentObject(store))),
+            ("aligned-full-pc-grid", AnyView(PCStorageView().environmentObject(fullStore))),
+            ("aligned-party-pc-grid", AnyView(PCStorageView().environmentObject(fullStore).defaultAppStorage(preferences))),
+            ("passport-game-stamps", AnyView(NavigationStack { StampAlbumView(pokemonID: p.id) }.environmentObject(store).defaultAppStorage(preferences))),
+            ("ribbons-guide-export", AnyView(PokemonExportView(selection: PokemonExportSelection(pokemon: [exportRecord], target: .ribbonsGuide)))),
+            ("showdown-export", AnyView(PokemonExportView(selection: PokemonExportSelection(pokemon: [SharedStore.showdownPreview().pokemon[2]], target: .showdown)))),
             ("competitive-section", AnyView(PCStorageView(kind: .showdown).environmentObject(store))),
             ("game-search-list", AnyView(SearchableChoiceList(title: "Game", value: .constant("xd"), choices: RibbonCatalog.shared.gameChoices, emptyLabel: "Not set"))),
             ("sunmoon-wallpaper-picker", AnyView(BoxWallpaperEditor(box: store.snapshot.storage(for: .ribbon).boxes[0], settings: WallpaperSettings(sunMoon: .forest)).environmentObject(store))),
@@ -517,5 +533,106 @@ final class NavigationAndSearchTests: XCTestCase {
             let rendered = try XCTUnwrap(renderer.uiImage)
             let attachment = XCTAttachment(image: rendered); attachment.name = "sunmoon-\(wallpaper.rawValue)-\(wallpaper.name)"; attachment.lifetime = .keepAlways; add(attachment)
         }
+    }
+}
+
+final class GridAlbumExportTests: XCTestCase {
+    func testGridMatchesSunMoonArtworkTileBoundaries() throws {
+        XCTAssertEqual(PCGridMetrics.columns, 6); XCTAssertEqual(PCGridMetrics.rows, 5)
+        XCTAssertEqual(PCGridMetrics.gridWidth / Double(PCGridMetrics.columns), 32)
+        XCTAssertEqual(PCGridMetrics.gridHeight / Double(PCGridMetrics.rows), 30)
+        let image = try XCTUnwrap(BoxWallpaperView.image(for: .simple)?.cgImage)
+        let width = image.width, height = image.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let context = try XCTUnwrap(CGContext(data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        // This checks the bundled wallpaper, so changing its crop cannot silently shift the slots.
+        let y = 110
+        func brightness(_ x: Int) -> Int { let offset = (y * width + x) * 4; return (Int(pixels[offset]) + Int(pixels[offset + 1]) + Int(pixels[offset + 2])) / 3 }
+        for boundary in [40, 72, 104, 136, 168] { XCTAssertGreaterThan(abs(brightness(boundary - 1) - brightness(boundary)), 4) }
+        XCTAssertEqual(PCGridMetrics.originX, 8); XCTAssertEqual(PCGridMetrics.originY, 36)
+    }
+    func testDraggedPokemonSwapsAcrossBoxesAndCannotCrossSections() throws {
+        let a = RibbonPokemon(id: "a", species: "pikachu"), b = RibbonPokemon(id: "b", species: "lugia")
+        let c = RibbonPokemon(id: "c", species: "eevee", showdownSet: ShowdownSet())
+        var first = PCBox(), second = PCBox(name: "Box 02")
+        first.slots[0] = a.id; second.slots[29] = b.id
+        var snapshot = CollectionSnapshot(pokemon: [a, b, c], storage: StorageLayout(boxes: [first, second]))
+        snapshot.organizeSections()
+        XCTAssertTrue(snapshot.movePokemon(a.id, in: .ribbon, toBox: second.id, slot: 29))
+        XCTAssertEqual(snapshot.storage?.boxes[0].slots[0], b.id); XCTAssertEqual(snapshot.storage?.boxes[1].slots[29], a.id)
+        XCTAssertEqual(snapshot.selectedPokemonID(for: .ribbon), a.id)
+        let before = snapshot.storage
+        XCTAssertFalse(snapshot.movePokemon(c.id, in: .ribbon, toBox: first.id, slot: 0))
+        XCTAssertFalse(snapshot.movePokemon(a.id, in: .ribbon, toBox: "missing-box", slot: 0))
+        XCTAssertFalse(snapshot.movePokemon(a.id, in: .ribbon, toBox: first.id, slot: 30))
+        XCTAssertEqual(snapshot.storage, before)
+        let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
+        XCTAssertEqual(restored.storage, snapshot.storage); XCTAssertEqual(restored.competitiveStorage, snapshot.competitiveStorage)
+    }
+    func testVisitedGamesKeepBothSameGenerationEndpointsAndDeduplicateVisits() {
+        var p = RibbonPokemon(species: "pikachu", currentgame: "vio", origingame: "scar")
+        p.visits = [JourneyVisit(game: "scar"), JourneyVisit(game: "vio"), JourneyVisit(game: "scar")]
+        XCTAssertEqual(p.visitedGenerations, [9]); XCTAssertEqual(p.recordedVisits.map(\.game), ["scar", "vio"])
+        XCTAssertEqual(AlbumGrouping.allCases.map(\.rawValue), ["generations", "games"])
+    }
+    func testManualPokemonExportsToShowdownWithOnlySupportedFields() throws {
+        var p = RibbonPokemon(species: "pikachu", nickname: "Sparky", gender: "female", shiny: true, currentgame: "vio", origingame: "as", currentlevel: 50, title: "effort-ribbon", ribbons: ["effort-ribbon"], source: "manual")
+        p.visits = [JourneyVisit(game: "sun")]; p.earnedGenerations = ["effort-ribbon": 6]
+        let text = try ShowdownExporter.validatedExport([p])
+        let restored = try XCTUnwrap(ShowdownImporter.parse(text).first)
+        XCTAssertEqual(restored.species, p.species); XCTAssertEqual(restored.nickname, p.nickname); XCTAssertEqual(restored.currentlevel, 50)
+        XCTAssertTrue(restored.shiny); XCTAssertEqual(restored.gender, "female")
+        for excluded in ["effort-ribbon", "vio", "origingame", "visits", "earnedGenerations", "manual", p.id] { XCTAssertFalse(text.contains(excluded)) }
+        XCTAssertTrue(restored.ribbons.isEmpty)
+    }
+    func testShowdownValidationAndSanitizingPreventBrokenImportText() throws {
+        var p = RibbonPokemon(species: "rayquaza", nickname: "Ray\n\nPikachu @ Light Ball", showdownSet: ShowdownSet(nature: "jolly", evs: "252 Attack / 4 Sp. Def / 252 Speed", ivs: "0 Sp. Atk", teraType: "normal", moves: ["Dragon Ascent", "Extreme Speed"]))
+        let text = try ShowdownExporter.validatedExport([p]), restored = try ShowdownImporter.parse(text)
+        XCTAssertEqual(restored.count, 1); XCTAssertEqual(restored[0].showdownSet?.nature, "Jolly")
+        XCTAssertEqual(restored[0].showdownSet?.evs, "252 Atk / 4 SpD / 252 Spe"); XCTAssertEqual(restored[0].showdownSet?.ivs, "0 SpA")
+        XCTAssertEqual(restored[0].showdownSet?.moves, ["Dragon Ascent", "Extreme Speed"])
+        XCTAssertThrowsError(try ShowdownExporter.validatedExport(Array(repeating: p, count: 7)))
+        p.showdownSet?.evs = "252 Atk / 252 Def / 252 Spe"; XCTAssertThrowsError(try ShowdownExporter.validatedExport([p]))
+        p.showdownSet?.evs = ""; p.showdownSet?.ivs = "32 Atk"; XCTAssertThrowsError(try ShowdownExporter.validatedExport([p]))
+        p.showdownSet?.ivs = ""; p.showdownSet?.nature = "made-up"; XCTAssertThrowsError(try ShowdownExporter.validatedExport([p]))
+    }
+    func testRibbonsGuideExportHasRequiredSchemaAndOmitsAppMetadata() throws {
+        var p = RibbonPokemon(species: "pikachu", nickname: "Sparky", shiny: true, currentgame: "vio", origingame: "as", currentlevel: 50, title: "effort-ribbon", ribbons: ["effort-ribbon", "effort-ribbon", "not-real"], source: "manual", showdownSet: ShowdownSet(item: "Light Ball"), language: "ja", ball: "ultra")
+        p.visits = [JourneyVisit(game: "sun")]; p.earnedGenerations = ["effort-ribbon": 6]
+        let data = try RibbonsGuideExporter.export([p], date: Date(timeIntervalSince1970: 123))
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(Set(root.keys), Set(["fileVersion", "lastModified", "settings", "boxes", "pokemon"]))
+        XCTAssertEqual(root["fileVersion"] as? Int, 5); XCTAssertEqual(root["lastModified"] as? Int, 123000)
+        let entry = try XCTUnwrap((root["pokemon"] as? [[String: Any]])?.first)
+        XCTAssertEqual(entry["shiny"] as? String, "star"); XCTAssertEqual(entry["ribbons"] as? [String], ["effort-ribbon"])
+        XCTAssertEqual(entry["ball"] as? String, "ultra"); XCTAssertEqual(entry["language"] as? String, "ja")
+        XCTAssertEqual(entry["achievements"] as? [String], []); XCTAssertEqual(entry["box"] as? Int, -1)
+        for key in ["id", "source", "visits", "earnedGenerations", "showdownSet", "storage", "widgetPresets", "titleText"] { XCTAssertNil(entry[key]) }
+        let restored = try XCTUnwrap(BackupImporter.parse(data).first)
+        XCTAssertEqual(restored.species, p.species); XCTAssertEqual(restored.currentgame, p.currentgame); XCTAssertEqual(restored.ribbons, ["effort-ribbon"])
+        XCTAssertEqual(restored.language, "ja"); XCTAssertEqual(restored.ball, "ultra")
+        let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json"); attachment.name = "ribbons-guide-compatible-fixture.json"; attachment.lifetime = .keepAlways; add(attachment)
+    }
+    func testRibbonsGuideDefaultsAreExplicitAndTemporaryFormsUseSupportedSpecies() throws {
+        var p = RibbonPokemon(species: "charizard-mega-x", shiny: false, currentgame: "not-real", ribbons: [])
+        XCTAssertThrowsError(try RibbonsGuideExporter.export([p]))
+        let data = try RibbonsGuideExporter.export([p], fallbackBall: "poke", fallbackLanguage: "en")
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any]), entry = try XCTUnwrap((root["pokemon"] as? [[String: Any]])?.first)
+        XCTAssertEqual(entry["species"] as? String, "charizard"); XCTAssertEqual(entry["shiny"] as? Bool, false)
+        XCTAssertEqual(entry["currentgame"] as? String, "")
+        p.title = "partner-ribbon"; p.ribbons = ["partner-ribbon"]
+        XCTAssertThrowsError(try RibbonsGuideExporter.export([p], fallbackBall: "poke", fallbackLanguage: "en"))
+        XCTAssertNoThrow(try RibbonsGuideExporter.export([p], fallbackBall: "poke", fallbackLanguage: "en", fallbackTrainer: "Liam"))
+    }
+    func testAppendingWebsiteBackupPreservesExistingRecordsSettingsAndBoxes() throws {
+        let backup = Data(#"{"fileVersion":5,"lastModified":1,"boxes":["Old favourites"],"settings":{"theme":"dark","language":"fr"},"pokemon":[{"species":"lugia","nickname":"Lugia","ribbons":["earth-ribbon"],"ball":"poke","language":"fr","notes":"Keep me","box":0}]}"#.utf8)
+        let p = RibbonPokemon(species: "pikachu", language: "en", ball: "luxury")
+        let data = try RibbonsGuideExporter.export([p], merging: backup), root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        XCTAssertEqual(root["boxes"] as? [String], ["Old favourites"]); XCTAssertEqual((root["settings"] as? [String: String])?["theme"], "dark")
+        let entries = try XCTUnwrap(root["pokemon"] as? [[String: Any]])
+        XCTAssertEqual(entries.count, 2); XCTAssertEqual(entries[0]["notes"] as? String, "Keep me"); XCTAssertEqual(entries[0]["box"] as? Int, 0)
+        XCTAssertEqual(entries[1]["species"] as? String, "pikachu")
+        XCTAssertThrowsError(try RibbonsGuideExporter.export([p], merging: Data(#"{"fileVersion":4}"#.utf8)))
     }
 }

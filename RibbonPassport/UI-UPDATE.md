@@ -16,13 +16,24 @@ Use **Teams** or **Widgets** above that section’s PC to access its other scree
 - Game menus follow generation/game chronology, ribbons and marks follow their introduction generation, and Pokémon selectors use National Pokédex order. Older contest ribbons identify their generation to distinguish matching names.
 - Classic 30-slot PC boxes, renamed by tapping the box heading. Use **+ → New box** for more storage.
 - The **Party** button in the box heading shows or hides the six-slot party. Add a selected Pokémon to the party, or drag it to the sidebar. Returning a party member to storage preserves its record.
-- Select **Move**, then a destination slot, or drag between slots. Occupied destinations swap their contents.
+- The PC uses the wallpaper’s exact six-column, five-row grid, with no gaps between cells. Selection and drop outlines follow the background tile edges, including with the party visible.
+- Hold a Pokémon to drag it to any slot. Occupied destinations swap their contents. To cross boxes, hold the drag over a previous/next arrow for about 0.65 seconds, then drop into a slot in the revealed box. **Move** followed by a destination remains available. Moves are restricted to the current section.
 - **Passport** opens the Stamp Album. **Edit visits** records games visited; **Assign / move a ribbon** records where an original award was earned. Missing visit history is not guessed. Unchanged demo records receive the authored demo history automatically; imported and edited records do not. Origin and Current stay visible above the album. A generation stamp shows its game count, and selecting it lists every recorded game in that generation, including both endpoints. Adding another visit never replaces either endpoint.
+- The Stamp Album has a **Generations / Games** switch and remembers the chosen view. Games displays a separate stamp for every recorded game, including multiple games within one generation, with Origin/Current labels. Ribbon locations remain assigned by generation.
 - Memory Ribbons remain a display of the underlying legacy awards. Their original awards can be assigned to earlier generations independently.
 
 ## Teams
 
 The Showdown section includes the team library, team overview, individual build details, import, display-order editor and widget preview. Build edits preserve the Pokémon's identity and collection data. Teams can be shared as Showdown text. The ribbon-team tab remains available.
+
+## Exports
+
+Use **Export** on a passport, competitive build or team; a Pokémon’s box context menu also offers **Export Pokémon**. In Ribbons, **+ → Export Ribbon Masters** exports the whole ribbon collection. The export sheet can switch between the two destinations.
+
+- **Showdown:** copy/share standard Import/Export text or save a `.txt` file. Export one Pokémon or a team of up to six, including Pokémon created in the app without a build. Supported identity/build fields are included; ribbons, game history, capture details and app settings are excluded. EV/IV syntax, nature, Tera type and move count are checked before saving. Format-specific battle legality still belongs to Showdown’s team validator.
+- **ribbons.guide:** save a version 5 `RibbonBackup.json` using the website’s supported species, game and ribbon IDs. Original ribbons are retained rather than replacing them with calculated Memory Ribbons. Battle-only forms use the corresponding species supported by ribbons.guide. Native IDs, Showdown builds, visited-game history, generation assignments, PC layout and widget settings are excluded.
+- ribbons.guide requires a valid **ball** and **language**. These are retained on new backup imports and can be entered under **Capture details** when creating a Pokémon. If missing at export time, choose values for the missing entries. An equipped Partner Ribbon also needs the original trainer’s name. Missing capture details are never guessed.
+- **Append to an existing website backup…** keeps that file’s existing records, box names and website settings, then appends the exported Pokémon. It does not change the original file. Restoring the resulting JSON on ribbons.guide replaces its website collection; use the combined file when retaining existing website records. Repeated appends can create duplicate entries.
 
 ## Widgets
 

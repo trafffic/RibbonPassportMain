@@ -127,8 +127,8 @@ struct BoxWallpaperView: View {
             if let artwork = Self.image(for: settings.sunMoon ?? .forest) {
                 // Show the wallpaper's grid area; the app supplies its own box heading and border.
                 Image(uiImage: artwork).resizable().interpolation(.none)
-                    .frame(width: geometry.size.width * 208 / 196, height: geometry.size.height * 192 / 152)
-                    .offset(x: -geometry.size.width * 6 / 196, y: -geometry.size.height * 36 / 152)
+                    .frame(width: geometry.size.width * PCGridMetrics.artworkWidth / PCGridMetrics.gridWidth, height: geometry.size.height * PCGridMetrics.artworkHeight / PCGridMetrics.gridHeight)
+                    .offset(x: -geometry.size.width * PCGridMetrics.originX / PCGridMetrics.gridWidth, y: -geometry.size.height * PCGridMetrics.originY / PCGridMetrics.gridHeight)
                 if let tint = settings.tint { Color(hex: tint).opacity(min(1, max(0, settings.strength)) * 0.5) }
             }
         }.clipped().allowsHitTesting(false).accessibilityHidden(true)

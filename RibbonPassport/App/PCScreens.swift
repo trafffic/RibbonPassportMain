@@ -9,6 +9,11 @@ extension AppStore {
         layout.reconcile(pokemonIDs: next.pokemon(for: kind).map(\.id))
         if kind == .ribbon { next.storage = layout } else { next.competitiveStorage = layout }; commit(next)
     }
+    @discardableResult func movePokemon(_ id: String, kind: TeamKind, boxID: String, slot: Int) -> Bool {
+        var next = snapshot
+        guard next.movePokemon(id, in: kind, toBox: boxID, slot: slot) else { return false }
+        commit(next); return error == nil
+    }
     func savePreset(_ preset: WidgetPreset, makeDefault: Bool = false) {
         var next = snapshot
         var presets = next.widgetPresets ?? []
@@ -59,6 +64,10 @@ struct PCStorageView: View {
     @State private var moving = false
     @State private var renaming = false
     @State private var boxName = ""
+    @State private var draggingID: String?
+    @State private var dropSlot: Int?
+    @State private var hoveredPage: Int?
+    @State private var exporting: PokemonExportSelection?
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
     private var layout: StorageLayout { store.snapshot.storage(for: kind) }
     private var box: PCBox { layout.boxes[min(boxIndex, layout.boxes.count - 1)] }
@@ -88,6 +97,9 @@ struct PCStorageView: View {
                             Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
                             if kind == .ribbon {
                                 Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
+                                Button("Export Ribbon Masters", systemImage: "square.and.arrow.up") {
+                                    exporting = PokemonExportSelection(pokemon: store.snapshot.pokemon(for: .ribbon), target: .ribbonsGuide)
+                                }.disabled(store.snapshot.pokemon(for: .ribbon).isEmpty)
                                 Button("Refresh demo", systemImage: "sparkles") { store.demo() }
                             } else { Button("Import Showdown team", systemImage: "doc.on.clipboard") { showdown = true } }
                             Button("New box", systemImage: "plus.square") {
@@ -106,7 +118,7 @@ struct PCStorageView: View {
                         HStack(alignment: .top, spacing: 7) {
                             if partyVisible { partyBar }
                             boxGrid
-                        }.padding(7).background { BoxWallpaperView(settings: layout.wallpaper(for: box)) }.overlay(Rectangle().stroke(theme.border, lineWidth: 2))
+                        }.background(theme.panel).overlay(Rectangle().stroke(theme.border, lineWidth: 2))
                     }
                     HStack {
                         Text("\(box.slots.compactMap { $0 }.count) / 30")
@@ -142,6 +154,13 @@ struct PCStorageView: View {
                     if let index = layout.boxes.firstIndex(where: { $0.slots.contains(id) }) { boxIndex = index }
                 } }
                 .sheet(isPresented: $editingWallpaper) { BoxWallpaperEditor(box: box, settings: layout.wallpaper(for: box), kind: kind) }
+                .sheet(item: $exporting) { PokemonExportView(selection: $0) }
+                .task(id: hoveredPage) {
+                    guard let direction = hoveredPage, draggingID != nil, layout.boxes.count > 1 else { return }
+                    do { try await Task.sleep(for: .milliseconds(650)) } catch { return }
+                    guard !Task.isCancelled, hoveredPage == direction else { return }
+                    boxIndex = (boxIndex + layout.boxes.count + direction) % layout.boxes.count
+                }
                 .sheet(isPresented: $showdown) { RetroShowdownImportView() }
                 .alert("Box name", isPresented: $renaming) {
                     TextField("Name", text: $boxName)
@@ -164,6 +183,7 @@ struct PCStorageView: View {
         HStack(spacing: 5) {
             Button { boxIndex = (boxIndex + layout.boxes.count - 1) % layout.boxes.count } label: { Image(systemName: "chevron.left").frame(width: 33, height: 44) }
                 .accessibilityLabel("Previous box")
+                .onDrop(of: [UTType.text], isTargeted: pageTarget(-1)) { _ in false }
             Button { boxName = box.name; renaming = true } label: {
                 Text(box.name.uppercased()).font(PixelFont.font(17)).lineLimit(1).minimumScaleFactor(0.65).frame(maxWidth: .infinity)
             }.accessibilityLabel("Rename \(box.name)")
@@ -173,38 +193,67 @@ struct PCStorageView: View {
             }.accessibilityIdentifier("pc.partyToggle").accessibilityValue(partyVisible ? "Shown" : "Hidden")
             Button { boxIndex = (boxIndex + 1) % layout.boxes.count } label: { Image(systemName: "chevron.right").frame(width: 33, height: 44) }
                 .accessibilityLabel("Next box")
+                .onDrop(of: [UTType.text], isTargeted: pageTarget(1)) { _ in false }
         }.buttonStyle(.plain).padding(.horizontal, 3).padding(.vertical, 5).background(theme.ink).foregroundStyle(theme.paper)
     }
     private var boxGrid: some View {
         GeometryReader { geometry in
-            let columns = max(1, min(6, Int(geometry.size.width / 44)))
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: columns), spacing: 4) {
-                ForEach(0..<30, id: \.self) { slot in
-                    let p = pokemon(box.slots[slot])
-                    Button {
-                        if moving, let id = selection?.id { move(id, slot: slot) }
-                        else if let p { store.choose(p.id) }
-                    } label: {
-                        ZStack(alignment: .bottomTrailing) {
-                            if let p {
-                                PokemonSprite(pokemon: p, download: true).padding(3)
-                                if p.shiny { AssetImage(key: "shiny-" + theme.appearance).frame(width: 10, height: 10).padding(2) }
-                            } else { Rectangle().fill(theme.border.opacity(0.5)).frame(width: 4, height: 4).frame(maxWidth: .infinity, maxHeight: .infinity) }
-                        }.frame(height: 49).frame(maxWidth: .infinity)
-                            .background(p?.id == selection?.id && p != nil ? theme.panel.opacity(0.65) : .clear)
-                            .overlay(Rectangle().stroke(p?.id == selection?.id && p != nil ? theme.accent : .clear, lineWidth: 2))
-                    }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty slot \(slot + 1)")
-                        .contextMenu { if let p { pokemonMenu(p) } }
-                        .draggable(p?.id ?? "")
-                        .dropDestination(for: String.self) { ids, _ in
-                            guard let id = ids.first, pokemon(id) != nil else { return false }; move(id, slot: slot); return true
+            let cellWidth = geometry.size.width / CGFloat(PCGridMetrics.columns)
+            let cellHeight = geometry.size.height / CGFloat(PCGridMetrics.rows)
+            VStack(spacing: 0) {
+                ForEach(0..<PCGridMetrics.rows, id: \.self) { row in
+                    HStack(spacing: 0) {
+                        ForEach(0..<PCGridMetrics.columns, id: \.self) { column in
+                            boxSlot(row * PCGridMetrics.columns + column, width: cellWidth, height: cellHeight)
                         }
+                    }
                 }
+            }.background { BoxWallpaperView(settings: layout.wallpaper(for: box)) }
+        }.aspectRatio(PCGridMetrics.aspectRatio, contentMode: .fit).frame(maxWidth: .infinity)
+    }
+    private func boxSlot(_ slot: Int, width: CGFloat, height: CGFloat) -> some View {
+        let p = pokemon(box.slots[slot])
+        return Button {
+            if moving, let id = selection?.id { move(id, slot: slot) }
+            else if let p { store.choose(p.id) }
+        } label: {
+            ZStack(alignment: .bottomTrailing) {
+                Color.clear
+                if let p {
+                    PokemonSprite(pokemon: p, download: true).padding(4)
+                    if p.shiny { AssetImage(key: "shiny-" + theme.appearance).frame(width: 10, height: 10).padding(3) }
+                }
+            }.frame(width: width, height: height).contentShape(Rectangle())
+                .background(p?.id == selection?.id && p != nil ? theme.panel.opacity(0.28) : .clear)
+                .overlay {
+                    if dropSlot == slot || (p != nil && p?.id == selection?.id) {
+                        Rectangle().strokeBorder(dropSlot == slot ? theme.ink : theme.accent, lineWidth: 2)
+                    }
+                }
+        }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty slot \(slot + 1)")
+            .contextMenu { if let p { pokemonMenu(p) } }
+            .onDrag {
+                guard let p else { return NSItemProvider() }
+                draggingID = p.id
+                return NSItemProvider(object: p.id as NSString)
+            } preview: {
+                if let p { PokemonSprite(pokemon: p).frame(width: 56, height: 56) }
             }
-        }.frame(height: partyVisible ? 370 : 290)
+            .dropDestination(for: String.self) { ids, _ in
+                guard let id = ids.first, pokemon(id) != nil else { return false }
+                let moved = move(id, slot: slot); draggingID = nil; dropSlot = nil; hoveredPage = nil
+                return moved
+            } isTargeted: { targeted in
+                if targeted { dropSlot = slot } else if dropSlot == slot { dropSlot = nil }
+            }
+    }
+    private func pageTarget(_ direction: Int) -> Binding<Bool> {
+        Binding(get: { hoveredPage == direction }, set: { targeted in
+            if targeted { hoveredPage = direction } else if hoveredPage == direction { hoveredPage = nil }
+        })
     }
     private var partyBar: some View {
-        VStack(spacing: 7) {
+        VStack(spacing: 4) {
             Text("PARTY").font(PixelFont.font(10))
             ForEach(0..<6, id: \.self) { i in
                 let p = i < layout.partyIDs.count ? pokemon(layout.partyIDs[i]) : nil
@@ -215,11 +264,14 @@ struct PCStorageView: View {
                     Group {
                         if let p { PokemonSprite(pokemon: p, download: true) }
                         else { Text("·").foregroundStyle(theme.muted) }
-                    }.frame(width: 39, height: 43).background(theme.board)
+                    }.frame(width: 35, height: 31).background(theme.board)
                         .overlay(Rectangle().stroke(theme.border, style: StrokeStyle(lineWidth: 1, dash: [2])))
                 }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty party slot")
                     .contextMenu { if let p { Button("Return to box") { store.editStorage(kind: kind) { $0.returnToBox(p.id) } }; pokemonMenu(p) } }
-                    .draggable(p?.id ?? "")
+                    .onDrag {
+                        guard let p else { return NSItemProvider() }
+                        draggingID = p.id; return NSItemProvider(object: p.id as NSString)
+                    }
                     .dropDestination(for: String.self) { ids, _ in
                         guard let id = ids.first, pokemon(id) != nil, layout.partyIDs.count < 6 else { return false }
                         store.editStorage(kind: kind) { _ = $0.moveToParty(id) }; return true
@@ -231,6 +283,9 @@ struct PCStorageView: View {
         Button(kind == .ribbon ? "Open passport" : "Open build") { store.openPokemonID = p.id }
         Button("Add to party") { store.editStorage(kind: kind) { _ = $0.moveToParty(p.id) }; partyVisible = true }
             .disabled(layout.partyIDs.count >= 6 || layout.partyIDs.contains(p.id))
+        Button("Export Pokémon", systemImage: "square.and.arrow.up") {
+            exporting = PokemonExportSelection(pokemon: [p], target: kind == .ribbon ? .ribbonsGuide : .showdown)
+        }
         Button("Delete", role: .destructive) { store.deletePokemon(p.id) }
     }
     private func selectionStrip(_ p: RibbonPokemon) -> some View {
@@ -247,9 +302,9 @@ struct PCStorageView: View {
             Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
         }.retroPanel(padding: 9)
     }
-    private func move(_ id: String, slot: Int) {
-        let boxID = box.id
-        store.editStorage(kind: kind) { _ = $0.move(id, toBox: boxID, slot: slot) }; moving = false
+    @discardableResult private func move(_ id: String, slot: Int) -> Bool {
+        let moved = store.movePokemon(id, kind: kind, boxID: box.id, slot: slot)
+        if moved { moving = false }; return moved
     }
 }
 
@@ -259,6 +314,9 @@ struct StampAlbumView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.colorScheme) private var scheme
     @State private var generation = 0
+    @State private var game = ""
+    @AppStorage("album.grouping") private var grouping: AlbumGrouping = .generations
+    @State private var exporting: PokemonExportSelection?
     @State private var editing = false
     @State private var editingVisits = false
     @State private var selectedAward: AwardLocationSelection?
@@ -267,7 +325,8 @@ struct StampAlbumView: View {
     var body: some View {
         ScrollView {
             if let p {
-                let active = p.visitedGenerations.contains(generation) ? generation : p.visitedGenerations.first ?? 0
+                let activeGame = p.recordedVisits.contains { $0.game == game } ? game : p.recordedVisits.first?.game ?? ""
+                let active = grouping == .games ? RibbonCatalog.shared.gameInfo[activeGame]?.gen ?? 0 : p.visitedGenerations.contains(generation) ? generation : p.visitedGenerations.first ?? 0
                 VStack(spacing: 16) {
                     HStack(spacing: 10) {
                         PokemonSprite(pokemon: p, download: true).frame(width: 94, height: 90)
@@ -281,7 +340,11 @@ struct StampAlbumView: View {
                         endpoint("ORIGIN", game: p.origingame)
                         endpoint("CURRENT", game: p.currentgame)
                     }.retroPanel()
-                    RetroHeading(title: "Stamp album", value: "\(p.visitedGenerations.count) generations")
+                    RetroHeading(title: "Stamp album", value: grouping == .generations ? "\(p.visitedGenerations.count) generations" : "\(p.recordedVisits.count) games")
+                    Picker("Album view", selection: $grouping) {
+                        ForEach(AlbumGrouping.allCases) { Text($0.name).tag($0) }
+                    }.pickerStyle(.segmented).accessibilityIdentifier("album.grouping")
+                    if grouping == .generations {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 9) {
                         ForEach(p.visitedGenerations, id: \.self) { gen in
                             let games = p.games(in: gen)
@@ -298,10 +361,27 @@ struct StampAlbumView: View {
                             }.buttonStyle(.plain).accessibilityIdentifier("album.generation.\(gen)")
                         }
                     }
+                    } else {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 9) {
+                            ForEach(p.recordedVisits) { visit in
+                                Button { game = visit.game } label: {
+                                    VStack(spacing: 6) {
+                                        Text("GEN \(visit.generation.roman)").font(PixelFont.font(11))
+                                        GameMascot(game: visit.game, size: visit.game == "scar" ? 42 : 52).frame(height: 54)
+                                        Text(RibbonCatalog.shared.compactGameName(visit.game)).font(PixelFont.font(14)).lineLimit(2).minimumScaleFactor(0.8).frame(minHeight: 32)
+                                        Text(visit.game == p.origingame && visit.game == p.currentgame ? "Origin · Current" : visit.game == p.origingame ? "Origin" : visit.game == p.currentgame ? "Current" : "Visited")
+                                            .font(PixelFont.font(11)).foregroundStyle(theme.muted)
+                                    }.frame(maxWidth: .infinity).padding(.vertical, 10).padding(.horizontal, 3)
+                                        .background(visit.game == activeGame ? theme.board : theme.panel)
+                                        .overlay(Rectangle().strokeBorder(theme.border, style: StrokeStyle(lineWidth: visit.game == activeGame ? 2 : 1, dash: visit.game == activeGame ? [] : [3])))
+                                }.buttonStyle(.plain).accessibilityIdentifier("album.game.\(visit.game)")
+                            }
+                        }
+                    }
                     if active > 0 {
                         VStack(alignment: .leading, spacing: 12) {
                             RetroHeading(title: "Generation \(active.roman)", value: "\(p.awards(earnedIn: active).count) earned")
-                            ForEach(p.games(in: active), id: \.self) { game in
+                            ForEach(grouping == .games ? [activeGame] : p.games(in: active), id: \.self) { game in
                                 HStack(spacing: 8) {
                                     GameMascot(game: game, size: 25)
                                     Text(RibbonCatalog.shared.gameName(game)).font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true)
@@ -337,7 +417,13 @@ struct StampAlbumView: View {
                 }.padding(16)
             } else { ContentUnavailableView("Pokémon removed", systemImage: "tray") }
         }.background(theme.paper).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
-            .toolbar { Button("Edit") { editing = true }.disabled(p == nil) }
+            .toolbar {
+                Button("Edit") { editing = true }.disabled(p == nil)
+                Button("Export", systemImage: "square.and.arrow.up") {
+                    if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
+                }.disabled(p == nil)
+            }
+            .sheet(item: $exporting) { PokemonExportView(selection: $0) }
             .sheet(isPresented: $editing) { if let p { NavigationStack { PokemonEditor(pokemon: p) }.font(PixelFont.font(16)) } }
             .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
             .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }

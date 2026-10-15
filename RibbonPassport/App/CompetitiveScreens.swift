@@ -55,6 +55,7 @@ struct RetroTeamDetailView: View {
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dismiss) private var dismiss
     @State private var confirmDelete = false
+    @State private var exporting: PokemonExportSelection?
     private var team: RibbonTeam? { store.snapshot.teams.first { $0.id == teamID } }
     private var members: [RibbonPokemon] { store.snapshot.members(teamID: teamID) }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
@@ -97,9 +98,12 @@ struct RetroTeamDetailView: View {
             .toolbar {
                 if let team {
                     NavigationLink("Edit") { RetroTeamArrangeView(team: team, showdown: store.snapshot.kind(of: team) == .showdown) }
-                    if store.snapshot.kind(of: team) == .showdown { ShareLink(item: ShowdownExporter.export(members)) { Image(systemName: "square.and.arrow.up") } }
+                    Button("Export", systemImage: "square.and.arrow.up") {
+                        exporting = PokemonExportSelection(pokemon: members, target: store.snapshot.kind(of: team) == .showdown ? .showdown : .ribbonsGuide)
+                    }
                 }
             }
+            .sheet(item: $exporting) { PokemonExportView(selection: $0) }
             .confirmationDialog("Delete this team?", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("Delete team", role: .destructive) {
                     var next = store.snapshot; next.teams.removeAll { $0.id == teamID }
@@ -115,6 +119,7 @@ struct CompetitiveBuildView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.colorScheme) private var scheme
     @State private var editing = false
+    @State private var exporting: PokemonExportSelection?
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: p?.currentgame ?? "") }
     var body: some View {
@@ -159,7 +164,11 @@ struct CompetitiveBuildView: View {
                 }.padding(16)
             } else { ContentUnavailableView("Build unavailable", systemImage: "tray") }
         }.background(theme.paper).navigationTitle("Build").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
-            .toolbar { Button("Edit") { editing = true }.disabled(p?.showdownSet == nil) }
+            .toolbar {
+                Button("Edit") { editing = true }.disabled(p?.showdownSet == nil)
+                Button("Export", systemImage: "square.and.arrow.up") { if let p { exporting = PokemonExportSelection(pokemon: [p], target: .showdown) } }.disabled(p == nil)
+            }
+            .sheet(item: $exporting) { PokemonExportView(selection: $0) }
             .sheet(isPresented: $editing) { if let p { CompetitiveBuildEditor(pokemon: p) } }
     }
     private func buildField(_ name: String, _ value: String) -> some View {
