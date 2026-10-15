@@ -21,6 +21,8 @@ Rarity scores are editorial estimates reused from the Scriptable widget. They de
 
 # Pixel font
 
+Ribbon manager eligibility metadata and directed transfer routes are derived from the upstream [ribbon definitions](https://github.com/SlyAceZeta/Ribbons.Guide/blob/main/data/ribbons.json), [species definitions](https://github.com/SlyAceZeta/Ribbons.Guide/blob/main/data/pokemon.json), [games](https://github.com/SlyAceZeta/Ribbons.Guide/blob/main/data/games.json), [transfer groups](https://github.com/SlyAceZeta/Ribbons.Guide/blob/main/data/gamegroups.json) and [eligibility logic](https://github.com/SlyAceZeta/Ribbons.Guide/blob/main/js/main.js). The compact offline snapshot is `RibbonAssets/ribbon-rules.json` (15 October 2026), under the same GPL-3.0 licence.
+
 Pixelify Sans by Stefie Justprince is bundled for offline use in the app and widgets. Source: [Google Fonts](https://github.com/google/fonts/tree/main/ofl/pixelifysans). Licensed under the SIL Open Font License 1.1; see `Licences/PixelifySans-OFL.txt`.
 
 - Widget theme pack scenery: original code-drawn pixel backgrounds included under the project’s GPL-3.0 licence.

@@ -10,6 +10,7 @@ struct AddPokemonView: View {
     @State private var pokemon = RibbonPokemon(species: "", currentlevel: 5)
     @State private var speciesPicker = false
     @State private var awards = false
+    @State private var marks = false
     @State private var build = ShowdownSet()
     @State private var moves = Array(repeating: "", count: 4)
     var body: some View {
@@ -30,12 +31,13 @@ struct AddPokemonView: View {
                     Picker("Gender", selection: $pokemon.gender) {
                         Text("Not specified").tag(""); Text("Male").tag("male"); Text("Female").tag("female")
                     }
-                    if pokemon.species == "lugia" || pokemon.species == "lugia-shadow" { Toggle("Shadow Lugia artwork", isOn: $pokemon.shadow) }
+                    if RibbonRules.shared.species[pokemon.species]?.flags.contains(where: { ["colShadow", "xdShadow"].contains($0) }) == true { Toggle("Shadow Pokémon", isOn: $pokemon.shadow) }
                     if RibbonCatalog.shared.gmaxSpecies.contains(pokemon.species) { Toggle("Gigantamax factor", isOn: $pokemon.gmax) }
                 }
                 Section("Journey") {
                     GamePicker(title: "Origin game", value: $pokemon.origingame)
                     GamePicker(title: "Current game", value: $pokemon.currentgame)
+                    RibbonMetLevelEditor(pokemon: $pokemon)
                 }
                 Section {
                     DisclosureGroup("Capture details") {
@@ -46,7 +48,8 @@ struct AddPokemonView: View {
                 }
                 if kind == .ribbon {
                     Section("Ribbons & marks") {
-                        Button("Choose awards (\(pokemon.ribbons.count))") { awards = true }
+                        ManageRibbonsButton(pokemon: pokemon) { awards = true }.disabled(pokemon.species.isEmpty)
+                        Button("Edit marks (\(pokemon.ribbons.filter { $0.hasSuffix("-mark") }.count))") { marks = true }
                         SearchableChoicePicker(title: "Equipped title", value: $pokemon.title, choices: RibbonCatalog.shared.awardChoices(pokemon.ribbons), emptyLabel: "None", emptyID: "None")
                     }
                 }
@@ -79,7 +82,8 @@ struct AddPokemonView: View {
                     }
                 }
                 .sheet(isPresented: $speciesPicker) { SpeciesPicker(selection: $pokemon.species) }
-                .sheet(isPresented: $awards) { AwardPicker(selection: $pokemon.ribbons) }
+                .sheet(isPresented: $awards) { RibbonManager(pokemon: $pokemon, entryTitle: "Add Pokémon") { awards = false } }
+                .sheet(isPresented: $marks) { AwardPicker(selection: $pokemon.ribbons) }
                 .onChange(of: pokemon.species) { _, _ in pokemon.gmax = false; pokemon.shadow = false }
                 .onChange(of: pokemon.ribbons) { _, owned in if !owned.contains(pokemon.title) { pokemon.title = "None" } }
         }

@@ -3,6 +3,154 @@ import SwiftUI
 import UIKit
 @testable import RibbonPassport
 
+final class RibbonManagerTests: XCTestCase {
+    private let rules = RibbonRules.shared
+    func testCatalogueAndPageSizeCycle() {
+        XCTAssertEqual(rules.ribbonIDs.count, 106)
+        XCTAssertFalse(rules.ribbonIDs.contains { $0.hasSuffix("-mark") })
+        XCTAssertEqual(RibbonPageSize.options, [12, 16, 32])
+        XCTAssertEqual([RibbonPageSize.next(12), RibbonPageSize.next(16), RibbonPageSize.next(32)], [16, 32, 12])
+        XCTAssertEqual(RibbonPageSize.validated(8), 12)
+        XCTAssertEqual(RibbonPageSize.validated(24), 12)
+    }
+    func testReachableGamesRespectSpeciesFormsAndOneWayTransfers() {
+        let metagross = RibbonPokemon(species: "metagross", currentgame: "diamond", origingame: "ruby")
+        let games = rules.compatibleGames(for: metagross)
+        XCTAssertFalse(games.contains("red")); XCTAssertFalse(games.contains("ruby"))
+        XCTAssertTrue(games.contains("sw")); XCTAssertTrue(games.contains("bd"))
+        let home = RibbonPokemon(species: "metagross", currentgame: "home")
+        XCTAssertFalse(rules.compatibleGames(for: home).contains("diamond"))
+        let cosplay = RibbonPokemon(species: "pikachu-cosplay", currentgame: "as")
+        XCTAssertEqual(Set(rules.compatibleGames(for: cosplay)), Set(["or", "as"]))
+        let spinda = RibbonPokemon(species: "spinda", currentgame: "bd", origingame: "bd")
+        XCTAssertEqual(Set(rules.compatibleGames(for: spinda)), Set(["bd", "sp"]))
+    }
+    func testMythicalAndLegendaryRestrictionsDependOnTheActualGame() {
+        let mew = RibbonPokemon(species: "mew", currentgame: "bd", origingame: "emerald")
+        let ray = RibbonPokemon(species: "rayquaza", currentgame: "bd", origingame: "emerald")
+        XCTAssertEqual(rules.category(for: mew), "MYTHICAL"); XCTAssertEqual(rules.category(for: ray), "LEGENDARY")
+        XCTAssertEqual(rules.category(for: RibbonPokemon(species: "articuno-galar")), "LEGENDARY")
+        XCTAssertNil(rules.category(for: RibbonPokemon(species: "metagross")))
+        XCTAssertNotNil(rules.unavailableReason("tower-master-ribbon", game: "bd", pokemon: mew))
+        XCTAssertNil(rules.unavailableReason("tower-master-ribbon", game: "sw", pokemon: mew))
+        XCTAssertTrue(rules.earningGames(for: "tower-master-ribbon", pokemon: ray).contains("sw"))
+        XCTAssertFalse(rules.earningGames(for: "tower-master-ribbon", pokemon: ray).contains("bd"))
+        let alola = RibbonPokemon(species: "mew", currentgame: "sun")
+        XCTAssertNotNil(rules.unavailableReason("battle-tree-great-ribbon", game: "sun", pokemon: alola))
+        XCTAssertNil(rules.unavailableReason("battle-tree-great-ribbon", game: "usun", pokemon: alola))
+    }
+    func testLastChanceDependsOnCompatibleLaterGames() {
+        let mew = RibbonPokemon(species: "mew", currentgame: "as", origingame: "emerald")
+        let victini = RibbonPokemon(species: "victini", currentgame: "as", origingame: "black")
+        XCTAssertFalse(rules.isLastChance("coolness-master-ribbon", game: "as", pokemon: mew))
+        XCTAssertTrue(rules.laterGames(for: "coolness-master-ribbon", after: "as", pokemon: mew).contains("bd"))
+        XCTAssertTrue(rules.isLastChance("coolness-master-ribbon", game: "as", pokemon: victini))
+        let restricted = RibbonPokemon(species: "rayquaza", currentgame: "emerald", origingame: "emerald", currentlevel: 50)
+        XCTAssertFalse(rules.isLastChance("winning-ribbon", game: "emerald", pokemon: restricted))
+    }
+    func testRecordUsesOneSpecificGameAndOwnedCannotBeOverwritten() throws {
+        var p = RibbonPokemon(species: "metagross", currentgame: "bd", origingame: "emerald")
+        XCTAssertTrue(p.recordRibbon("effort-ribbon", game: "bd"))
+        XCTAssertEqual(p.awards(earnedInGame: "bd"), ["effort-ribbon"])
+        XCTAssertTrue(p.awards(earnedInGame: "sp").isEmpty)
+        XCTAssertFalse(p.recordRibbon("effort-ribbon", game: "sp"))
+        XCTAssertEqual(p.earnedGames?["effort-ribbon"], "bd")
+        XCTAssertTrue(rules.earningGames(for: "effort-ribbon", pokemon: p).isEmpty)
+        p.title = "effort-ribbon"; p.titleText = "the Once Well-Trained"
+        let before = p
+        p.removeAward("effort-ribbon")
+        XCTAssertFalse(p.ribbons.contains("effort-ribbon")); XCTAssertNil(p.earnedGames?["effort-ribbon"])
+        XCTAssertNil(p.earnedGenerations?["effort-ribbon"]); XCTAssertEqual(p.title, "None")
+        XCTAssertTrue(p.recordRibbon("effort-ribbon", game: "sp"))
+        XCTAssertEqual(p.earnedGames?["effort-ribbon"], "sp")
+        p = before
+        XCTAssertEqual(p.earnedGames?["effort-ribbon"], "bd"); XCTAssertEqual(p.title, "effort-ribbon")
+        let restored = try JSONDecoder().decode(RibbonPokemon.self, from: JSONEncoder().encode(p))
+        XCTAssertEqual(restored, p)
+    }
+    func testOldGenerationLocationsRemainUnassignedToAGameAndKeepMemoryCounts() throws {
+        var p = try XCTUnwrap(SharedStore.demo().pokemon.first { $0.species == "rayquaza" })
+        let before = RibbonCatalog.shared.awards(for: p)
+        let legacy = try XCTUnwrap(p.ribbons.first { p.earnedGenerations?[$0] == 3 })
+        XCTAssertNil(p.earnedGames)
+        XCTAssertTrue(p.earningLocation(legacy).contains("Game not set"))
+        XCTAssertTrue(p.awards(earnedInGame: "ruby").isEmpty)
+        p.assignAward(legacy, game: "ruby")
+        XCTAssertEqual(p.earnedGames?[legacy], "ruby")
+        XCTAssertTrue(p.awards(earnedInGame: "ruby").contains(legacy))
+        XCTAssertEqual(RibbonCatalog.shared.awards(for: p), before)
+        XCTAssertTrue(p.recordedVisits.contains { $0.game == p.origingame })
+        XCTAssertTrue(p.recordedVisits.contains { $0.game == p.currentgame })
+    }
+    func testEventMemoryShadowAndLevelRestrictions() {
+        var p = RibbonPokemon(species: "metagross", currentgame: "emerald", origingame: "colosseum", currentlevel: 51)
+        XCTAssertNotNil(rules.unavailableReason("winning-ribbon", game: "emerald", pokemon: p))
+        p.currentlevel = 50
+        XCTAssertNil(rules.unavailableReason("winning-ribbon", game: "emerald", pokemon: p))
+        XCTAssertFalse(p.recordRibbon("contest-memory-ribbon", game: "as"))
+        XCTAssertFalse(p.recordRibbon("world-ribbon", game: "emerald"))
+        XCTAssertNotNil(rules.unavailableReason("national-ribbon", game: "colosseum", pokemon: p))
+        p.shadow = true
+        XCTAssertNil(rules.unavailableReason("national-ribbon", game: "colosseum", pokemon: p))
+        var voiced = RibbonPokemon(species: "mew", currentgame: "bd", currentlevel: 100)
+        XCTAssertNotNil(rules.unavailableReason("footprint-ribbon", game: "bd", pokemon: voiced))
+        voiced.metLevel = 70
+        XCTAssertNil(rules.unavailableReason("footprint-ribbon", game: "bd", pokemon: voiced))
+        voiced.metLevel = 71
+        XCTAssertNotNil(rules.unavailableReason("footprint-ribbon", game: "bd", pokemon: voiced))
+    }
+    func testEarningLocationsStayOutOfWebsiteExportsButMetLevelRoundTrips() throws {
+        var p = RibbonPokemon(species: "metagross", currentgame: "bd", origingame: "emerald", language: "en", ball: "poke")
+        p.metLevel = 50; XCTAssertTrue(p.recordRibbon("effort-ribbon", game: "bd"))
+        let data = try RibbonsGuideExporter.export([p])
+        let root = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        let entry = try XCTUnwrap((root["pokemon"] as? [[String: Any]])?.first)
+        XCTAssertNil(entry["earnedGames"]); XCTAssertNil(entry["earnedGenerations"])
+        XCTAssertEqual(try BackupImporter.parse(data).first?.metLevel, 50)
+    }
+    @MainActor func testNativeManagerRendersEveryPageSizeAndOwnedDrawer() throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
+        let previous = scene.windows.first { $0.isKeyWindow }
+        let window = UIWindow(windowScene: scene)
+        let controller = UIHostingController(rootView: AnyView(EmptyView()))
+        window.rootViewController = controller
+        let preferenceName = "RibbonManager.RenderTests." + UUID().uuidString
+        let preferences = try XCTUnwrap(UserDefaults(suiteName: preferenceName))
+        let previews = FileManager.default.temporaryDirectory.appendingPathComponent("RibbonManager-Previews")
+        try FileManager.default.createDirectory(at: previews, withIntermediateDirectories: true)
+        print("Ribbon manager preview directory: \(previews.path)")
+        defer { controller.rootView = AnyView(EmptyView()); window.isHidden = true; window.rootViewController = nil; previous?.makeKey(); preferences.removePersistentDomain(forName: preferenceName) }
+        var p = RibbonPokemon(species: "mew", currentgame: "bd", origingame: "emerald", currentlevel: 100, metLevel: 50)
+        for id in ["effort-ribbon", "alert-ribbon", "shock-ribbon"] { XCTAssertTrue(p.recordRibbon(id, game: "bd")) }
+        for width in [320.0, 390.0] {
+            for count in RibbonPageSize.options {
+                for dark in [false, true] {
+                    preferences.set(count, forKey: "ribbons.pageSize")
+                    window.frame = CGRect(x: 0, y: 0, width: width, height: 844)
+                    let view = RibbonManager(pokemon: .constant(p), allGames: true, earnableOnly: false) {}.defaultAppStorage(preferences).environment(\.colorScheme, dark ? .dark : .light)
+                    controller.rootView = AnyView(view.id("\(width)-\(count)-\(dark)"))
+                    window.makeKeyAndVisible()
+                    controller.view.frame = window.bounds; controller.view.layoutIfNeeded()
+                    RunLoop.main.run(until: Date().addingTimeInterval(0.15))
+                    let image = UIGraphicsImageRenderer(size: window.bounds.size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+                    XCTAssertEqual(image.size.width, width)
+                    let attachment = XCTAttachment(image: image); attachment.name = "ribbons-\(count)-\(Int(width))-\(dark ? "dark" : "light")"; attachment.lifetime = .keepAlways; add(attachment)
+                    try image.pngData()?.write(to: previews.appendingPathComponent("ribbons-\(count)-\(Int(width))-\(dark ? "dark" : "light").png"))
+                }
+            }
+        }
+        controller.rootView = AnyView(RibbonManager(pokemon: .constant(p), initiallyOwned: true) {}.id("owned"))
+        controller.view.layoutIfNeeded(); RunLoop.main.run(until: Date().addingTimeInterval(0.5))
+        let ownedImage = UIGraphicsImageRenderer(size: window.bounds.size).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+        let ownedAttachment = XCTAttachment(image: ownedImage); ownedAttachment.name = "ribbons-owned-drawer"; ownedAttachment.lifetime = .keepAlways; add(ownedAttachment)
+        try ownedImage.pngData()?.write(to: previews.appendingPathComponent("ribbons-owned-drawer.png"))
+        controller.rootView = AnyView(RibbonGamePicker(pokemon: p, selected: "bd") { _ in }.id("game-picker"))
+        controller.view.layoutIfNeeded(); RunLoop.main.run(until: Date().addingTimeInterval(0.3))
+        let pickerImage = UIGraphicsImageRenderer(size: window.bounds.size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+        try pickerImage.pngData()?.write(to: previews.appendingPathComponent("ribbons-game-picker.png"))
+    }
+}
+
 final class ImportTests: XCTestCase {
     func testShowdownNicknameGenderAndShiny() throws {
         let text = "Sparky (Pikachu) (F) @ Light Ball\nAbility: Static\nLevel: 50\nShiny: Yes\n- Thunderbolt\n\nLugia @ Leftovers\n- Roost"
@@ -537,6 +685,50 @@ final class NavigationAndSearchTests: XCTestCase {
 }
 
 final class GridAlbumExportTests: XCTestCase {
+    func testPartyDropSwapsWhenFullAndRejectsOtherSections() throws {
+        let ids = (0..<7).map { "party-drag-\($0)" }
+        let records = ids.map { RibbonPokemon(id: $0, species: "pikachu") } + [RibbonPokemon(id: "competitive-drag", species: "eevee", showdownSet: ShowdownSet())]
+        var box = PCBox(id: "party-drag-box"); box.slots[0] = ids[0]
+        var snapshot = CollectionSnapshot(pokemon: records, storage: StorageLayout(boxes: [box], partyIDs: Array(ids.dropFirst())))
+        snapshot.organizeSections()
+        XCTAssertTrue(snapshot.movePokemonToParty(ids[0], in: .ribbon, slot: 4))
+        XCTAssertEqual(snapshot.storage?.partyIDs[4], ids[0])
+        XCTAssertEqual(snapshot.storage?.boxes[0].slots[0], ids[5])
+        XCTAssertEqual(snapshot.storage?.partyIDs.count, 6)
+        let before = snapshot.storage
+        XCTAssertFalse(snapshot.movePokemonToParty("competitive-drag", in: .ribbon, slot: 0))
+        XCTAssertFalse(snapshot.movePokemonToParty(ids[0], in: .ribbon, slot: 6))
+        XCTAssertEqual(snapshot.storage, before)
+        let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
+        XCTAssertEqual(restored.storage, snapshot.storage)
+    }
+    func testPartyReorderAndEmptyDropKeepUniqueCompactRecords() {
+        var box = PCBox(); box.slots[0] = "c"
+        var layout = StorageLayout(boxes: [box], partyIDs: ["a", "b"])
+        XCTAssertTrue(layout.moveToParty("a", slot: 1))
+        XCTAssertEqual(layout.partyIDs, ["b", "a"])
+        XCTAssertTrue(layout.moveToParty("c", slot: 5))
+        XCTAssertEqual(layout.partyIDs, ["b", "a", "c"])
+        XCTAssertNil(layout.boxes[0].slots[0])
+        XCTAssertTrue(layout.move("a", toBox: box.id, slot: 12))
+        XCTAssertEqual(layout.partyIDs, ["b", "c"])
+        XCTAssertEqual(layout.boxes[0].slots[12], "a")
+        XCTAssertFalse(layout.moveToParty("missing", slot: 0))
+    }
+    func testDragHitTestingUsesExactSlotFramesAndRejectsOutsideDrops() {
+        let frames: [PCSlotTarget: CGRect] = [
+            .box("first", 0): CGRect(x: 40, y: 100, width: 32, height: 30),
+            .box("first", 1): CGRect(x: 72, y: 100, width: 32, height: 30),
+            .party(0): CGRect(x: 0, y: 100, width: 35, height: 31),
+            .page(1): CGRect(x: 280, y: 40, width: 33, height: 44)
+        ]
+        XCTAssertEqual(PCSlotTarget.hit(at: CGPoint(x: 71.9, y: 115), frames: frames), .box("first", 0))
+        XCTAssertEqual(PCSlotTarget.hit(at: CGPoint(x: 72, y: 115), frames: frames), .box("first", 1))
+        XCTAssertEqual(PCSlotTarget.hit(at: CGPoint(x: 18, y: 115), frames: frames), .party(0))
+        XCTAssertEqual(PCSlotTarget.hit(at: CGPoint(x: 300, y: 62), frames: frames), .page(1))
+        XCTAssertNil(PCSlotTarget.hit(at: CGPoint(x: 37, y: 115), frames: frames))
+        XCTAssertNil(PCSlotTarget.hit(at: CGPoint(x: 200, y: 600), frames: frames))
+    }
     func testGridMatchesSunMoonArtworkTileBoundaries() throws {
         XCTAssertEqual(PCGridMetrics.columns, 6); XCTAssertEqual(PCGridMetrics.rows, 5)
         XCTAssertEqual(PCGridMetrics.gridWidth / Double(PCGridMetrics.columns), 32)

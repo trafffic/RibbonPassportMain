@@ -121,6 +121,7 @@ extension CollectionSnapshot {
         entry.nickname = entry.nickname.trimmingCharacters(in: .whitespacesAndNewlines)
         entry.ribbons = catalog.chronologicalAwards(entry.ribbons.filter { catalog.ribbons[$0] != nil })
         entry.earnedGenerations = entry.earnedGenerations?.filter { entry.ribbons.contains($0.key) }
+        entry.earnedGames = entry.earnedGames?.filter { entry.ribbons.contains($0.key) }
         if entry.title != "None" && !entry.ribbons.contains(entry.title) { entry.title = "None"; entry.titleText = "" }
         let kind: TeamKind = entry.showdownSet == nil ? .ribbon : .showdown
         var layout = storage(for: kind)
@@ -216,6 +217,14 @@ enum AlbumGrouping: String, CaseIterable, Identifiable {
 }
 
 extension CollectionSnapshot {
+    @discardableResult mutating func movePokemonToParty(_ id: String, in kind: TeamKind, slot: Int) -> Bool {
+        guard section(forPokemon: id) == kind else { return false }
+        var layout = storage(for: kind)
+        guard layout.moveToParty(id, slot: slot) else { return false }
+        if kind == .ribbon { storage = layout; selectedRibbonID = id } else { competitiveStorage = layout; selectedCompetitiveID = id }
+        selectedID = id
+        return true
+    }
     @discardableResult mutating func movePokemon(_ id: String, in kind: TeamKind, toBox boxID: String, slot: Int) -> Bool {
         guard section(forPokemon: id) == kind else { return false }
         var layout = storage(for: kind)

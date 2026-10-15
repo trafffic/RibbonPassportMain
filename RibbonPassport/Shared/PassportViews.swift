@@ -28,6 +28,9 @@ struct PassportTheme {
     var muted: Color { colour(["566C48", "526A79", "78684D", "626B80"], ["B5C9A3", "ABC5D5", "C4B397", "B9C2D8"]) }
     var board: Color { colour(["D2DFBA", "D5E7ED", "E4D6B7", "D9DDE8"], ["3C5132", "344E5B", "504329", "424B61"]) }
     var border: Color { colour(["9BAD80", "8DA9B5", "B3A078", "9DA6BC"], ["667D52", "60808F", "89734D", "68748E"]) }
+    var warningSurface: Color { Color(hex: dark ? "4D341F" : "F5DEB6") }
+    var warningInk: Color { Color(hex: dark ? "FFD38B" : "713709") }
+    var warningBorder: Color { Color(hex: dark ? "E5AC54" : "AC5C12") }
     var appearance: String { dark ? "dark" : "light" }
 }
 extension Color {

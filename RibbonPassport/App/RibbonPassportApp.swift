@@ -10,7 +10,30 @@ final class AppStore: ObservableObject {
     @Published var tab = 0
     @Published var openPokemonID: String?
     @Published var openTeamID: String?
-    init() { reload() }
+    static var interactionTesting: Bool {
+        #if DEBUG
+        return ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "1"
+        #else
+        return false
+        #endif
+    }
+    var preferences: UserDefaults { Self.interactionTesting ? UserDefaults(suiteName: "RibbonPassport.InteractionTests")! : .standard }
+    init() {
+        #if DEBUG
+        if Self.interactionTesting {
+            preferences.removePersistentDomain(forName: "RibbonPassport.InteractionTests")
+            preferences.set(true, forKey: "pc.ribbon.partyVisible")
+            let a = RibbonPokemon(id: "drag-a", species: "metagross", currentgame: "bd", origingame: "diamond")
+            let b = RibbonPokemon(id: "drag-b", species: "rayquaza", currentgame: "bd", origingame: "ruby")
+            let c = RibbonPokemon(id: "drag-c", species: "pikachu", currentgame: "sw", origingame: "sw")
+            var first = PCBox(id: "drag-box-a", name: "Box 01"); first.slots[0] = a.id; first.slots[1] = b.id
+            snapshot = CollectionSnapshot(pokemon: [a, b, c], selectedID: a.id, storage: StorageLayout(boxes: [first, PCBox(id: "drag-box-b", name: "Box 02")], partyIDs: [c.id]), selectedRibbonID: a.id)
+            snapshot.organizeSections()
+            return
+        }
+        #endif
+        reload()
+    }
     func reload() {
         do { var loaded = try SharedStore.load(); loaded.organizeSections(); snapshot = loaded; error = nil }
         catch { self.error = error.localizedDescription }
@@ -19,6 +42,7 @@ final class AppStore: ObservableObject {
         do {
             var next = value; next.updatedAt = Date()
             next.organizeSections()
+            if Self.interactionTesting { snapshot = next; error = nil; return }
             try SharedStore.save(next); snapshot = next; error = nil
             WidgetCenter.shared.reloadAllTimelines()
         } catch { self.error = error.localizedDescription }
@@ -42,6 +66,7 @@ final class AppStore: ObservableObject {
         guard let index = next.pokemon.firstIndex(where: { $0.id == pokemon.id }) else { return }
         var clean = pokemon
         clean.earnedGenerations = clean.earnedGenerations?.filter { clean.ribbons.contains($0.key) }
+        clean.earnedGames = clean.earnedGames?.filter { clean.ribbons.contains($0.key) }
         next.pokemon[index] = clean; commit(next)
     }
     func importBackup(_ url: URL) {
@@ -57,6 +82,8 @@ final class AppStore: ObservableObject {
                     incoming[index].id = prior.id
                     incoming[index].visits = prior.visits
                     incoming[index].earnedGenerations = prior.earnedGenerations?.filter { incoming[index].ribbons.contains($0.key) }
+                    incoming[index].earnedGames = prior.earnedGames?.filter { incoming[index].ribbons.contains($0.key) }
+                    if incoming[index].metLevel == nil { incoming[index].metLevel = prior.metLevel }
                     used.insert(prior.id)
                 } else { incoming[index].id = UUID().uuidString }
             }
@@ -99,6 +126,7 @@ struct RibbonPassportApp: App {
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store)
+                .defaultAppStorage(store.preferences)
                 .preferredColorScheme(store.snapshot.appearance == .automatic ? nil : store.snapshot.appearance == .dark ? .dark : .light)
                 .onOpenURL { url in
                     if url.scheme == "ribbonpassport", url.host == "pokemon" {
@@ -204,6 +232,7 @@ struct PokemonEditor: View {
     @Environment(\.colorScheme) private var scheme
     @State private var pokemon: RibbonPokemon
     @State private var awards = false
+    @State private var marks = false
     init(pokemon: RibbonPokemon) { _pokemon = State(initialValue: pokemon) }
     var body: some View {
         Form {
@@ -225,12 +254,13 @@ struct PokemonEditor: View {
                 Stepper("Level \(pokemon.currentlevel)", value: $pokemon.currentlevel, in: 1...100)
                 Toggle("Shiny", isOn: $pokemon.shiny)
                 Picker("Gender", selection: $pokemon.gender) { Text("Not specified").tag(""); Text("Male").tag("male"); Text("Female").tag("female") }
-                if pokemon.species == "lugia" || pokemon.species == "lugia-shadow" { Toggle("Shadow Lugia artwork", isOn: $pokemon.shadow) }
+                if RibbonRules.shared.species[pokemon.species]?.flags.contains(where: { ["colShadow", "xdShadow"].contains($0) }) == true { Toggle("Shadow Pokémon", isOn: $pokemon.shadow) }
                 if RibbonCatalog.shared.gmaxSpecies.contains(pokemon.species) { Toggle("Gigantamax factor", isOn: $pokemon.gmax) }
             }
             Section("Journey") {
                 GamePicker(title: "Current game", value: $pokemon.currentgame)
                 GamePicker(title: "Origin game", value: $pokemon.origingame)
+                RibbonMetLevelEditor(pokemon: $pokemon)
             }
             if let build = pokemon.showdownSet {
                 Section("Showdown build") {
@@ -246,7 +276,8 @@ struct PokemonEditor: View {
                 }
             }
             Section("Ribbons and marks") {
-                Button("Choose awards (\(pokemon.ribbons.count) saved)") { awards = true }
+                ManageRibbonsButton(pokemon: pokemon) { awards = true }
+                Button("Edit marks (\(pokemon.ribbons.filter { $0.hasSuffix("-mark") }.count))") { marks = true }
                 SearchableChoicePicker(title: "Equipped title", value: $pokemon.title,
                                        choices: RibbonCatalog.shared.awardChoices(pokemon.ribbons + (pokemon.title == "None" ? [] : [pokemon.title])), emptyLabel: "None", emptyID: "None").onChange(of: pokemon.title) { _, _ in pokemon.titleText = "" }
                 Text("The displayed total includes marks and uses Memory Ribbons from Gen 6 onward.").font(.caption).foregroundStyle(.secondary)
@@ -256,7 +287,8 @@ struct PokemonEditor: View {
             }
         }.navigationTitle(pokemon.displayName).navigationBarTitleDisplayMode(.inline)
             .toolbar { Button("Save") { store.update(pokemon); dismiss() }.fontWeight(.semibold) }
-            .sheet(isPresented: $awards) { AwardPicker(selection: $pokemon.ribbons) }
+            .sheet(isPresented: $awards) { RibbonManager(pokemon: $pokemon) { awards = false } }
+            .sheet(isPresented: $marks) { AwardPicker(selection: $pokemon.ribbons) }
     }
 }
 struct AwardPicker: View {
@@ -265,7 +297,7 @@ struct AwardPicker: View {
     @Environment(\.colorScheme) private var scheme
     @State private var search = ""
     private var matching: [String] {
-        RibbonCatalog.shared.chronologicalAwards(Array(RibbonCatalog.shared.ribbons.keys)).filter {
+        RibbonCatalog.shared.chronologicalAwards(Array(RibbonCatalog.shared.ribbons.keys)).filter { $0.hasSuffix("-mark") }.filter {
             search.isEmpty || RibbonCatalog.shared.awardPickerName($0).localizedCaseInsensitiveContains(search)
         }
     }
@@ -288,7 +320,7 @@ struct AwardPicker: View {
                         }
                     }
                 }
-            }.navigationTitle("Ribbons & marks").searchable(text: $search)
+            }.navigationTitle("Marks").searchable(text: $search)
                 .toolbar { Button("Done") { dismiss() } }
         }
     }

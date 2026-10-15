@@ -111,6 +111,8 @@ struct RibbonPokemon: Codable, Identifiable, Equatable {
     var showdownSet: ShowdownSet? = nil
     var visits: [JourneyVisit]? = nil
     var earnedGenerations: [String: Int]? = nil
+    var earnedGames: [String: String]? = nil
+    var metLevel: Int? = nil
     var language: String? = nil
     var ball: String? = nil
     var trainername: String? = nil
@@ -227,7 +229,7 @@ enum BackupImporter {
                 origingame: entry["origingame"] as? String ?? "", shadow: entry["shadow"] as? Bool ?? false,
                 gmax: entry["gmax"] as? Bool ?? false, currentlevel: max(1, min(100, level)),
                 title: safeTitle, titleText: (catalog.titles[safeTitle] ?? "").replacingOccurrences(of: "[Original Trainer]", with: trainer),
-                ribbons: Array(Set(ribbons)).sorted(), source: "ribbons.guide", language: entry["language"] as? String, ball: entry["ball"] as? String, trainername: entry["trainername"] as? String)
+                ribbons: Array(Set(ribbons)).sorted(), source: "ribbons.guide", metLevel: Int(String(describing: entry["metlevel"] ?? "")), language: entry["language"] as? String, ball: entry["ball"] as? String, trainername: entry["trainername"] as? String)
         }
     }
     private static func validID(_ value: String) -> Bool {

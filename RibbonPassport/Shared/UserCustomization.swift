@@ -11,7 +11,7 @@ extension RibbonPokemon {
     var recordedVisits: [JourneyVisit] {
         var seen = Set<String>()
         var result = (visits ?? []).filter { !$0.game.isEmpty && seen.insert($0.game).inserted }
-        for game in [origingame, currentgame] where !game.isEmpty {
+        for game in [origingame, currentgame] + (earnedGames ?? [:]).values.sorted() where !game.isEmpty {
             if !result.contains(where: { $0.game == game }) { result.append(JourneyVisit(id: "endpoint-" + game, game: game)) }
         }
         return result.sorted { CatalogOrder.gameIndex($0.game) < CatalogOrder.gameIndex($1.game) }
@@ -19,11 +19,15 @@ extension RibbonPokemon {
     func games(in generation: Int) -> [String] { recordedVisits.filter { $0.generation == generation }.map(\.game) }
     var visitedGenerations: [Int] { Array(Set(recordedVisits.map(\.generation).filter { $0 > 0 })).sorted() }
     func awards(earnedIn generation: Int) -> [String] {
-        RibbonCatalog.shared.ranked(ribbons.filter { earnedGenerations?[$0] == generation })
+        RibbonCatalog.shared.ranked(ribbons.filter {
+            if let game = earnedGames?[$0] { return RibbonCatalog.shared.gameInfo[game]?.gen == generation }
+            return earnedGenerations?[$0] == generation
+        })
     }
     mutating func assignAward(_ award: String, generation: Int?) {
         guard ribbons.contains(award) else { return }
         if earnedGenerations == nil { earnedGenerations = [:] }
+        earnedGames?[award] = nil
         earnedGenerations?[award] = generation
     }
 }
@@ -84,6 +88,24 @@ struct StorageLayout: Codable, Equatable {
         guard partyIDs.count < 6, boxes.contains(where: { $0.slots.contains(id) }) else { return false }
         for b in boxes.indices { for s in boxes[b].slots.indices where boxes[b].slots[s] == id { boxes[b].slots[s] = nil } }
         partyIDs.append(id); return true
+    }
+    /// Party records stay compact; occupied slots swap, including with a full party.
+    @discardableResult mutating func moveToParty(_ id: String, slot: Int) -> Bool {
+        guard (0..<6).contains(slot) else { return false }
+        if let source = partyIDs.firstIndex(of: id) {
+            if slot < partyIDs.count { partyIDs.swapAt(source, slot) }
+            else { partyIDs.remove(at: source); partyIDs.append(id) }
+            return true
+        }
+        guard let box = boxes.firstIndex(where: { $0.slots.contains(id) }),
+              let source = boxes[box].slots.firstIndex(of: id) else { return false }
+        if slot < partyIDs.count {
+            boxes[box].slots[source] = partyIDs[slot]; partyIDs[slot] = id
+        } else {
+            guard partyIDs.count < 6 else { return false }
+            boxes[box].slots[source] = nil; partyIDs.append(id)
+        }
+        return true
     }
     mutating func returnToBox(_ id: String) {
         guard partyIDs.contains(id) else { return }
@@ -265,7 +287,7 @@ enum RibbonsGuideExporter {
             let owned = RibbonCatalog.shared.chronologicalAwards(p.ribbons.filter { awards.contains($0) })
             let title = awards.contains(p.title) ? p.title : "None"
             let shiny: Any = p.shiny ? "star" as Any : false as Any
-            let entry: [String: Any] = [
+            var entry: [String: Any] = [
                 "species": species, "nickname": p.nickname, "gender": ["male", "female"].contains(p.gender) ? p.gender : "unknown",
                 "shiny": shiny, "currentlevel": String(max(1, min(100, p.currentlevel))),
                 "origingame": games.contains(p.origingame) ? p.origingame : "", "currentgame": games.contains(p.currentgame) ? p.currentgame : "",
@@ -273,6 +295,7 @@ enum RibbonsGuideExporter {
                 "ribbons": owned, "box": -1, "ball": ball, "language": language, "trainername": trainer,
                 "achievements": [String]()
             ]
+            if let level = p.metLevel, (1...100).contains(level) { entry["metlevel"] = String(level) }
             entries.append(entry)
         }
         let root: [String: Any] = ["fileVersion": 5, "lastModified": Int64(date.timeIntervalSince1970 * 1000), "settings": settings, "boxes": boxes, "pokemon": entries]

@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 extension AppStore {
     func editStorage(kind: TeamKind = .ribbon, _ change: (inout StorageLayout) -> Void) {
@@ -12,6 +11,11 @@ extension AppStore {
     @discardableResult func movePokemon(_ id: String, kind: TeamKind, boxID: String, slot: Int) -> Bool {
         var next = snapshot
         guard next.movePokemon(id, in: kind, toBox: boxID, slot: slot) else { return false }
+        commit(next); return error == nil
+    }
+    @discardableResult func movePokemonToParty(_ id: String, kind: TeamKind, slot: Int) -> Bool {
+        var next = snapshot
+        guard next.movePokemonToParty(id, in: kind, slot: slot) else { return false }
         commit(next); return error == nil
     }
     func savePreset(_ preset: WidgetPreset, makeDefault: Bool = false) {
@@ -50,6 +54,8 @@ extension AppStore {
 struct PCStorageView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     var kind: TeamKind = .ribbon
     @AppStorage private var partyVisible: Bool
     init(kind: TeamKind = .ribbon) {
@@ -64,11 +70,15 @@ struct PCStorageView: View {
     @State private var moving = false
     @State private var renaming = false
     @State private var boxName = ""
-    @State private var draggingID: String?
-    @State private var dropSlot: Int?
+    @State private var drag: PCSpriteDrag?
+    @State private var slotFrames: [PCSlotTarget: CGRect] = [:]
+    @State private var settlingTask: Task<Void, Never>?
+    @GestureState private var dragTouchActive = false
     @State private var hoveredPage: Int?
     @State private var exporting: PokemonExportSelection?
+    @State private var managingRibbons: AwardLocationSelection?
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
+    private var dragSpace: String { "pc-storage-" + kind.key }
     private var layout: StorageLayout { store.snapshot.storage(for: kind) }
     private var box: PCBox { layout.boxes[min(boxIndex, layout.boxes.count - 1)] }
     private var selection: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == store.snapshot.selectedPokemonID(for: kind) } }
@@ -127,7 +137,10 @@ struct PCStorageView: View {
                         Spacer()
                         Text("Box \(min(boxIndex + 1, layout.boxes.count)) / \(layout.boxes.count)")
                     }.font(PixelFont.font(13)).foregroundStyle(theme.muted)
-                    if let p = selection { selectionStrip(p) }
+                    if let p = selection {
+                        selectionStrip(p)
+                        if kind == .ribbon { ManageRibbonsButton(pokemon: p) { managingRibbons = AwardLocationSelection(id: p.id) } }
+                    }
                     if selection != nil {
                         HStack(spacing: 9) {
                             Button(moving ? "Cancel move" : "Move") { moving.toggle() }
@@ -141,7 +154,21 @@ struct PCStorageView: View {
                     }
                     if moving { Text("Select a destination slot").font(PixelFont.font(14)).foregroundStyle(theme.accent) }
                 }.padding(16)
-            }.background(theme.paper).toolbar(.hidden, for: .navigationBar)
+            }.scrollDisabled(drag != nil)
+                .overlay(alignment: .topLeading) { dragSprites.allowsHitTesting(false).accessibilityHidden(true) }
+                .coordinateSpace(name: dragSpace)
+                .onPreferenceChange(PCSlotFrames.self) { slotFrames = $0 }
+                .onChange(of: dragTouchActive) { _, active in
+                    if !active {
+                        Task { @MainActor in
+                            await Task.yield()
+                            if !dragTouchActive, drag?.settling == false { finishDrag(cancelled: true) }
+                        }
+                    }
+                }
+                .onChange(of: scenePhase) { _, phase in if phase != .active { clearDrag() } }
+                .onDisappear { clearDrag() }
+                .background(theme.paper).toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(item: pokemonRoute) { id in
                     if let p = pokemon(id), p.showdownSet != nil { CompetitiveBuildView(pokemonID: id) }
                     else { StampAlbumView(pokemonID: id) }
@@ -155,11 +182,13 @@ struct PCStorageView: View {
                 } }
                 .sheet(isPresented: $editingWallpaper) { BoxWallpaperEditor(box: box, settings: layout.wallpaper(for: box), kind: kind) }
                 .sheet(item: $exporting) { PokemonExportView(selection: $0) }
+                .sheet(item: $managingRibbons) { choice in StoredRibbonManager(pokemonID: choice.id, entryTitle: "PC box") }
                 .task(id: hoveredPage) {
-                    guard let direction = hoveredPage, draggingID != nil, layout.boxes.count > 1 else { return }
+                    guard let direction = hoveredPage, drag?.settling == false, layout.boxes.count > 1 else { return }
                     do { try await Task.sleep(for: .milliseconds(650)) } catch { return }
-                    guard !Task.isCancelled, hoveredPage == direction else { return }
+                    guard !Task.isCancelled, hoveredPage == direction, drag?.settling == false else { return }
                     boxIndex = (boxIndex + layout.boxes.count + direction) % layout.boxes.count
+                    drag?.target = nil
                 }
                 .sheet(isPresented: $showdown) { RetroShowdownImportView() }
                 .alert("Box name", isPresented: $renaming) {
@@ -183,7 +212,8 @@ struct PCStorageView: View {
         HStack(spacing: 5) {
             Button { boxIndex = (boxIndex + layout.boxes.count - 1) % layout.boxes.count } label: { Image(systemName: "chevron.left").frame(width: 33, height: 44) }
                 .accessibilityLabel("Previous box")
-                .onDrop(of: [UTType.text], isTargeted: pageTarget(-1)) { _ in false }
+                .background(hoveredPage == -1 ? theme.accent.opacity(0.35) : .clear)
+                .trackPCSlot(.page(-1), space: dragSpace)
             Button { boxName = box.name; renaming = true } label: {
                 Text(box.name.uppercased()).font(PixelFont.font(17)).lineLimit(1).minimumScaleFactor(0.65).frame(maxWidth: .infinity)
             }.accessibilityLabel("Rename \(box.name)")
@@ -193,7 +223,8 @@ struct PCStorageView: View {
             }.accessibilityIdentifier("pc.partyToggle").accessibilityValue(partyVisible ? "Shown" : "Hidden")
             Button { boxIndex = (boxIndex + 1) % layout.boxes.count } label: { Image(systemName: "chevron.right").frame(width: 33, height: 44) }
                 .accessibilityLabel("Next box")
-                .onDrop(of: [UTType.text], isTargeted: pageTarget(1)) { _ in false }
+                .background(hoveredPage == 1 ? theme.accent.opacity(0.35) : .clear)
+                .trackPCSlot(.page(1), space: dragSpace)
         }.buttonStyle(.plain).padding(.horizontal, 3).padding(.vertical, 5).background(theme.ink).foregroundStyle(theme.paper)
     }
     private var boxGrid: some View {
@@ -213,74 +244,56 @@ struct PCStorageView: View {
     }
     private func boxSlot(_ slot: Int, width: CGFloat, height: CGFloat) -> some View {
         let p = pokemon(box.slots[slot])
+        let target = PCSlotTarget.box(box.id, slot)
         return Button {
-            if moving, let id = selection?.id { move(id, slot: slot) }
+            if moving, let id = selection?.id { animateMove(id, to: target) }
             else if let p { store.choose(p.id) }
         } label: {
             ZStack(alignment: .bottomTrailing) {
                 Color.clear
                 if let p {
-                    PokemonSprite(pokemon: p, download: true).padding(4)
-                    if p.shiny { AssetImage(key: "shiny-" + theme.appearance).frame(width: 10, height: 10).padding(3) }
+                    PokemonSprite(pokemon: p, download: true).padding(4).opacity(spriteOpacity(p.id))
+                    if p.shiny { AssetImage(key: "shiny-" + theme.appearance).frame(width: 10, height: 10).padding(3).opacity(spriteOpacity(p.id)) }
                 }
             }.frame(width: width, height: height).contentShape(Rectangle())
-                .background(p?.id == selection?.id && p != nil ? theme.panel.opacity(0.28) : .clear)
+                .background(drag?.target == target ? theme.panel.opacity(0.35) : drag == nil && p?.id == selection?.id && p != nil ? theme.panel.opacity(0.28) : .clear)
                 .overlay {
-                    if dropSlot == slot || (p != nil && p?.id == selection?.id) {
-                        Rectangle().strokeBorder(dropSlot == slot ? theme.ink : theme.accent, lineWidth: 2)
+                    if drag?.target == target || (drag == nil && p != nil && p?.id == selection?.id) {
+                        Rectangle().strokeBorder(theme.accent, lineWidth: 2)
                     }
                 }
         }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty slot \(slot + 1)")
-            .contextMenu { if let p { pokemonMenu(p) } }
-            .onDrag {
-                guard let p else { return NSItemProvider() }
-                draggingID = p.id
-                return NSItemProvider(object: p.id as NSString)
-            } preview: {
-                if let p { PokemonSprite(pokemon: p).frame(width: 56, height: 56) }
-            }
-            .dropDestination(for: String.self) { ids, _ in
-                guard let id = ids.first, pokemon(id) != nil else { return false }
-                let moved = move(id, slot: slot); draggingID = nil; dropSlot = nil; hoveredPage = nil
-                return moved
-            } isTargeted: { targeted in
-                if targeted { dropSlot = slot } else if dropSlot == slot { dropSlot = nil }
-            }
-    }
-    private func pageTarget(_ direction: Int) -> Binding<Bool> {
-        Binding(get: { hoveredPage == direction }, set: { targeted in
-            if targeted { hoveredPage = direction } else if hoveredPage == direction { hoveredPage = nil }
-        })
+            .accessibilityIdentifier("pc.box.slot.\(slot)").accessibilityValue(p?.id ?? "Empty")
+            .trackPCSlot(target, space: dragSpace)
+            .highPriorityGesture(spriteDrag(pokemon: p, source: target), including: p != nil || drag != nil ? .all : .none)
+            .accessibilityHint("Drag to move, or use Move below the box")
     }
     private var partyBar: some View {
         VStack(spacing: 4) {
             Text("PARTY").font(PixelFont.font(10))
             ForEach(0..<6, id: \.self) { i in
                 let p = i < layout.partyIDs.count ? pokemon(layout.partyIDs[i]) : nil
+                let target = PCSlotTarget.party(i)
                 Button {
-                    if let p { store.choose(p.id) }
+                    if moving, let id = selection?.id { animateMove(id, to: target) }
+                    else if let p { store.choose(p.id) }
                     else if let id = selection?.id { store.editStorage(kind: kind) { _ = $0.moveToParty(id) } }
                 } label: {
                     Group {
-                        if let p { PokemonSprite(pokemon: p, download: true) }
+                        if let p { PokemonSprite(pokemon: p, download: true).opacity(spriteOpacity(p.id)) }
                         else { Text("·").foregroundStyle(theme.muted) }
                     }.frame(width: 35, height: 31).background(theme.board)
-                        .overlay(Rectangle().stroke(theme.border, style: StrokeStyle(lineWidth: 1, dash: [2])))
+                        .overlay(Rectangle().stroke(drag?.target == target ? theme.accent : theme.border, style: StrokeStyle(lineWidth: drag?.target == target ? 2 : 1, dash: drag?.target == target ? [] : [2])))
                 }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty party slot")
-                    .contextMenu { if let p { Button("Return to box") { store.editStorage(kind: kind) { $0.returnToBox(p.id) } }; pokemonMenu(p) } }
-                    .onDrag {
-                        guard let p else { return NSItemProvider() }
-                        draggingID = p.id; return NSItemProvider(object: p.id as NSString)
-                    }
-                    .dropDestination(for: String.self) { ids, _ in
-                        guard let id = ids.first, pokemon(id) != nil, layout.partyIDs.count < 6 else { return false }
-                        store.editStorage(kind: kind) { _ = $0.moveToParty(id) }; return true
-                    }
+                    .accessibilityIdentifier("pc.party.slot.\(i)").accessibilityValue(p?.id ?? "Empty")
+                    .trackPCSlot(target, space: dragSpace)
+                    .highPriorityGesture(spriteDrag(pokemon: p, source: target), including: p != nil || drag != nil ? .all : .none)
             }
         }.padding(5).background(theme.panel).overlay(Rectangle().stroke(theme.border, lineWidth: 1))
     }
     @ViewBuilder private func pokemonMenu(_ p: RibbonPokemon) -> some View {
         Button(kind == .ribbon ? "Open passport" : "Open build") { store.openPokemonID = p.id }
+        if layout.partyIDs.contains(p.id) { Button("Return to box") { store.editStorage(kind: kind) { $0.returnToBox(p.id) } } }
         Button("Add to party") { store.editStorage(kind: kind) { _ = $0.moveToParty(p.id) }; partyVisible = true }
             .disabled(layout.partyIDs.count >= 6 || layout.partyIDs.contains(p.id))
         Button("Export Pokémon", systemImage: "square.and.arrow.up") {
@@ -300,11 +313,165 @@ struct PCStorageView: View {
                 }
             }
             Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
+            Menu { pokemonMenu(p) } label: { Image(systemName: "ellipsis").frame(width: 32, height: 44) }.accessibilityLabel("Pokémon actions")
         }.retroPanel(padding: 9)
     }
-    @discardableResult private func move(_ id: String, slot: Int) -> Bool {
-        let moved = store.movePokemon(id, kind: kind, boxID: box.id, slot: slot)
-        if moved { moving = false }; return moved
+    @ViewBuilder private var dragSprites: some View {
+        if let drag {
+            if let displaced = drag.displaced {
+                PCSlidingSprite(pokemon: displaced, diameter: drag.diameter, start: drag.displacedPosition, end: drag.sourceFrame.center, reduceMotion: reduceMotion)
+            }
+            PokemonSprite(pokemon: drag.pokemon).frame(width: drag.diameter, height: drag.diameter)
+                .shadow(color: theme.ink.opacity(0.16), radius: 1, y: 2)
+                .position(x: drag.position.x, y: drag.position.y - (drag.settling ? 0 : 2))
+                .accessibilityHidden(true)
+        }
+    }
+    private func spriteOpacity(_ id: String) -> Double {
+        if drag?.pokemon.id == id { return 0.08 }
+        if drag?.displaced?.id == id { return 0 }
+        return 1
+    }
+    private func spriteDrag(pokemon p: RibbonPokemon?, source: PCSlotTarget) -> some Gesture {
+        DragGesture(minimumDistance: 4, coordinateSpace: .named(dragSpace))
+            .updating($dragTouchActive) { _, active, _ in active = true }
+            .onChanged { value in
+                guard drag?.settling != true else { return }
+                if drag == nil {
+                    guard let p, let frame = slotFrames[source] else { return }
+                    drag = PCSpriteDrag(pokemon: p, source: source, sourceFrame: frame, position: value.location)
+                }
+                drag?.position = value.location
+                updateDragTarget(at: value.location)
+            }
+            .onEnded { value in updateDragTarget(at: value.location); finishDrag() }
+    }
+    private func updateDragTarget(at point: CGPoint) {
+        guard let drag, !drag.settling else { return }
+        let target = PCSlotTarget.hit(at: point, frames: slotFrames)
+        if case .page(let direction) = target, layout.boxes.count > 1 {
+            hoveredPage = direction; self.drag?.target = nil
+        } else {
+            hoveredPage = nil
+            self.drag?.target = target.flatMap { canMove(drag.pokemon.id, to: $0) ? $0 : nil }
+        }
+    }
+    private func canMove(_ id: String, to target: PCSlotTarget) -> Bool {
+        guard store.snapshot.section(forPokemon: id) == kind else { return false }
+        var trial = layout
+        switch target {
+        case .box(let box, let slot): return trial.move(id, toBox: box, slot: slot)
+        case .party(let slot): return trial.moveToParty(id, slot: slot)
+        case .page: return false
+        }
+    }
+    @discardableResult private func commitMove(_ id: String, to target: PCSlotTarget) -> Bool {
+        switch target {
+        case .box(let box, let slot): return store.movePokemon(id, kind: kind, boxID: box, slot: slot)
+        case .party(let slot): return store.movePokemonToParty(id, kind: kind, slot: slot)
+        case .page: return false
+        }
+    }
+    private func animateMove(_ id: String, to target: PCSlotTarget) {
+        guard drag == nil, let p = pokemon(id), canMove(id, to: target) else { return }
+        let source: PCSlotTarget?
+        if let party = layout.partyIDs.firstIndex(of: id) { source = .party(party) }
+        else if let box = layout.boxes.first(where: { $0.slots.contains(id) }), let slot = box.slots.firstIndex(of: id) { source = .box(box.id, slot) }
+        else { source = nil }
+        guard let source, let frame = slotFrames[source] else {
+            if commitMove(id, to: target) { moving = false }
+            return
+        }
+        drag = PCSpriteDrag(pokemon: p, source: source, sourceFrame: frame, position: frame.center)
+        drag?.target = target
+        finishDrag()
+    }
+    private func finishDrag(cancelled: Bool = false) {
+        guard let session = drag, !session.settling else { return }
+        hoveredPage = nil
+        let target = cancelled ? nil : session.target
+        let destination = target.flatMap { slotFrames[$0] }
+        let willMove = target != nil && target != session.source && destination != nil && canMove(session.pokemon.id, to: target!)
+        if !willMove, case .box(let sourceBox, _) = session.source,
+           let index = layout.boxes.firstIndex(where: { $0.id == sourceBox }) { boxIndex = index }
+        drag?.settling = true
+        if willMove, let target, let destination {
+            let displaced: String?
+            switch target {
+            case .box(let boxID, let slot): displaced = layout.boxes.first(where: { $0.id == boxID })?.slots[slot]
+            case .party(let slot): displaced = slot < layout.partyIDs.count ? layout.partyIDs[slot] : nil
+            case .page: displaced = nil
+            }
+            if let displaced, displaced != session.pokemon.id {
+                drag?.displaced = pokemon(displaced); drag?.displacedPosition = destination.center
+            }
+        }
+        let animation: Animation? = reduceMotion ? nil : .timingCurve(0.2, 0.7, 0.25, 1, duration: 0.14)
+        withAnimation(animation) {
+            drag?.position = willMove ? destination!.center : session.sourceFrame.center
+        }
+        settlingTask = Task { @MainActor in
+            if !reduceMotion { do { try await Task.sleep(for: .milliseconds(140)) } catch { return } }
+            guard !Task.isCancelled, drag?.pokemon.id == session.pokemon.id else { return }
+            if willMove, let target {
+                if commitMove(session.pokemon.id, to: target) { moving = false }
+                else {
+                    if case .box(let sourceBox, _) = session.source,
+                       let index = layout.boxes.firstIndex(where: { $0.id == sourceBox }) { boxIndex = index }
+                    withAnimation(animation) { drag?.position = session.sourceFrame.center; drag?.displaced = nil }
+                    if !reduceMotion { do { try await Task.sleep(for: .milliseconds(140)) } catch { return } }
+                }
+            }
+            clearDrag()
+        }
+    }
+    private func clearDrag() {
+        settlingTask?.cancel(); settlingTask = nil; drag = nil; hoveredPage = nil
+    }
+}
+
+enum PCSlotTarget: Hashable {
+    case box(String, Int), party(Int), page(Int)
+    static func hit(at point: CGPoint, frames: [Self: CGRect]) -> Self? {
+        frames.first { !$0.value.isEmpty && $0.value.contains(point) }?.key
+    }
+}
+private struct PCSlotFrames: PreferenceKey {
+    static var defaultValue: [PCSlotTarget: CGRect] { [:] }
+    static func reduce(value: inout [PCSlotTarget: CGRect], nextValue: () -> [PCSlotTarget: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, next in next })
+    }
+}
+private extension View {
+    func trackPCSlot(_ target: PCSlotTarget, space: String) -> some View {
+        background {
+            GeometryReader { geometry in Color.clear.preference(key: PCSlotFrames.self, value: [target: geometry.frame(in: .named(space))]) }
+        }
+    }
+}
+private extension CGRect { var center: CGPoint { CGPoint(x: midX, y: midY) } }
+private struct PCSpriteDrag {
+    var pokemon: RibbonPokemon
+    var source: PCSlotTarget
+    var sourceFrame: CGRect
+    var position: CGPoint
+    var target: PCSlotTarget?
+    var settling = false
+    var displaced: RibbonPokemon?
+    var displacedPosition = CGPoint.zero
+    var diameter: CGFloat { min(40, min(sourceFrame.width, sourceFrame.height) - 4) }
+}
+private struct PCSlidingSprite: View {
+    var pokemon: RibbonPokemon
+    var diameter: CGFloat
+    var start: CGPoint
+    var end: CGPoint
+    var reduceMotion: Bool
+    @State private var landed = false
+    var body: some View {
+        PokemonSprite(pokemon: pokemon).frame(width: diameter, height: diameter)
+            .position(landed ? end : start)
+            .onAppear { withAnimation(reduceMotion ? nil : .timingCurve(0.2, 0.7, 0.25, 1, duration: 0.14)) { landed = true } }
     }
 }
 
@@ -320,6 +487,7 @@ struct StampAlbumView: View {
     @State private var editing = false
     @State private var editingVisits = false
     @State private var selectedAward: AwardLocationSelection?
+    @State private var managingRibbons = false
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: p?.currentgame ?? "") }
     var body: some View {
@@ -340,6 +508,7 @@ struct StampAlbumView: View {
                         endpoint("ORIGIN", game: p.origingame)
                         endpoint("CURRENT", game: p.currentgame)
                     }.retroPanel()
+                    ManageRibbonsButton(pokemon: p) { managingRibbons = true }
                     RetroHeading(title: "Stamp album", value: grouping == .generations ? "\(p.visitedGenerations.count) generations" : "\(p.recordedVisits.count) games")
                     Picker("Album view", selection: $grouping) {
                         ForEach(AlbumGrouping.allCases) { Text($0.name).tag($0) }
@@ -380,7 +549,8 @@ struct StampAlbumView: View {
                     }
                     if active > 0 {
                         VStack(alignment: .leading, spacing: 12) {
-                            RetroHeading(title: "Generation \(active.roman)", value: "\(p.awards(earnedIn: active).count) earned")
+                            let earned = grouping == .games ? p.awards(earnedInGame: activeGame) : p.awards(earnedIn: active)
+                            RetroHeading(title: grouping == .games ? RibbonCatalog.shared.compactGameName(activeGame) : "Generation \(active.roman)", value: "\(earned.count) earned")
                             ForEach(grouping == .games ? [activeGame] : p.games(in: active), id: \.self) { game in
                                 HStack(spacing: 8) {
                                     GameMascot(game: game, size: 25)
@@ -393,19 +563,18 @@ struct StampAlbumView: View {
                                 }
                             }
                             Divider()
-                            if p.awards(earnedIn: active).isEmpty { Text("No ribbons assigned").font(PixelFont.font(15)).foregroundStyle(theme.muted) }
+                            if earned.isEmpty { Text("No ribbons assigned").font(PixelFont.font(15)).foregroundStyle(theme.muted) }
                             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 6), spacing: 8) {
-                                ForEach(p.awards(earnedIn: active), id: \.self) { id in
+                                ForEach(earned, id: \.self) { id in
                                     Button { selectedAward = AwardLocationSelection(id: id) } label: {
                                         AssetImage(key: "award-" + id).frame(height: 34).padding(4).frame(maxWidth: .infinity).background(theme.board)
                                     }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.ribbons[id] ?? id)
                                 }
                             }
-                            Button("Assign / move a ribbon") { selectedAward = AwardLocationSelection(id: p.ribbons.first ?? "") }
-                                .buttonStyle(RetroAction(prominent: true)).disabled(p.ribbons.isEmpty)
+                            Button("Manage ribbons") { managingRibbons = true }.buttonStyle(RetroAction(prominent: true))
                         }.retroPanel()
                     }
-                    let unspecified = p.ribbons.filter { p.earnedGenerations?[$0] == nil }.count
+                    let unspecified = p.ownedRibbonIDs.filter { p.earnedGames?[$0] == nil }.count
                     RetroHeading(title: "Original awards", value: "\(p.ribbons.count) · \(unspecified) unassigned")
                     if !p.ribbons.isEmpty {
                         Text("Memory Ribbons combine older awards in the current game.").font(PixelFont.font(13)).foregroundStyle(theme.muted)
@@ -426,6 +595,7 @@ struct StampAlbumView: View {
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
             .sheet(isPresented: $editing) { if let p { NavigationStack { PokemonEditor(pokemon: p) }.font(PixelFont.font(16)) } }
             .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
+            .sheet(isPresented: $managingRibbons) { StoredRibbonManager(pokemonID: pokemonID) }
             .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }
     }
     private func endpoint(_ title: String, game: String) -> some View {
@@ -442,34 +612,8 @@ struct StampAlbumView: View {
 struct AwardLocationEditor: View {
     var pokemonID: String
     var initialAward: String
-    @EnvironmentObject private var store: AppStore
-    @Environment(\.dismiss) private var dismiss
-    @State private var award = ""
-    @State private var generation = 0
-    private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     var body: some View {
-        NavigationStack {
-            Form {
-                if let p {
-                    SearchableChoicePicker(title: "Ribbon", value: $award, choices: RibbonCatalog.shared.awardChoices(p.ribbons)).onChange(of: award) { _, id in generation = p.earnedGenerations?[id] ?? 0 }
-                    if !award.isEmpty { AssetImage(key: "award-" + award).frame(height: 64).frame(maxWidth: .infinity) }
-                    Picker("Earned in", selection: $generation) {
-                        Text("Not specified").tag(0)
-                        ForEach(p.visitedGenerations, id: \.self) { gen in Text("Generation \(gen.roman)").tag(gen) }
-                    }
-                }
-            }.navigationTitle("Ribbon location").font(PixelFont.font(17))
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
-                            if var p { p.assignAward(award, generation: generation == 0 ? nil : generation); store.update(p) }
-                            if store.error == nil { dismiss() }
-                        }.disabled(award.isEmpty)
-                    }
-                }
-                .onAppear { award = initialAward; generation = p?.earnedGenerations?[initialAward] ?? 0 }
-        }
+        StoredRibbonManager(pokemonID: pokemonID, showOwned: true)
     }
 }
 
@@ -490,13 +634,11 @@ struct JourneyEditorView: View {
                                 Text(RibbonCatalog.shared.gameName(visit.game))
                                 Spacer()
                                 Text("Gen \(visit.generation.roman)").foregroundStyle(.secondary)
-                            }.deleteDisabled(visit.game == p.origingame || visit.game == p.currentgame)
+                            }.deleteDisabled(visit.game == p.origingame || visit.game == p.currentgame || p.earnedGames?.values.contains(visit.game) == true)
                         }.onDelete { indices in
                             var next = p
                             let games = indices.map { p.recordedVisits[$0].game }.filter { $0 != p.origingame && $0 != p.currentgame }
                             next.visits = next.recordedVisits.filter { !games.contains($0.game) }
-                            let remaining = Set(next.recordedVisits.map(\.generation))
-                            next.earnedGenerations = next.earnedGenerations?.filter { remaining.contains($0.value) }
                             store.update(next)
                         }
                     }
