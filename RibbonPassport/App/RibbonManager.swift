@@ -5,16 +5,12 @@ struct ManageRibbonsButton: View {
     var action: () -> Void
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                AssetImage(key: "award-contest-star-ribbon").frame(width: 30, height: 36)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Manage ribbons").font(PixelFont.font(22))
-                    Text("\(pokemon.ownedRibbonIDs.count) owned").font(PixelFont.font(13))
-                }
+            HStack(spacing: 8) {
+                Text("Ribbons").font(PixelFont.font(18))
                 Spacer(minLength: 4)
-                Image(systemName: "chevron.right").font(.system(size: 17))
-            }.frame(maxWidth: .infinity, alignment: .leading)
-        }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.manage")
+                Text("\(pokemon.ownedRibbonIDs.count) owned ›").font(PixelFont.font(14)).foregroundStyle(.secondary)
+            }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityIdentifier("ribbons.manage")
     }
 }
 
@@ -59,11 +55,12 @@ struct RibbonManager: View {
     var entryTitle = "Edit Pokémon"
     var initiallyOwned = false
     var onSave: () -> Void
-    init(pokemon: Binding<RibbonPokemon>, entryTitle: String = "Edit Pokémon", initiallyOwned: Bool = false, allGames: Bool = false, earnableOnly: Bool = true, onSave: @escaping () -> Void) {
+    var embedded = false
+    init(pokemon: Binding<RibbonPokemon>, entryTitle: String = "Edit Pokémon", initiallyOwned: Bool = false, allGames: Bool = false, earnableOnly: Bool = true, embedded: Bool = false, onSave: @escaping () -> Void) {
         _destinationPokemon = pokemon
         _pokemon = State(initialValue: pokemon.wrappedValue)
         _catalogue = State(initialValue: allGames); _earnable = State(initialValue: earnableOnly)
-        self.entryTitle = entryTitle; self.initiallyOwned = initiallyOwned; self.onSave = onSave
+        self.entryTitle = entryTitle; self.initiallyOwned = initiallyOwned; self.onSave = onSave; self.embedded = embedded
     }
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
@@ -108,24 +105,35 @@ struct RibbonManager: View {
         return rules.unavailableReason(id, game: game, pokemon: pokemon) == nil ? 1 : 4
     }
     var body: some View {
-        NavigationStack {
+        Group {
+            if embedded { managerBody }
+            else { NavigationStack { managerBody } }
+        }.tint(theme.accent)
+    }
+    private var managerBody: some View {
             VStack(spacing: 0) {
                 if typeSize.isAccessibilitySize {
                     ScrollView { managerContent(gridHeight: CGFloat(size == 32 ? 8 : 4) * 80).padding(12) }
                 } else {
                     GeometryReader { geometry in
                         let minimum: CGFloat = size == 32 ? 259 : 239
-                        if geometry.size.height < minimum + 406 {
-                            ScrollView { managerContent(gridHeight: minimum).padding(12) }
-                        } else { managerContent(gridHeight: geometry.size.height - 406).padding(12) }
+                        let overhead: CGFloat = embedded ? 406 : 463
+                        ViewThatFits(in: .vertical) {
+                            managerContent(gridHeight: max(minimum, geometry.size.height - overhead)).padding(12)
+                                .fixedSize(horizontal: false, vertical: true)
+                            ScrollView { managerContent(gridHeight: minimum).padding(12).fixedSize(horizontal: false, vertical: true) }
+                        }
+
                     }
                 }
                 footer
             }.background(theme.paper).foregroundStyle(theme.ink)
                 .navigationTitle("Ribbons").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
+                    if !embedded {
                     ToolbarItem(placement: .principal) { Text("RIBBONS").font(PixelFont.font(21)) }
                     ToolbarItem(placement: .cancellationAction) { Button("‹ \(entryTitle)") { dismiss() }.font(PixelFont.font(14)) }
+                    }
                 }
                 .onAppear {
                     savedSize = size
@@ -138,7 +146,9 @@ struct RibbonManager: View {
                     else { gamePicker }
                 }
                 .sheet(item: $detail) { choice in detailView(choice.id) }
-        }.tint(theme.accent)
+                .onChange(of: pokemon) { _, value in
+                    if embedded { destinationPokemon = value }
+                }
     }
     private func managerContent(gridHeight: CGFloat) -> some View {
         let check = transferCheck
@@ -146,6 +156,7 @@ struct RibbonManager: View {
         let pages = max(1, (list.count + size - 1) / size)
         let ids = Array(list.dropFirst(min(page, pages - 1) * size).prefix(size))
         return VStack(spacing: 8) {
+            if !embedded {
             HStack(spacing: 9) {
                 PokemonSprite(pokemon: pokemon, download: true).frame(width: 40, height: 43)
                 VStack(alignment: .leading, spacing: 3) {
@@ -157,6 +168,7 @@ struct RibbonManager: View {
                 }
                 Spacer(minLength: 0)
             }.frame(height: 49)
+            }
             HStack(spacing: 7) {
                 if !game.isEmpty { GameMascot(game: game, size: 25) }
                 VStack(alignment: .leading, spacing: 2) {
@@ -201,7 +213,7 @@ struct RibbonManager: View {
                 Button("Next ›") { page += 1 }.disabled(page + 1 >= pages)
             }.font(PixelFont.font(13)).frame(minHeight: 28)
             Button { panel = .transfer } label: {
-                RibbonTransferStatus(check: check, theme: theme, review: true)
+                RibbonTransferStatus(check: check, theme: theme, review: true).fixedSize(horizontal: false, vertical: true)
             }.buttonStyle(.plain).disabled(!check.canAssess).accessibilityIdentifier("ribbons.transfer.review")
             Button { panel = .owned } label: {
                 HStack {
@@ -264,7 +276,7 @@ struct RibbonManager: View {
         HStack(spacing: 8) {
             Text(message.isEmpty ? "\(pokemon.ownedRibbonIDs.count) owned ribbons" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.updatesFrequently)
             Button("Undo") { restore() }.disabled(undo == nil).font(PixelFont.font(14)).buttonStyle(.bordered)
-            Button("Save") { destinationPokemon = pokemon; onSave() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.save")
+            Button(embedded ? "Done" : "Save") { destinationPokemon = pokemon; onSave() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.save")
         }.padding(.horizontal, 12).padding(.vertical, 7).background(theme.paper).overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
     }
     private var gamePicker: some View {

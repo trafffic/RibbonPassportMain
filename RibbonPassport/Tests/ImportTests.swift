@@ -784,10 +784,12 @@ final class NavigationAndSearchTests: XCTestCase {
         for wallpaper in SunMoonWallpaper.allCases {
             let image = try XCTUnwrap(BoxWallpaperView.image(for: wallpaper), wallpaper.name)
             XCTAssertEqual(image.size, CGSize(width: 208, height: 192))
-            let renderer = ImageRenderer(content: BoxWallpaperView(settings: WallpaperSettings(sunMoon: wallpaper)).frame(width: 364, height: 290))
-            renderer.scale = 2
-            let rendered = try XCTUnwrap(renderer.uiImage)
-            let attachment = XCTAttachment(image: rendered); attachment.name = "sunmoon-\(wallpaper.rawValue)-\(wallpaper.name)"; attachment.lifetime = .keepAlways; add(attachment)
+            for full in [false, true] {
+                let renderer = ImageRenderer(content: BoxWallpaperView(settings: WallpaperSettings(sunMoon: wallpaper), fullArtwork: full).frame(width: 364, height: full ? 336 : 290))
+                renderer.scale = 2
+                let rendered = try XCTUnwrap(renderer.uiImage)
+                let attachment = XCTAttachment(image: rendered); attachment.name = "sunmoon-\(wallpaper.rawValue)-\(wallpaper.name)-\(full ? "full" : "grid")"; attachment.lifetime = .keepAlways; add(attachment)
+            }
         }
     }
 }
@@ -934,5 +936,40 @@ final class GridAlbumExportTests: XCTestCase {
         XCTAssertEqual(entries.count, 2); XCTAssertEqual(entries[0]["notes"] as? String, "Keep me"); XCTAssertEqual(entries[0]["box"] as? Int, 0)
         XCTAssertEqual(entries[1]["species"] as? String, "pikachu")
         XCTAssertThrowsError(try RibbonsGuideExporter.export([p], merging: Data(#"{"fileVersion":4}"#.utf8)))
+    }
+}
+
+final class TerminalPassportRenderTests: XCTestCase {
+    @MainActor func testTerminalAndPassportTabsRenderAtCompactWidthsInBothThemes() throws {
+        var snapshot = SharedStore.demo()
+        snapshot.organizeSections()
+        let store = AppStore(snapshot: snapshot, save: { _ in })
+        let pokemon = try XCTUnwrap(store.snapshot.pokemon(for: .ribbon).first)
+        let defaultsName = "RibbonPassport.TerminalRender." + UUID().uuidString
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: defaultsName))
+        defer { defaults.removePersistentDomain(forName: defaultsName) }
+        for width: CGFloat in [320, 390] {
+            for dark in [false, true] {
+                for screen in ["terminal", "terminal-party", "overview", "ribbons", "journey"] {
+                    defaults.set(screen == "terminal-party", forKey: "pc.ribbon.partyVisible")
+                    let view: AnyView
+                    if screen.hasPrefix("terminal") { view = AnyView(PCStorageView()) }
+                    else {
+                        let section = PassportSection.allCases.first { $0.rawValue.lowercased() == screen }!
+                        view = AnyView(NavigationStack { StampAlbumView(pokemonID: pokemon.id, section: section) })
+                    }
+                    let size = CGSize(width: width, height: 844)
+                    let window = UIWindow(frame: CGRect(origin: .zero, size: size))
+                    let controller = UIHostingController(rootView: view.environmentObject(store).defaultAppStorage(defaults).environment(\.colorScheme, dark ? .dark : .light))
+                    window.rootViewController = controller; window.makeKeyAndVisible()
+                    controller.view.frame = window.bounds; controller.view.layoutIfNeeded()
+                    RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+                    let image = UIGraphicsImageRenderer(size: size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+                    let attachment = XCTAttachment(image: image); attachment.name = "terminal-\(screen)-\(Int(width))-\(dark ? "dark" : "light")"; attachment.lifetime = .keepAlways; add(attachment)
+                    XCTAssertEqual(image.size, size)
+                    window.isHidden = true
+                }
+            }
+        }
     }
 }

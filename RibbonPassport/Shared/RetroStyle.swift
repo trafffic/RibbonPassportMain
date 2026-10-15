@@ -121,14 +121,19 @@ private enum SunMoonArtwork {
 }
 struct BoxWallpaperView: View {
     var settings: WallpaperSettings
+    var fullArtwork = false
     static func image(for wallpaper: SunMoonWallpaper) -> UIImage? { SunMoonArtwork.images[wallpaper] }
     var body: some View {
         GeometryReader { geometry in
             if let artwork = Self.image(for: settings.sunMoon ?? .forest) {
-                // Show the wallpaper's grid area; the app supplies its own box heading and border.
-                Image(uiImage: artwork).resizable().interpolation(.none)
-                    .frame(width: geometry.size.width * PCGridMetrics.artworkWidth / PCGridMetrics.gridWidth, height: geometry.size.height * PCGridMetrics.artworkHeight / PCGridMetrics.gridHeight)
-                    .offset(x: -geometry.size.width * PCGridMetrics.originX / PCGridMetrics.gridWidth, y: -geometry.size.height * PCGridMetrics.originY / PCGridMetrics.gridHeight)
+                if fullArtwork {
+                    Image(uiImage: artwork).resizable().interpolation(.none)
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                } else {
+                    Image(uiImage: artwork).resizable().interpolation(.none)
+                        .frame(width: geometry.size.width * PCGridMetrics.artworkWidth / PCGridMetrics.gridWidth, height: geometry.size.height * PCGridMetrics.artworkHeight / PCGridMetrics.gridHeight)
+                        .offset(x: -geometry.size.width * PCGridMetrics.originX / PCGridMetrics.gridWidth, y: -geometry.size.height * PCGridMetrics.originY / PCGridMetrics.gridHeight)
+                }
                 if let tint = settings.tint { Color(hex: tint).opacity(min(1, max(0, settings.strength)) * 0.5) }
             }
         }.clipped().allowsHitTesting(false).accessibilityHidden(true)

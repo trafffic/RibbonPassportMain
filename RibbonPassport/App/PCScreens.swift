@@ -63,6 +63,7 @@ struct PCStorageView: View {
         _partyVisible = AppStorage(wrappedValue: false, "pc.\(kind.key).partyVisible")
     }
     @State private var boxIndex = 0
+    @State private var choosingBox = false
     @State private var adding = false
     @State private var editingWallpaper = false
     @State private var importing = false
@@ -76,8 +77,8 @@ struct PCStorageView: View {
     @GestureState private var dragTouchActive = false
     @State private var hoveredPage: Int?
     @State private var exporting: PokemonExportSelection?
-    @State private var managingRibbons: AwardLocationSelection?
-    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
+    @State private var passportSection: PassportSection = .overview
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "", style: WidgetStyle(palette: .sage)) }
     private var dragSpace: String { "pc-storage-" + kind.key }
     private var layout: StorageLayout { store.snapshot.storage(for: kind) }
     private var box: PCBox { layout.boxes[min(boxIndex, layout.boxes.count - 1)] }
@@ -86,6 +87,7 @@ struct PCStorageView: View {
     private var pokemonRoute: Binding<String?> {
         Binding(get: { store.snapshot.section(forPokemon: store.openPokemonID ?? "") == kind ? store.openPokemonID : nil }, set: { id in
             if id != nil || store.snapshot.section(forPokemon: store.openPokemonID ?? "") == kind { store.openPokemonID = id }
+            if id == nil { passportSection = .overview }
         })
     }
     private var teamRoute: Binding<String?> {
@@ -98,12 +100,15 @@ struct PCStorageView: View {
     }
     var body: some View {
         NavigationStack {
+            GeometryReader { viewport in
             ScrollView {
-                VStack(spacing: 14) {
+                VStack(spacing: 16) {
                     HStack {
-                        Text(kind.title.uppercased()).font(PixelFont.font(29))
+                        Text(kind.title.uppercased()).font(PixelFont.font(25))
                         Spacer(minLength: 4)
                         Menu {
+                            NavigationLink("Teams") { RetroTeamsView(kind: kind) }
+                            NavigationLink("Widgets") { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) }
                             Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
                             if kind == .ribbon {
                                 Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
@@ -116,44 +121,42 @@ struct PCStorageView: View {
                                 store.editStorage(kind: kind) { $0.boxes.append(PCBox(name: String(format: "Box %02d", $0.boxes.count + 1))) }
                                 boxIndex = layout.boxes.count - 1
                             }
-                        } label: { Image(systemName: "plus").frame(width: 44, height: 44) }.buttonStyle(RetroAction())
+                        } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }.buttonStyle(.plain).accessibilityLabel("Collection options")
                     }
-                    HStack(spacing: 10) {
-                        NavigationLink { RetroTeamsView(kind: kind) } label: { Label("Teams", systemImage: "person.3") }.frame(maxWidth: .infinity)
-                        NavigationLink { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) } label: { Label("Widgets", systemImage: "rectangle.3.group") }.frame(maxWidth: .infinity)
-                    }.buttonStyle(RetroAction())
                     if store.snapshot.pokemon(for: kind).isEmpty { emptyCollection }
-                    VStack(spacing: 0) {
-                        boxHeader
-                        HStack(alignment: .top, spacing: 7) {
-                            if partyVisible { partyBar }
-                            boxGrid
-                        }.background(theme.panel).overlay(Rectangle().stroke(theme.border, lineWidth: 2))
-                    }
                     HStack {
+                        Text("POKÉMON STORAGE")
+                        Spacer()
                         Text("\(box.slots.compactMap { $0 }.count) / 30")
-                        Spacer()
-                        Button("Wallpaper") { editingWallpaper = true }.foregroundStyle(theme.accent)
-                        Spacer()
-                        Text("Box \(min(boxIndex + 1, layout.boxes.count)) / \(layout.boxes.count)")
                     }.font(PixelFont.font(13)).foregroundStyle(theme.muted)
-                    if let p = selection {
-                        selectionStrip(p)
-                        if kind == .ribbon { ManageRibbonsButton(pokemon: p) { managingRibbons = AwardLocationSelection(id: p.id) } }
-                    }
-                    if selection != nil {
-                        HStack(spacing: 9) {
-                            Button(moving ? "Cancel move" : "Move") { moving.toggle() }
-                                .frame(maxWidth: .infinity).disabled(selection == nil)
-                            Button("Add to party") {
-                                guard let p = selection else { return }
-                                if layout.partyIDs.count >= 6 { store.error = "The party already has six Pokémon."; return }
-                                store.editStorage(kind: kind) { _ = $0.moveToParty(p.id) }; partyVisible = true
-                            }.frame(maxWidth: .infinity).disabled(selection == nil || layout.partyIDs.contains(selection?.id ?? ""))
-                        }.buttonStyle(RetroAction())
-                    }
+                    VStack(spacing: 10) {
+                        PCWorkspaceLayout(showsParty: partyVisible) {
+                            if partyVisible { partyBar.frame(width: 43) }
+                            boxGrid
+                        }
+                        if let p = selection {
+                            selectionStrip(p)
+                            if kind == .ribbon { ribbonStrip(p) }
+                        }
+                        boxSwitcher
+                    }.padding(8).background(theme.board, in: RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(theme.border, lineWidth: 1))
+                    Spacer(minLength: 0)
+                    HStack {
+                        Button { choosingBox = true } label: { Label("All boxes", systemImage: "square.grid.2x2") }
+                        Spacer()
+                        Menu {
+                            Button("Wallpaper") { editingWallpaper = true }
+                            Button("Rename box") { boxName = box.name; renaming = true }
+                            Button("New box") {
+                                store.editStorage(kind: kind) { $0.boxes.append(PCBox(name: String(format: "Box %02d", $0.boxes.count + 1))) }
+                                boxIndex = layout.boxes.count - 1
+                            }
+                        } label: { Label("Box options", systemImage: "photo") }
+                        .accessibilityIdentifier("pc.boxOptions")
+                    }.font(PixelFont.font(14)).foregroundStyle(theme.muted).buttonStyle(.plain)
                     if moving { Text("Select a destination slot").font(PixelFont.font(14)).foregroundStyle(theme.accent) }
-                }.padding(16)
+                }.padding(16).frame(minHeight: viewport.size.height, alignment: .top)
             }.scrollDisabled(drag != nil)
                 .overlay(alignment: .topLeading) { dragSprites.allowsHitTesting(false).accessibilityHidden(true) }
                 .coordinateSpace(name: dragSpace)
@@ -171,7 +174,7 @@ struct PCStorageView: View {
                 .background(theme.paper).toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(item: pokemonRoute) { id in
                     if let p = pokemon(id), p.showdownSet != nil { CompetitiveBuildView(pokemonID: id) }
-                    else { StampAlbumView(pokemonID: id) }
+                    else { StampAlbumView(pokemonID: id, section: passportSection) }
                 }
                 .navigationDestination(item: teamRoute) { id in RetroTeamDetailView(teamID: id) }
                 .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
@@ -180,9 +183,9 @@ struct PCStorageView: View {
                 .sheet(isPresented: $adding) { AddPokemonView(boxID: box.id, kind: kind) { id in
                     if let index = layout.boxes.firstIndex(where: { $0.slots.contains(id) }) { boxIndex = index }
                 } }
+                .sheet(isPresented: $choosingBox) { boxPicker }
                 .sheet(isPresented: $editingWallpaper) { BoxWallpaperEditor(box: box, settings: layout.wallpaper(for: box), kind: kind) }
                 .sheet(item: $exporting) { PokemonExportView(selection: $0) }
-                .sheet(item: $managingRibbons) { choice in StoredRibbonManager(pokemonID: choice.id, entryTitle: "PC box") }
                 .task(id: hoveredPage) {
                     guard let direction = hoveredPage, drag?.settling == false, layout.boxes.count > 1 else { return }
                     do { try await Task.sleep(for: .milliseconds(650)) } catch { return }
@@ -200,6 +203,7 @@ struct PCStorageView: View {
                     }
                     Button("Cancel", role: .cancel) { }
                 }
+            }
         }
     }
     private var emptyCollection: some View {
@@ -209,38 +213,84 @@ struct PCStorageView: View {
         }.buttonStyle(RetroAction()).frame(maxWidth: .infinity).retroPanel()
     }
     private var boxHeader: some View {
-        HStack(spacing: 5) {
-            Button { boxIndex = (boxIndex + layout.boxes.count - 1) % layout.boxes.count } label: { Image(systemName: "chevron.left").frame(width: 33, height: 44) }
-                .accessibilityLabel("Previous box")
-                .background(hoveredPage == -1 ? theme.accent.opacity(0.35) : .clear)
-                .trackPCSlot(.page(-1), space: dragSpace)
+        HStack(spacing: 2) {
+            Button { boxIndex = (boxIndex + layout.boxes.count - 1) % layout.boxes.count } label: {
+                Image(systemName: "chevron.left").frame(width: 28, height: 36)
+            }.accessibilityLabel("Previous box").trackPCSlot(.page(-1), space: dragSpace)
             Button { boxName = box.name; renaming = true } label: {
-                Text(box.name.uppercased()).font(PixelFont.font(17)).lineLimit(1).minimumScaleFactor(0.65).frame(maxWidth: .infinity)
+                Text(box.name.uppercased()).font(PixelFont.font(15)).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity, alignment: .leading)
             }.accessibilityLabel("Rename \(box.name)")
             Button { withAnimation(.easeInOut(duration: 0.2)) { partyVisible.toggle() } } label: {
-                Label("Party", systemImage: "person.2").font(PixelFont.font(13)).padding(.horizontal, 8).frame(minHeight: 38)
-                    .background(partyVisible ? theme.board : theme.panel).foregroundStyle(theme.ink)
+                Text("Party").font(PixelFont.font(13)).frame(minWidth: 44, minHeight: 36)
             }.accessibilityIdentifier("pc.partyToggle").accessibilityValue(partyVisible ? "Shown" : "Hidden")
-            Button { boxIndex = (boxIndex + 1) % layout.boxes.count } label: { Image(systemName: "chevron.right").frame(width: 33, height: 44) }
-                .accessibilityLabel("Next box")
-                .background(hoveredPage == 1 ? theme.accent.opacity(0.35) : .clear)
-                .trackPCSlot(.page(1), space: dragSpace)
-        }.buttonStyle(.plain).padding(.horizontal, 3).padding(.vertical, 5).background(theme.ink).foregroundStyle(theme.paper)
+            Button { boxIndex = (boxIndex + 1) % layout.boxes.count } label: {
+                Image(systemName: "chevron.right").frame(width: 28, height: 36)
+            }.accessibilityLabel("Next box").trackPCSlot(.page(1), space: dragSpace)
+        }.buttonStyle(.plain).foregroundStyle(Color.white)
     }
     private var boxGrid: some View {
         GeometryReader { geometry in
-            let cellWidth = geometry.size.width / CGFloat(PCGridMetrics.columns)
-            let cellHeight = geometry.size.height / CGFloat(PCGridMetrics.rows)
-            VStack(spacing: 0) {
-                ForEach(0..<PCGridMetrics.rows, id: \.self) { row in
-                    HStack(spacing: 0) {
-                        ForEach(0..<PCGridMetrics.columns, id: \.self) { column in
-                            boxSlot(row * PCGridMetrics.columns + column, width: cellWidth, height: cellHeight)
+            let gridWidth = geometry.size.width * PCGridMetrics.gridWidth / PCGridMetrics.artworkWidth
+            let gridHeight = geometry.size.height * PCGridMetrics.gridHeight / PCGridMetrics.artworkHeight
+            ZStack(alignment: .topLeading) {
+                BoxWallpaperView(settings: layout.wallpaper(for: box), fullArtwork: true)
+                boxHeader.frame(width: geometry.size.width * 0.83, height: geometry.size.height * 0.15)
+                    .position(x: geometry.size.width / 2, y: geometry.size.height * 0.093)
+                VStack(spacing: 0) {
+                    ForEach(0..<PCGridMetrics.rows, id: \.self) { row in
+                        HStack(spacing: 0) {
+                            ForEach(0..<PCGridMetrics.columns, id: \.self) { column in
+                                boxSlot(row * PCGridMetrics.columns + column, width: gridWidth / 6, height: gridHeight / 5)
+                            }
                         }
                     }
+                }.frame(width: gridWidth, height: gridHeight)
+                    .offset(x: geometry.size.width * PCGridMetrics.originX / PCGridMetrics.artworkWidth,
+                            y: geometry.size.height * PCGridMetrics.originY / PCGridMetrics.artworkHeight)
+            }
+        }.aspectRatio(PCGridMetrics.artworkWidth / PCGridMetrics.artworkHeight, contentMode: .fit)
+            .frame(maxWidth: .infinity).clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+    private var boxSwitcher: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ForEach(Array(layout.boxes.enumerated()), id: \.element.id) { index, entry in
+                    Button { boxIndex = index } label: {
+                        Text(entry.name.uppercased()).font(PixelFont.font(12)).lineLimit(1)
+                            .padding(.horizontal, 7).frame(minHeight: 36)
+                            .overlay(alignment: .bottom) { if index == boxIndex { Rectangle().fill(theme.accent).frame(height: 2) } }
+                    }.accessibilityIdentifier("pc.box.select.\(index)").accessibilityAddTraits(index == boxIndex ? .isSelected : [])
                 }
-            }.background { BoxWallpaperView(settings: layout.wallpaper(for: box)) }
-        }.aspectRatio(PCGridMetrics.aspectRatio, contentMode: .fit).frame(maxWidth: .infinity)
+            }
+        }.buttonStyle(.plain)
+    }
+    private var boxPicker: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140))], spacing: 12) {
+                    ForEach(Array(layout.boxes.enumerated()), id: \.element.id) { index, entry in
+                        Button { boxIndex = index; choosingBox = false } label: {
+                            VStack(alignment: .leading, spacing: 7) {
+                                BoxWallpaperView(settings: layout.wallpaper(for: entry), fullArtwork: true).aspectRatio(208.0 / 192, contentMode: .fit)
+                                HStack { Text(entry.name); Spacer(); Text("\(entry.slots.compactMap { $0 }.count)/30") }
+                                    .font(PixelFont.font(14))
+                            }.padding(6).background(theme.panel).overlay(Rectangle().stroke(index == boxIndex ? theme.accent : theme.border, lineWidth: index == boxIndex ? 2 : 1))
+                        }.buttonStyle(.plain).accessibilityIdentifier("pc.boxPicker.\(index)")
+                    }
+                }.padding(16)
+            }.background(theme.paper).navigationTitle("All boxes").navigationBarTitleDisplayMode(.inline)
+                .toolbar { Button("Done") { choosingBox = false } }
+        }
+    }
+    private func ribbonStrip(_ p: RibbonPokemon) -> some View {
+        Button { passportSection = .ribbons; store.openPokemonID = p.id } label: {
+            HStack(spacing: 12) {
+                ForEach(Array(p.ownedRibbonIDs.prefix(4)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 23, height: 27) }
+                Spacer(minLength: 0)
+                Text("\(p.ownedRibbonIDs.count) ribbons ›").font(PixelFont.font(14))
+            }.padding(.vertical, 9).contentShape(Rectangle())
+        }.buttonStyle(.plain).foregroundStyle(theme.muted).accessibilityIdentifier("ribbons.manage")
+            .overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
     }
     private func boxSlot(_ slot: Int, width: CGFloat, height: CGFloat) -> some View {
         let p = pokemon(box.slots[slot])
@@ -266,33 +316,37 @@ struct PCStorageView: View {
             .accessibilityIdentifier("pc.box.slot.\(slot)").accessibilityValue(p?.id ?? "Empty")
             .trackPCSlot(target, space: dragSpace)
             .highPriorityGesture(spriteDrag(pokemon: p, source: target), including: p != nil || drag != nil ? .all : .none)
-            .accessibilityHint("Drag to move, or use Move below the box")
+            .accessibilityHint("Drag to move, or choose Move in Pokémon actions")
     }
     private var partyBar: some View {
-        VStack(spacing: 4) {
-            Text("PARTY").font(PixelFont.font(10))
-            ForEach(0..<6, id: \.self) { i in
-                let p = i < layout.partyIDs.count ? pokemon(layout.partyIDs[i]) : nil
-                let target = PCSlotTarget.party(i)
-                Button {
-                    if moving, let id = selection?.id { animateMove(id, to: target) }
-                    else if let p { store.choose(p.id) }
-                    else if let id = selection?.id { store.editStorage(kind: kind) { _ = $0.moveToParty(id) } }
-                } label: {
-                    Group {
-                        if let p { PokemonSprite(pokemon: p, download: true).opacity(spriteOpacity(p.id)) }
-                        else { Text("·").foregroundStyle(theme.muted) }
-                    }.frame(width: 35, height: 31).background(theme.board)
-                        .overlay(Rectangle().stroke(drag?.target == target ? theme.accent : theme.border, style: StrokeStyle(lineWidth: drag?.target == target ? 2 : 1, dash: drag?.target == target ? [] : [2])))
-                }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty party slot")
-                    .accessibilityIdentifier("pc.party.slot.\(i)").accessibilityValue(p?.id ?? "Empty")
-                    .trackPCSlot(target, space: dragSpace)
-                    .highPriorityGesture(spriteDrag(pokemon: p, source: target), including: p != nil || drag != nil ? .all : .none)
-            }
-        }.padding(5).background(theme.panel).overlay(Rectangle().stroke(theme.border, lineWidth: 1))
+        GeometryReader { geometry in
+            VStack(spacing: 3) {
+                Text("PARTY").font(PixelFont.font(10)).foregroundStyle(theme.muted)
+                    .frame(height: geometry.size.height * 0.15)
+                ForEach(0..<6, id: \.self) { i in
+                    let p = i < layout.partyIDs.count ? pokemon(layout.partyIDs[i]) : nil
+                    let target = PCSlotTarget.party(i)
+                    Button {
+                        if moving, let id = selection?.id { animateMove(id, to: target) }
+                        else if let p { store.choose(p.id) }
+                        else if let id = selection?.id { store.editStorage(kind: kind) { _ = $0.moveToParty(id) } }
+                    } label: {
+                        Group {
+                            if let p { PokemonSprite(pokemon: p, download: true).padding(3).opacity(spriteOpacity(p.id)) }
+                            else { Color.clear }
+                        }.frame(maxWidth: .infinity, maxHeight: .infinity).background(theme.panel, in: RoundedRectangle(cornerRadius: 3))
+                            .overlay { if drag?.target == target { Rectangle().stroke(theme.accent, lineWidth: 2) } }
+                    }.buttonStyle(.plain).accessibilityLabel(p?.displayName ?? "Empty party slot")
+                        .accessibilityIdentifier("pc.party.slot.\(i)").accessibilityValue(p?.id ?? "Empty")
+                        .trackPCSlot(target, space: dragSpace)
+                        .highPriorityGesture(spriteDrag(pokemon: p, source: target), including: p != nil || drag != nil ? .all : .none)
+                }
+            }.padding(3)
+        }.background(theme.board)
     }
     @ViewBuilder private func pokemonMenu(_ p: RibbonPokemon) -> some View {
-        Button(kind == .ribbon ? "Open passport" : "Open build") { store.openPokemonID = p.id }
+        Button(kind == .ribbon ? "Open passport" : "Open build") { passportSection = .overview; store.openPokemonID = p.id }
+        Button(moving ? "Cancel move" : "Move") { moving.toggle() }
         if layout.partyIDs.contains(p.id) { Button("Return to box") { store.editStorage(kind: kind) { $0.returnToBox(p.id) } } }
         Button("Add to party") { store.editStorage(kind: kind) { _ = $0.moveToParty(p.id) }; partyVisible = true }
             .disabled(layout.partyIDs.count >= 6 || layout.partyIDs.contains(p.id))
@@ -312,9 +366,9 @@ struct PCStorageView: View {
                         .font(PixelFont.font(12)).lineLimit(1).minimumScaleFactor(0.75).foregroundStyle(theme.muted)
                 }
             }
-            Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
+            Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { passportSection = .overview; store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
             Menu { pokemonMenu(p) } label: { Image(systemName: "ellipsis").frame(width: 32, height: 44) }.accessibilityLabel("Pokémon actions")
-        }.retroPanel(padding: 9)
+        }.padding(9).background(theme.panel, in: RoundedRectangle(cornerRadius: 4))
     }
     @ViewBuilder private var dragSprites: some View {
         if let drag {
@@ -430,6 +484,25 @@ struct PCStorageView: View {
     }
 }
 
+/// Both the party rail and artwork receive the same height, derived from the box width.
+private struct PCWorkspaceLayout: Layout {
+    var showsParty: Bool
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? 320
+        let boxWidth = max(1, width - (showsParty ? 50 : 0))
+        return CGSize(width: width, height: boxWidth * PCGridMetrics.artworkHeight / PCGridMetrics.artworkWidth)
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        guard let board = subviews.last else { return }
+        if showsParty, subviews.count > 1 {
+            subviews[0].place(at: bounds.origin, anchor: .topLeading, proposal: ProposedViewSize(width: 43, height: bounds.height))
+        }
+        let inset: CGFloat = showsParty ? 50 : 0
+        board.place(at: CGPoint(x: bounds.minX + inset, y: bounds.minY), anchor: .topLeading,
+                    proposal: ProposedViewSize(width: bounds.width - inset, height: bounds.height))
+    }
+}
+
 enum PCSlotTarget: Hashable {
     case box(String, Int), party(Int), page(Int)
     static func hit(at point: CGPoint, frames: [Self: CGRect]) -> Self? {
@@ -476,10 +549,13 @@ private struct PCSlidingSprite: View {
 }
 
 struct AwardLocationSelection: Identifiable { var id: String }
+enum PassportSection: String, CaseIterable { case overview = "Overview", ribbons = "Ribbons", journey = "Journey" }
+
 struct StampAlbumView: View {
     var pokemonID: String
     @EnvironmentObject private var store: AppStore
     @Environment(\.colorScheme) private var scheme
+    @State var section: PassportSection = .overview
     @State private var generation = 0
     @State private var game = ""
     @AppStorage("album.grouping") private var grouping: AlbumGrouping = .generations
@@ -487,28 +563,118 @@ struct StampAlbumView: View {
     @State private var editing = false
     @State private var editingVisits = false
     @State private var selectedAward: AwardLocationSelection?
-    @State private var managingRibbons = false
+    @State private var describedAward: AwardLocationSelection?
+    @State private var reviewingTransfer = false
+    @State private var transferUndo: RibbonPokemon?
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: p?.currentgame ?? "") }
+    private var pokemonBinding: Binding<RibbonPokemon> {
+        Binding(get: { p! }, set: { store.update($0) })
+    }
     var body: some View {
-        ScrollView {
+        Group {
             if let p {
-                let activeGame = p.recordedVisits.contains { $0.game == game } ? game : p.recordedVisits.first?.game ?? ""
-                let active = grouping == .games ? RibbonCatalog.shared.gameInfo[activeGame]?.gen ?? 0 : p.visitedGenerations.contains(generation) ? generation : p.visitedGenerations.first ?? 0
-                VStack(spacing: 16) {
-                    HStack(spacing: 10) {
-                        PokemonSprite(pokemon: p, download: true).frame(width: 94, height: 90)
-                        VStack(alignment: .leading, spacing: 7) {
-                            PokemonName(pokemon: p, theme: theme, size: 26)
-                            EquippedTitleLabel(pokemon: p, theme: theme).font(PixelFont.font(15))
-                            Text("Lv. \(p.currentlevel) · \(RibbonCatalog.shared.awards(for: p).count) awards").font(PixelFont.font(14)).foregroundStyle(theme.muted)
+                VStack(spacing: 0) {
+                    if section == .overview { hero(p).padding(.horizontal, 16).padding(.vertical, 12) }
+                    HStack(spacing: 8) {
+                        ForEach(PassportSection.allCases, id: \.self) { tab in
+                            Button { section = tab } label: {
+                                Text(tab.rawValue).font(PixelFont.font(16)).frame(maxWidth: .infinity, minHeight: 44)
+                                    .foregroundStyle(section == tab ? theme.accent : theme.muted)
+                                    .overlay(alignment: .bottom) { if section == tab { Rectangle().fill(theme.accent).frame(height: 2) } }
+                            }.buttonStyle(.plain).accessibilityIdentifier("passport.tab.\(tab.rawValue.lowercased())")
+                                .accessibilityAddTraits(section == tab ? .isSelected : [])
                         }
-                    }.retroPanel()
-                    HStack(alignment: .top, spacing: 10) {
-                        endpoint("ORIGIN", game: p.origingame)
-                        endpoint("CURRENT", game: p.currentgame)
-                    }.retroPanel()
-                    ManageRibbonsButton(pokemon: p) { managingRibbons = true }
+                    }.padding(.horizontal, 16).overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
+                    if section == .ribbons {
+                        RibbonManager(pokemon: pokemonBinding, entryTitle: "Passport", embedded: true) { section = .overview }
+                    } else {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 18) {
+                                if section == .overview { overview(p) }
+                                else { journey(p) }
+                            }.padding(16)
+                        }
+                    }
+                }
+            } else { ContentUnavailableView("Pokémon removed", systemImage: "tray") }
+        }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .principal) { Text(section == .ribbons ? p?.displayName.uppercased() ?? "PASSPORT" : "PASSPORT").font(PixelFont.font(20)).lineLimit(1) }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button("Edit Pokémon") { editing = true }
+                        Button("Edit visits") { editingVisits = true }
+                        Button("Export", systemImage: "square.and.arrow.up") {
+                            if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
+                        }
+                        NavigationLink("Saved versions") { RecoveryItemHistoryView(kind: .pokemon, objectID: pokemonID) }
+                    } label: { Image(systemName: "ellipsis").frame(width: 36, height: 36) }.accessibilityLabel("Passport options")
+                }
+            }
+            .sheet(item: $exporting) { PokemonExportView(selection: $0) }
+            .sheet(isPresented: $editing) { if let p { NavigationStack { PokemonEditor(pokemon: p) }.font(PixelFont.font(16)) } }
+            .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
+            .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }
+            .sheet(item: $describedAward) { choice in RibbonDescriptionView(awardID: choice.id) }
+            .sheet(isPresented: $reviewingTransfer) {
+                if let p {
+                    RibbonTransferDrawer(pokemon: p, game: p.currentgame, check: RibbonRules.shared.transferCheck(from: p.currentgame, pokemon: p), canUndo: transferUndo != nil, onRecord: { id, game in
+                        guard var updated = self.p else { return }
+                        let previous = updated
+                        if updated.recordRibbon(id, game: game) { store.update(updated); if store.error == nil { transferUndo = previous } }
+                    }, onUndo: {
+                        if let previous = transferUndo { store.update(previous); if store.error == nil { transferUndo = nil } }
+                    }, onDone: { reviewingTransfer = false })
+                }
+            }
+    }
+    private func hero(_ p: RibbonPokemon) -> some View {
+        HStack(spacing: 15) {
+            PokemonSprite(pokemon: p, download: true).frame(width: 70, height: 70)
+            VStack(alignment: .leading, spacing: 6) {
+                PokemonName(pokemon: p, theme: theme, size: 25)
+                EquippedTitleLabel(pokemon: p, theme: theme).font(PixelFont.font(14))
+                Text("Lv. \(p.currentlevel) · \(p.ownedRibbonIDs.count) ribbons").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+    private func overview(_ p: RibbonPokemon) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top, spacing: 14) {
+                endpoint("ORIGIN", game: p.origingame)
+                endpoint("CURRENT", game: p.currentgame)
+            }.padding(.vertical, 10)
+            Divider()
+            Button { section = .ribbons } label: {
+                HStack { Text("Owned ribbons").font(PixelFont.font(19)); Spacer(); Text("\(p.ownedRibbonIDs.count) ›").font(PixelFont.font(14)) }
+            }.buttonStyle(.plain).accessibilityIdentifier("passport.owned")
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 18) {
+                ForEach(Array(p.ownedRibbonIDs.suffix(12)), id: \.self) { id in
+                    Button { describedAward = AwardLocationSelection(id: id) } label: {
+                        AssetImage(key: "award-" + id).frame(width: 30, height: 34).frame(maxWidth: .infinity, minHeight: 44)
+                    }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.awardPickerName(id)).accessibilityIdentifier("passport.ribbon.\(id)")
+                }
+            }
+            let check = RibbonRules.shared.transferCheck(from: p.currentgame, pokemon: p)
+            Button { transferUndo = nil; reviewingTransfer = true } label: {
+                HStack(spacing: 8) {
+                    Text(check.isSafe ? "✓" : "!").font(PixelFont.font(28)).frame(width: 24)
+                    VStack(alignment: .leading, spacing: 4) { Text(check.title).font(PixelFont.font(16)); Text(check.summary).font(PixelFont.font(12)) }
+                    Spacer(minLength: 0)
+                    Text("Review ›").font(PixelFont.font(13))
+                }.padding(.vertical, 12).contentShape(Rectangle())
+            }.buttonStyle(.plain).foregroundStyle(check.isSafe ? theme.accent : theme.warningInk)
+                .overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
+                .overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
+                .disabled(!check.canAssess).accessibilityIdentifier("passport.transfer.review")
+        }
+    }
+    private func journey(_ p: RibbonPokemon) -> some View {
+        let activeGame = p.recordedVisits.contains { $0.game == game } ? game : p.recordedVisits.first?.game ?? ""
+        let active = grouping == .games ? RibbonCatalog.shared.gameInfo[activeGame]?.gen ?? 0 : p.visitedGenerations.contains(generation) ? generation : p.visitedGenerations.first ?? 0
+        return VStack(alignment: .leading, spacing: 16) {
                     RetroHeading(title: "Stamp album", value: grouping == .generations ? "\(p.visitedGenerations.count) generations" : "\(p.recordedVisits.count) games")
                     Picker("Album view", selection: $grouping) {
                         ForEach(AlbumGrouping.allCases) { Text($0.name).tag($0) }
@@ -571,32 +737,12 @@ struct StampAlbumView: View {
                                     }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.ribbons[id] ?? id)
                                 }
                             }
-                            Button("Manage ribbons") { managingRibbons = true }.buttonStyle(RetroAction(prominent: true))
+                            Button("Ribbons ›") { section = .ribbons }.font(PixelFont.font(15)).buttonStyle(.plain).foregroundStyle(theme.accent)
                         }.retroPanel()
                     }
-                    let unspecified = p.ownedRibbonIDs.filter { p.earnedGames?[$0] == nil }.count
-                    RetroHeading(title: "Original awards", value: "\(p.ribbons.count) · \(unspecified) unassigned")
-                    if !p.ribbons.isEmpty {
-                        Text("Memory Ribbons combine older awards in the current game.").font(PixelFont.font(13)).foregroundStyle(theme.muted)
-                    }
-                    HStack {
-                        Button("Edit visits") { editingVisits = true }
-                        Button("Edit Pokémon") { editing = true }
-                    }.buttonStyle(RetroAction())
-                }.padding(16)
-            } else { ContentUnavailableView("Pokémon removed", systemImage: "tray") }
-        }.background(theme.paper).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
-            .toolbar {
-                Button("Edit") { editing = true }.disabled(p == nil)
-                Button("Export", systemImage: "square.and.arrow.up") {
-                    if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
-                }.disabled(p == nil)
-            }
-            .sheet(item: $exporting) { PokemonExportView(selection: $0) }
-            .sheet(isPresented: $editing) { if let p { NavigationStack { PokemonEditor(pokemon: p) }.font(PixelFont.font(16)) } }
-            .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
-            .sheet(isPresented: $managingRibbons) { StoredRibbonManager(pokemonID: pokemonID) }
-            .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }
+
+            Button("Edit visits") { editingVisits = true }.font(PixelFont.font(15)).buttonStyle(.plain).foregroundStyle(theme.accent)
+        }
     }
     private func endpoint(_ title: String, game: String) -> some View {
         VStack(alignment: .leading, spacing: 7) {
@@ -606,6 +752,37 @@ struct StampAlbumView: View {
                 Text(RibbonCatalog.shared.gameName(game)).font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true)
             }
         }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
+    }
+}
+
+/// Inspecting an owned ribbon never changes ownership or opens the editor.
+struct RibbonDescriptionView: View {
+    var awardID: String
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var scheme
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    HStack(spacing: 14) {
+                        AssetImage(key: "award-" + awardID).frame(width: 44, height: 52).accessibilityHidden(true)
+                        Text(RibbonCatalog.shared.awardPickerName(awardID)).font(PixelFont.font(23))
+                            .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("ribbon.description.name")
+                    }
+                    Text(RibbonRules.shared.awards[awardID]?.description ?? "No in-game description available.")
+                        .font(PixelFont.font(18)).fixedSize(horizontal: false, vertical: true)
+                        .accessibilityIdentifier("ribbon.description.text")
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
+            }.background(theme.paper).foregroundStyle(theme.ink)
+                .navigationTitle("Ribbon details").navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) { Text("Ribbon details").font(PixelFont.font(20)) }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }.font(PixelFont.font(15)).accessibilityIdentifier("ribbon.description.done")
+                    }
+                }
+        }.tint(theme.accent).presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
     }
 }
 

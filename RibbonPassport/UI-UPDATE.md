@@ -1,5 +1,12 @@
 # UI update
 
+## PC terminal and passport tabs
+
+The home screen uses a single PC terminal panel: the complete Sun/Moon wallpaper and its original header, the optional party rail, a compact selected Pokémon strip, a small ribbon shortcut and box tabs. **Party** stays in the wallpaper header. **All boxes** opens a box chooser; **Box options → Wallpaper** opens all 16 original Sun/Moon backgrounds with a separate saved choice and optional tint for each box. Teams, Widgets, imports and Add Pokémon are in the collection’s **…** menu; Move, party placement, export and deletion are in the selected Pokémon’s **…** menu. Existing finger tracking, swaps and box-arrow hover remain available.
+
+**Passport** now has **Overview / Ribbons / Journey** tabs. Overview shows the Pokémon, origin/current games, owned ribbon preview and transfer check. Tapping an individual ribbon opens its icon, name and in-game English description in a read-only sheet; the Owned ribbons heading opens the Ribbons tab. Ribbons contains the full existing ribbon editor, including game-specific earning locations, Owned, Undo, last-chance warnings and the transfer checklist. Edits in this tab save as they are made, including changes in its drawers, so switching tabs or returning to the PC retains them. Done returns to Overview. The small PC ribbon shortcut opens this same Ribbons tab. Separate Add/Edit Pokémon editors still use Save and keep an unsaved draft. Journey retains the stamp album’s generation/game grouping and editing. Passport options include editing, export and saved versions.
+
+
 ## Local recovery history
 
 Open **Settings → Recovery history** to browse **All**, **Deleted** or **Versions**. Choose a Pokémon or team, choose a saved version, and review its details and the changes before restoring. Edits, deletions and replaced imports are captured automatically when the collection saves. History starts with changes saved after this update; earlier deleted items cannot be recovered retroactively.
@@ -16,9 +23,9 @@ Footprint is last chance when transfer would make its later level requirement im
 
 Last-chance ribbons use an amber background, a stronger amber outline and an **!** corner marker. The marker also appears in the compact 32-per-page grid; the larger layouts keep the **LAST CHANCE** label. The Last chance filter and detail message share that colour, while owned ribbons retain their green styling.
 
-**Manage ribbons** opens from the selected Pokémon in a PC box, directly above the passport's Stamp Album, and from the Add/Edit Pokémon forms. The pixel interface includes all 106 ribbons, game choices grouped by generation, **Earnable only**, an **All** games switch, and **All / Last chance / Later gens** filters. The small per-page button cycles **12 → 16 → 32 → 12**. Its choice persists between sessions; older unsupported page sizes reset to 12.
+**Ribbons** opens from the selected Pokémon’s small PC shortcut, the passport’s Ribbons tab, and the Add/Edit Pokémon forms. The pixel interface includes all 106 ribbons, game choices grouped by generation, **Earnable only**, an **All** games switch, and **All / Last chance / Later gens** filters. The small per-page button cycles **12 → 16 → 32 → 12**. Its choice persists between sessions; older unsupported page sizes reset to 12.
 
-Tap an owned ribbon to remove it; **Undo** restores the ribbon, earning game and equipped title. Owned ribbons use a scrolling drawer. Unowned ribbons add immediately in the selected game, or ask for a specific valid earning game when browsing All. An already-owned ribbon cannot be overwritten by adding it from another game. Save applies the changes; leaving the manager without saving discards its draft.
+Tap an owned ribbon to remove it; **Undo** restores the ribbon, earning game and equipped title. Owned ribbons use a scrolling drawer. Unowned ribbons add immediately in the selected game, or ask for a specific valid earning game when browsing All. An already-owned ribbon cannot be overwritten by adding it from another game. Separate editor sheets use Save; leaving those sheets without saving discards their draft. The embedded passport Ribbons tab saves each edit automatically.
 
 Game eligibility uses the bundled species/form catalogue and directed transfer routes, including Mythical/Legendary challenge exclusions, BDSP Tower restrictions, level requirements, Shadow origins, and the individual games available to that Pokémon. Last chance means there is no compatible later-generation game for that ribbon. Automatic Memory Ribbons and distribution-only awards appear in the full catalogue with their explanation rather than as earnable challenges. Marks retain a separate editor.
 

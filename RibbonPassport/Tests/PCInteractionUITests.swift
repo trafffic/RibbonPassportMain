@@ -24,6 +24,7 @@ final class PCInteractionUITests: XCTestCase {
         expect(app.buttons["pc.box.slot.12"], value: "drag-b")
     }
     func testDragToPartySwapsAndBackToBoxWorks() {
+        XCTAssertLessThan(abs(app.buttons["pc.party.slot.5"].frame.maxY - app.buttons["pc.box.slot.29"].frame.maxY), 16, "Party and box must end on the same row")
         app.buttons["pc.box.slot.0"].press(forDuration: 0.05, thenDragTo: app.buttons["pc.party.slot.0"])
         expect(app.buttons["pc.party.slot.0"], value: "drag-a")
         expect(app.buttons["pc.box.slot.0"], value: "drag-c")
@@ -32,7 +33,7 @@ final class PCInteractionUITests: XCTestCase {
         expect(app.buttons["pc.party.slot.0"], value: "Empty")
     }
     func testDropOutsideStorageKeepsOriginalSlot() {
-        app.buttons["pc.box.slot.0"].press(forDuration: 0.05, thenDragTo: app.buttons["Teams"])
+        app.buttons["pc.box.slot.0"].press(forDuration: 0.05, thenDragTo: app.buttons["Collection options"])
         expect(app.buttons["pc.box.slot.0"], value: "drag-a")
         expect(app.buttons["pc.box.slot.1"], value: "drag-b")
     }
@@ -73,7 +74,8 @@ final class RibbonTransferUITests: XCTestCase {
         app.buttons["ribbons.transfer.done"].tap()
         XCTAssertTrue(review.label.contains("Not safe to leave Gen IV"))
         app.buttons["ribbons.save"].tap()
-        XCTAssertTrue(manage.waitForExistence(timeout: 5)); manage.tap(); review.tap()
+        let ribbonTab = app.buttons["passport.tab.ribbons"]
+        XCTAssertTrue(ribbonTab.waitForExistence(timeout: 5)); ribbonTab.tap(); review.tap()
         XCTAssertFalse(app.buttons["ribbons.transfer.add.footprint-ribbon"].exists)
         XCTAssertTrue(app.buttons["ribbons.transfer.add.legend-ribbon"].exists)
     }
@@ -130,5 +132,88 @@ final class RecoveryHistoryUITests: XCTestCase {
         version.tap()
         XCTAssertTrue(app.staticTexts["Edited Metagross"].waitForExistence(timeout: 5))
         restore()
+    }
+}
+
+final class TerminalPassportUITests: XCTestCase {
+    private var app: XCUIApplication!
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "transfer"; app.launch()
+        XCTAssertTrue(app.buttons["pc.box.slot.0"].waitForExistence(timeout: 10))
+    }
+    override func tearDownWithError() throws { app.terminate(); app = nil }
+    private func capture(_ name: String) {
+        let image = XCTAttachment(screenshot: app.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image)
+    }
+    func testPassportTabsSaveRibbonChangesAcrossNavigation() {
+        capture("terminal-home")
+        app.buttons["Passport ▸"].tap()
+        let owned = app.buttons["passport.owned"]
+        XCTAssertTrue(owned.waitForExistence(timeout: 5))
+        let before = owned.label
+        capture("passport-overview")
+        app.buttons["passport.tab.ribbons"].tap()
+        let drawer = app.buttons["ribbons.owned"]
+        if !drawer.isHittable { app.swipeUp() }
+        XCTAssertTrue(drawer.waitForExistence(timeout: 5)); drawer.tap()
+        let remove = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Remove ")).firstMatch
+        XCTAssertTrue(remove.waitForExistence(timeout: 5)); remove.tap()
+        app.navigationBars.buttons["Done"].tap()
+        app.buttons["passport.tab.journey"].tap()
+        XCTAssertTrue(app.segmentedControls["album.grouping"].waitForExistence(timeout: 5))
+        capture("passport-journey")
+        app.buttons["passport.tab.overview"].tap()
+        XCTAssertNotEqual(owned.label, before)
+        let changed = owned.label
+        app.buttons["passport.tab.ribbons"].tap()
+        capture("passport-ribbons")
+        app.buttons["ribbons.save"].tap()
+        XCTAssertEqual(owned.label, changed)
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(app.buttons["pc.box.slot.0"].waitForExistence(timeout: 5))
+        app.buttons["Passport ▸"].tap()
+        XCTAssertEqual(owned.label, changed)
+    }
+    func testOverviewRibbonTapShowsThatRibbonsDescriptionWithoutEditing() {
+        app.buttons["Passport ▸"].tap()
+        let owned = app.buttons["passport.owned"]
+        XCTAssertTrue(owned.waitForExistence(timeout: 5))
+        let originalCount = owned.label
+        let examples = [
+            ("tough-ribbon-ultra-sinnoh", "Super Contest Tough Category Ultra Rank winner!"),
+            ("tough-ribbon-master-sinnoh", "Super Contest Tough Category Master Rank winner!")
+        ]
+        for (id, description) in examples {
+            let ribbon = app.buttons["passport.ribbon.\(id)"]
+            XCTAssertTrue(ribbon.exists)
+            let name = ribbon.label
+            ribbon.tap()
+            let text = app.staticTexts["ribbon.description.text"]
+            XCTAssertTrue(text.waitForExistence(timeout: 5))
+            XCTAssertEqual(text.label, description)
+            XCTAssertEqual(app.staticTexts["ribbon.description.name"].label, name)
+            XCTAssertFalse(app.buttons["ribbons.owned"].exists)
+            XCTAssertFalse(app.buttons["ribbons.save"].exists)
+            capture("owned-description-" + id)
+            app.buttons["ribbon.description.done"].tap()
+            XCTAssertTrue(owned.waitForExistence(timeout: 5))
+            XCTAssertEqual(owned.label, originalCount)
+        }
+    }
+    func testWallpaperSelectionPersistsAndDoesNotChangeOtherBoxes() {
+        app.buttons["pc.boxOptions"].tap(); app.buttons["Wallpaper"].tap()
+        let simple = app.buttons["pc.wallpaper.sm16"]
+        for _ in 0..<10 { if simple.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(simple.isHittable); simple.tap()
+        app.navigationBars.buttons["Save"].tap()
+        app.buttons["pc.boxOptions"].tap(); app.buttons["Wallpaper"].tap()
+        for _ in 0..<10 { if simple.isHittable { break }; app.swipeUp() }
+        XCTAssertEqual(simple.value as? String, "Selected")
+        capture("sunmoon-wallpaper-selection")
+        app.navigationBars.buttons["Cancel"].tap()
+        app.buttons["Next box"].tap()
+        app.buttons["pc.boxOptions"].tap(); app.buttons["Wallpaper"].tap()
+        XCTAssertEqual(app.buttons["pc.wallpaper.sm02"].value as? String, "Selected")
     }
 }

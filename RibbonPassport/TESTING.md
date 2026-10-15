@@ -1,5 +1,15 @@
 # Current UI update validation
 
+## Owned ribbon descriptions
+
+The focused simulator interaction test opens two different owned ribbon icons from Passport Overview, verifies each selected name and exact in-game description, closes the sheet and confirms the owned count is unchanged. It passed with **TEST SUCCEEDED**; the app/widget unsigned Release build passed with **BUILD SUCCEEDED**. The descriptions are bundled offline, including normal/gold Memory variants. Source attribution and wording references are recorded in CREDITS.md.
+
+## PC terminal and passport tabs
+
+The redesign passed three focused native/resource checks and seven simulator interaction cases. These cover the 16 bundled Sun/Moon backgrounds (both full artwork and interior crops), the artwork tile boundaries, native renders of the terminal with/without its party rail and all three passport tabs at 320/390 points in light/dark, drag/swap/cancel/box-hover behavior, specific-game transfer checklist edits and Undo, automatic ribbon saving across tabs and reopening, and wallpaper persistence without changing another box. The final spacing pass reran native renders, checked the party’s bottom alignment during a box/party swap, and repeated the transfer flow. The iPhone app and widget extension also pass an unsigned Release build. All UI interactions use the isolated Debug collection and defaults suite.
+
+On device, choose **Box options → Wallpaper** to select from all 16 backgrounds, toggle **Party** in the artwork header, and open **Passport → Overview / Ribbons / Journey**. The PC ribbon-count shortcut opens the same Ribbons tab. Changes in that tab save automatically; separate Add/Edit Pokémon sheets retain their Save action. Verify finger tracking and the system’s larger accessibility text sizes on a physical iPhone. Signing settings are preserved.
+
 ## Local recovery history
 
 The recovery update passed **21 focused unit/render checks** (13 recovery cases and eight existing collection/storage/export regressions), **three simulator interaction tests**, and an unsigned **Release iPhone app/widget build**. The final runs completed with **TEST SUCCEEDED** and the device build with **BUILD SUCCEEDED**. Native screen renders were inspected at 320- and 390-point widths in light/dark. The simulator screenshot from Settings also confirms the recovery navigation and filter layout.

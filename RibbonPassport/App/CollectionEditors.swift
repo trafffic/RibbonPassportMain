@@ -156,23 +156,30 @@ struct BoxWallpaperEditor: View {
         NavigationStack {
             Form {
                 Section {
-                    ZStack {
-                        BoxWallpaperView(settings: settings)
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 8) {
-                            ForEach(Array(SharedStore.demo().pokemon.prefix(6))) { p in PokemonSprite(pokemon: p).frame(height: 58) }
-                        }.padding(14)
-                    }.frame(height: 180).listRowInsets(EdgeInsets()).overlay(Rectangle().stroke(theme.border, lineWidth: 2))
+                    GeometryReader { geometry in
+                        ZStack(alignment: .topLeading) {
+                            BoxWallpaperView(settings: settings, fullArtwork: true)
+                            Text(box.name.uppercased()).font(PixelFont.font(15)).foregroundStyle(.white)
+                                .offset(x: geometry.size.width * 0.16, y: geometry.size.height * 0.07)
+                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 6), spacing: 0) {
+                                ForEach(Array(SharedStore.demo().pokemon.prefix(6))) { p in
+                                    PokemonSprite(pokemon: p).frame(height: geometry.size.height * PCGridMetrics.gridHeight / PCGridMetrics.artworkHeight / 5).padding(3)
+                                }
+                            }.frame(width: geometry.size.width * PCGridMetrics.gridWidth / PCGridMetrics.artworkWidth)
+                                .offset(x: geometry.size.width * PCGridMetrics.originX / PCGridMetrics.artworkWidth, y: geometry.size.height * PCGridMetrics.originY / PCGridMetrics.artworkHeight)
+                        }
+                    }.aspectRatio(208.0 / 192, contentMode: .fit).listRowInsets(EdgeInsets())
                 }
                 Section("Sun / Moon · 16 wallpapers") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 10) {
                         ForEach(SunMoonWallpaper.allCases) { design in
                             Button { settings.sunMoon = design; settings.tint = nil } label: {
                                 VStack(spacing: 6) {
-                                    BoxWallpaperView(settings: WallpaperSettings(sunMoon: design)).frame(height: 70)
+                                    BoxWallpaperView(settings: WallpaperSettings(sunMoon: design), fullArtwork: true).frame(height: 70)
                                         .overlay(Rectangle().stroke(settings.sunMoon == design ? theme.accent : theme.border, lineWidth: settings.sunMoon == design ? 3 : 1))
                                     Text(design.name).font(PixelFont.font(16)).foregroundStyle(theme.ink)
                                 }
-                            }.buttonStyle(.plain)
+                            }.buttonStyle(.plain).accessibilityIdentifier("pc.wallpaper.\(design.rawValue)").accessibilityValue(settings.sunMoon == design ? "Selected" : "Not selected")
                         }
                     }.padding(.vertical, 5)
                 }
