@@ -50,7 +50,7 @@ struct StoredRibbonManager: View {
 }
 
 private enum RibbonCategory: String, CaseIterable { case all = "All", last = "Last chance", later = "Later gens" }
-private enum RibbonPanel: String, Identifiable { case games, owned; var id: String { rawValue } }
+private enum RibbonPanel: String, Identifiable { case games, owned, transfer; var id: String { rawValue } }
 private struct RibbonDetails: Identifiable { var id: String }
 
 struct RibbonManager: View {
@@ -83,25 +83,27 @@ struct RibbonManager: View {
     private var size: Int { RibbonPageSize.validated(savedSize) }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: game) }
     private var availableGames: [String] { rules.compatibleGames(for: pokemon) }
+    private var transferCheck: RibbonTransferCheck { rules.transferCheck(from: game, pokemon: pokemon) }
     private var matching: [String] {
+        let lastChance = Set(transferCheck.lastChance)
         let candidates = rules.ribbonIDs.filter { id in
             if !catalogue && !(rules.awards[id]?.games.contains(game) ?? false) { return false }
             let owned = pokemon.ribbons.contains(id)
             if earnable && (owned || (catalogue ? rules.earningGames(for: id, pokemon: pokemon).isEmpty : rules.unavailableReason(id, game: game, pokemon: pokemon) != nil)) { return false }
-            if category == .last { return rules.isLastChance(id, game: game, pokemon: pokemon) }
+            if category == .last { return lastChance.contains(id) }
             if category == .later { return !owned && !rules.laterGames(for: id, after: game, pokemon: pokemon).isEmpty }
             return true
         }
-        let priorities = Dictionary(uniqueKeysWithValues: candidates.map { ($0, priority($0)) })
+        let priorities = Dictionary(uniqueKeysWithValues: candidates.map { ($0, priority($0, lastChance: lastChance)) })
         return candidates.sorted {
             let a = priorities[$0] ?? 4, b = priorities[$1] ?? 4
             return a == b ? CatalogOrder.awardIndex($0) < CatalogOrder.awardIndex($1) : a < b
         }
     }
     private var pageCount: Int { max(1, (matching.count + size - 1) / size) }
-    private func priority(_ id: String) -> Int {
+    private func priority(_ id: String, lastChance: Set<String>) -> Int {
         if pokemon.ribbons.contains(id) { return 3 }
-        if rules.isLastChance(id, game: game, pokemon: pokemon) { return 0 }
+        if lastChance.contains(id) { return 0 }
         if !rules.laterGames(for: id, after: game, pokemon: pokemon).isEmpty { return 2 }
         return rules.unavailableReason(id, game: game, pokemon: pokemon) == nil ? 1 : 4
     }
@@ -113,9 +115,9 @@ struct RibbonManager: View {
                 } else {
                     GeometryReader { geometry in
                         let minimum: CGFloat = size == 32 ? 259 : 239
-                        if geometry.size.height < minimum + 334 {
+                        if geometry.size.height < minimum + 406 {
                             ScrollView { managerContent(gridHeight: minimum).padding(12) }
-                        } else { managerContent(gridHeight: geometry.size.height - 334).padding(12) }
+                        } else { managerContent(gridHeight: geometry.size.height - 406).padding(12) }
                     }
                 }
                 footer
@@ -132,12 +134,14 @@ struct RibbonManager: View {
                 }
                 .sheet(item: $panel, onDismiss: { pending = nil }) { target in
                     if target == .owned { ownedDrawer }
+                    else if target == .transfer { transferDrawer }
                     else { gamePicker }
                 }
                 .sheet(item: $detail) { choice in detailView(choice.id) }
         }.tint(theme.accent)
     }
     private func managerContent(gridHeight: CGFloat) -> some View {
+        let check = transferCheck
         let list = matching
         let pages = max(1, (list.count + size - 1) / size)
         let ids = Array(list.dropFirst(min(page, pages - 1) * size).prefix(size))
@@ -157,7 +161,7 @@ struct RibbonManager: View {
                 if !game.isEmpty { GameMascot(game: game, size: 25) }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(game.isEmpty ? "Choose a game" : RibbonCatalog.shared.compactGameName(game)).font(PixelFont.font(17)).lineLimit(1).minimumScaleFactor(0.75)
-                    if let gen = rules.games[game]?.gen { Text("GEN \(gen.roman)").font(PixelFont.font(11)).foregroundStyle(theme.muted) }
+                    if let gen = rules.games[game]?.gen { Text("GEN \(gen.roman) · \(game == pokemon.currentgame ? "Current game" : "Planning view")").font(PixelFont.font(11)).foregroundStyle(theme.muted) }
                 }
                 Spacer(minLength: 0)
                 Button("Change") { pending = nil; panel = .games }.font(PixelFont.font(13)).buttonStyle(.bordered).disabled(availableGames.isEmpty)
@@ -190,12 +194,15 @@ struct RibbonManager: View {
                 }.buttonStyle(.plain).accessibilityLabel("\(size) ribbons per page. Change to \(RibbonPageSize.next(size))")
                     .accessibilityIdentifier("ribbons.pageSize")
             }.frame(height: 25)
-            ribbonGrid(height: gridHeight, ids: ids)
+            ribbonGrid(height: gridHeight, ids: ids, lastChance: Set(check.lastChance))
             HStack {
                 Button("‹ Previous") { page -= 1 }.disabled(page == 0)
                 Spacer(); Text("\(min(page + 1, pages)) / \(pages)").foregroundStyle(theme.muted); Spacer()
                 Button("Next ›") { page += 1 }.disabled(page + 1 >= pages)
             }.font(PixelFont.font(13)).frame(minHeight: 28)
+            Button { panel = .transfer } label: {
+                RibbonTransferStatus(check: check, theme: theme, review: true)
+            }.buttonStyle(.plain).disabled(!check.canAssess).accessibilityIdentifier("ribbons.transfer.review")
             Button { panel = .owned } label: {
                 HStack {
                     Text("Owned ribbons · \(pokemon.ownedRibbonIDs.count) ▴").font(PixelFont.font(16))
@@ -205,20 +212,19 @@ struct RibbonManager: View {
             }.buttonStyle(.plain).accessibilityIdentifier("ribbons.owned")
         }.onChange(of: earnable) { _, _ in page = 0 }
     }
-    private func ribbonGrid(height: CGFloat, ids: [String]) -> some View {
+    private func ribbonGrid(height: CGFloat, ids: [String], lastChance: Set<String>) -> some View {
         let columns = size == 12 ? 3 : 4
         let rows = size / columns
         let cellHeight = max(28, (height - CGFloat(rows - 1) * 5) / CGFloat(rows))
         return ZStack {
             if ids.isEmpty { Text(game.isEmpty ? "Set a current game to choose ribbons." : "No unearned ribbons in this selection.").font(PixelFont.font(16)).foregroundStyle(theme.muted).multilineTextAlignment(.center) }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: columns), spacing: 5) {
-                ForEach(ids, id: \.self) { id in ribbonTile(id, height: cellHeight) }
+                ForEach(ids, id: \.self) { id in ribbonTile(id, height: cellHeight, last: lastChance.contains(id)) }
             }.frame(maxHeight: .infinity, alignment: .top)
         }.frame(height: height)
     }
-    private func ribbonTile(_ id: String, height: CGFloat) -> some View {
+    private func ribbonTile(_ id: String, height: CGFloat, last: Bool) -> some View {
         let owned = pokemon.ribbons.contains(id)
-        let last = rules.isLastChance(id, game: game, pokemon: pokemon)
         let allowed = catalogue ? !rules.earningGames(for: id, pokemon: pokemon).isEmpty : rules.unavailableReason(id, game: game, pokemon: pokemon) == nil
         let name = RibbonCatalog.shared.awardPickerName(id)
         return ZStack(alignment: .topTrailing) {
@@ -251,7 +257,7 @@ struct RibbonManager: View {
     }
     private func status(_ id: String) -> String {
         if pokemon.ribbons.contains(id) { return "Owned · " + pokemon.earningLocation(id) }
-        if rules.isLastChance(id, game: game, pokemon: pokemon) { return "Last chance before leaving this generation" }
+        if transferCheck.lastChance.contains(id) { return "Last chance before leaving this generation" }
         return rules.unavailableReason(id, game: game, pokemon: pokemon) ?? laterLabel(id)
     }
     private var footer: some View {
@@ -267,6 +273,10 @@ struct RibbonManager: View {
             if let id = pending { pending = nil; record(id, in: chosen) }
             panel = nil
         }
+    }
+    private var transferDrawer: some View {
+        RibbonTransferDrawer(pokemon: pokemon, game: game, check: transferCheck, message: message, canUndo: undo != nil,
+                             onRecord: { id, chosen in record(id, in: chosen) }, onUndo: restore, onDone: { panel = nil })
     }
     private var ownedDrawer: some View {
         NavigationStack {
@@ -309,8 +319,11 @@ struct RibbonManager: View {
                     HStack { AssetImage(key: "award-" + id).frame(width: 43, height: 50); Text(RibbonCatalog.shared.awardPickerName(id)).font(PixelFont.font(23)) }
                     Text(rules.awards[id]?.description ?? "").font(PixelFont.font(17))
                     Text(status(id)).font(PixelFont.font(15)).padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                        .background(rules.isLastChance(id, game: game, pokemon: pokemon) ? theme.warningSurface : theme.board)
-                        .foregroundStyle(rules.isLastChance(id, game: game, pokemon: pokemon) ? theme.warningInk : theme.ink)
+                        .background(transferCheck.lastChance.contains(id) ? theme.warningSurface : theme.board)
+                        .foregroundStyle(transferCheck.lastChance.contains(id) ? theme.warningInk : theme.ink)
+                    if id == "footprint-ribbon", let warning = rules.footprintTransferWarning(from: game, pokemon: pokemon) {
+                        Text(warning).font(PixelFont.font(15)).foregroundStyle(theme.warningInk)
+                    }
                     ForEach(Array(Set(rules.laterGames(for: id, after: game, pokemon: pokemon).compactMap { rules.games[$0]?.gen })).sorted(), id: \.self) { gen in
                         VStack(alignment: .leading, spacing: 6) {
                             Text("GEN \(gen.roman)").font(PixelFont.font(18))
@@ -343,11 +356,174 @@ struct RibbonManager: View {
     private func restore() { if let previous = undo { pokemon = previous; undo = nil; message = "Change undone" } }
 }
 
+struct RibbonTransferStatus: View {
+    var check: RibbonTransferCheck
+    var theme: PassportTheme
+    var review = false
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(check.isSafe ? "✓" : "!").font(PixelFont.font(28)).frame(width: 24).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(check.title).font(PixelFont.font(17)).fixedSize(horizontal: false, vertical: true)
+                Text(check.summary).font(PixelFont.font(12)).fixedSize(horizontal: false, vertical: true)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            if review { Text("Review ›").font(PixelFont.font(13)).fixedSize() }
+        }.padding(9).frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+            .background(check.isSafe ? theme.board : theme.warningSurface)
+            .foregroundStyle(check.isSafe ? theme.ink : theme.warningInk)
+            .overlay(RoundedRectangle(cornerRadius: 4).stroke(check.isSafe ? theme.accent : theme.warningBorder, lineWidth: 2))
+            .accessibilityElement(children: .combine)
+            .accessibilityValue(check.isSafe ? "Safe" : "Needs attention")
+    }
+}
+
+struct RibbonTransferDrawer: View {
+    var pokemon: RibbonPokemon
+    var game: String
+    var check: RibbonTransferCheck
+    var message = ""
+    var canUndo = false
+    var onRecord: (String, String) -> Void
+    var onUndo: () -> Void
+    var onDone: () -> Void
+    @Environment(\.colorScheme) private var scheme
+    @State private var page = 0
+    @State private var laterPage = 0
+    @State private var showingLater = false
+    @State private var earning: RibbonDetails?
+    private let rules = RibbonRules.shared
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: game) }
+    private var pages: Int { max(1, (check.lastChance.count + 3) / 4) }
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                ViewThatFits(in: .vertical) {
+                    checklist
+                    ScrollView { checklist }
+                }
+                Spacer(minLength: 0)
+                HStack {
+                    Text(message).font(PixelFont.font(12)).frame(maxWidth: .infinity, alignment: .leading)
+                    Button("Undo", action: onUndo).disabled(!canUndo).font(PixelFont.font(14))
+                        .accessibilityIdentifier("ribbons.transfer.undo")
+                }.padding(14)
+            }.background(theme.panel).foregroundStyle(theme.ink)
+                .navigationTitle("Transfer check").navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .principal) { Text("Transfer check").font(PixelFont.font(23)) }
+                    ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(PixelFont.font(15)).accessibilityIdentifier("ribbons.transfer.done") }
+                }
+                .sheet(item: $earning) { choice in
+                    RibbonGamePicker(pokemon: pokemon, selected: game, award: choice.id, generationFilter: check.generation) { chosen in
+                        onRecord(choice.id, chosen); earning = nil
+                    }
+                }
+                .sheet(isPresented: $showingLater) { laterDrawer }
+                .onChange(of: check.lastChance.count) { _, _ in page = min(page, pages - 1) }
+        }.tint(theme.accent).presentationDetents([.fraction(0.85), .large]).presentationDragIndicator(.visible)
+    }
+    private var checklist: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                GameMascot(game: game, size: 23)
+                if let generation = check.generation {
+                    Text("Gen \(generation.roman)\(check.nextGeneration.map { " → Gen \($0.roman)" } ?? "")").font(PixelFont.font(14))
+                }
+            }.foregroundStyle(theme.muted)
+            RibbonTransferStatus(check: check, theme: theme).accessibilityIdentifier("ribbons.transfer.status")
+            ForEach(check.warnings, id: \.self) { warning in
+                Text(warning).font(PixelFont.font(14)).fixedSize(horizontal: false, vertical: true).padding(9).background(theme.warningSurface).foregroundStyle(theme.warningInk)
+            }
+            HStack {
+                Text(check.lastChance.isEmpty ? "Generation complete" : "Earn before leaving").font(PixelFont.font(17))
+                Spacer(minLength: 4)
+                if let gen = check.generation { Text("All Gen \(gen.roman) games").font(PixelFont.font(11)).foregroundStyle(theme.muted) }
+            }
+            if check.lastChance.isEmpty {
+                Text(check.isSafe ? "✓ Ready to move up" : check.warnings.isEmpty ? "No last-chance ribbons left" : "Check Footprint eligibility above")
+                    .font(PixelFont.font(17)).padding(16).frame(maxWidth: .infinity).background(theme.board)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(check.lastChance.dropFirst(min(page, pages - 1) * 4).prefix(4)), id: \.self) { id in
+                        requiredRow(id)
+                    }
+                }
+                if pages > 1 { pager(page: $page, count: pages) }
+            }
+            Rectangle().fill(theme.border).frame(height: 1)
+            HStack {
+                Text("Can wait").font(PixelFont.font(17))
+                Spacer()
+                Button { showingLater = true } label: { Text("\(check.canWait.count) ribbons ›").font(PixelFont.font(12)) }
+                    .disabled(check.canWait.isEmpty).accessibilityIdentifier("ribbons.transfer.later")
+            }
+            ForEach(Array(check.canWait.prefix(2)), id: \.self) { id in laterRow(id) }
+            if check.canWait.isEmpty { Text("No later opportunities in this generation.").font(PixelFont.font(13)).foregroundStyle(theme.muted) }
+        }.padding(.horizontal, 14).padding(.top, 12).fixedSize(horizontal: false, vertical: true)
+    }
+    private func requiredRow(_ id: String) -> some View {
+        Button {
+            let choices = rules.generationEarningGames(for: id, from: game, pokemon: pokemon)
+            if choices.contains(game) { onRecord(id, game) }
+            else if choices.count == 1, let chosen = choices.first { onRecord(id, chosen) }
+            else { earning = RibbonDetails(id: id) }
+        } label: {
+            HStack(spacing: 9) {
+                AssetImage(key: "award-" + id).frame(width: 28, height: 34)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(RibbonCatalog.shared.awardPickerName(id).replacingOccurrences(of: " Ribbon", with: "")).font(PixelFont.font(17))
+                    Text(rules.generationEarningGames(for: id, from: game, pokemon: pokemon).map { RibbonCatalog.shared.compactGameName($0) }.joined(separator: " / "))
+                        .font(PixelFont.font(12)).foregroundStyle(theme.muted)
+                    if id == "footprint-ribbon", let warning = rules.footprintTransferWarning(from: game, pokemon: pokemon) {
+                        Text(warning).font(PixelFont.font(12)).padding(6).background(theme.warningSurface).foregroundStyle(theme.warningInk)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading).fixedSize(horizontal: false, vertical: true)
+                Text("+").font(PixelFont.font(19)).frame(width: 26, height: 26).background(theme.warningSurface).foregroundStyle(theme.warningInk)
+                    .overlay(Rectangle().stroke(theme.warningBorder, lineWidth: 2)).accessibilityHidden(true)
+            }.padding(.vertical, 9).frame(maxWidth: .infinity, minHeight: 62, alignment: .leading)
+                .contentShape(Rectangle())
+                .overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
+        }.buttonStyle(.plain).accessibilityLabel("Add \(RibbonCatalog.shared.awardPickerName(id))")
+            .accessibilityIdentifier("ribbons.transfer.add.\(id)")
+    }
+    private func laterRow(_ id: String) -> some View {
+        let generations = Set(rules.laterGames(for: id, after: game, pokemon: pokemon).compactMap { rules.games[$0]?.gen }).sorted()
+        return HStack(spacing: 9) {
+            AssetImage(key: "award-" + id).frame(width: 24, height: 29)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(RibbonCatalog.shared.awardPickerName(id).replacingOccurrences(of: " Ribbon", with: "")).font(PixelFont.font(16))
+                Text("Gen " + generations.map(\.roman).joined(separator: " · ")).font(PixelFont.font(12)).foregroundStyle(theme.muted)
+            }.fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }.padding(.vertical, 4)
+    }
+    private var laterDrawer: some View {
+        let count = max(1, (check.canWait.count + 5) / 6)
+        return NavigationStack {
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(Array(check.canWait.dropFirst(min(laterPage, count - 1) * 6).prefix(6)), id: \.self) { id in laterRow(id) }
+                Spacer(minLength: 0)
+                if count > 1 { pager(page: $laterPage, count: count) }
+            }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(theme.panel).foregroundStyle(theme.ink)
+                .navigationTitle("Later opportunities").navigationBarTitleDisplayMode(.inline)
+                .toolbar { Button("Done") { showingLater = false }.font(PixelFont.font(15)) }
+        }.presentationDetents([.medium, .large])
+    }
+    private func pager(page: Binding<Int>, count: Int) -> some View {
+        HStack {
+            Button("‹ Previous") { page.wrappedValue -= 1 }.disabled(page.wrappedValue == 0)
+            Spacer(); Text("\(min(page.wrappedValue + 1, count)) / \(count)"); Spacer()
+            Button("Next ›") { page.wrappedValue += 1 }.disabled(page.wrappedValue + 1 >= count)
+        }.font(PixelFont.font(14)).padding(.vertical, 3)
+    }
+}
+
 struct RibbonGamePicker: View {
     var pokemon: RibbonPokemon
     var selected: String
     var award: String?
     var historical = false
+    var generationFilter: Int? = nil
     var onSelect: (String) -> Void
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dismiss) private var dismiss
@@ -356,6 +532,7 @@ struct RibbonGamePicker: View {
     private let rules = RibbonRules.shared
     private var choices: [String] {
         rules.compatibleGames(for: pokemon, reachableOnly: !historical).filter { game in
+            if let generationFilter, rules.games[game]?.gen != generationFilter { return false }
             if historical && !pokemon.recordedVisits.contains(where: { $0.game == game }) { return false }
             return award.map { rules.unavailableReason($0, game: game, pokemon: pokemon, historical: historical) == nil } ?? true
         }
@@ -363,12 +540,12 @@ struct RibbonGamePicker: View {
     var body: some View {
         let theme = PassportTheme(dark: scheme == .dark, game: selected)
         let generations = Array(Set(choices.compactMap { rules.games[$0]?.gen })).sorted()
-        let games = choices.filter { rules.games[$0]?.gen == generation }
+        let games = choices.filter { rules.games[$0]?.gen == (generationFilter ?? generation) }
         let pages = max(1, (games.count + 5) / 6)
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
-                if let generation {
-                    Button("‹ Generations") { self.generation = nil; page = 0 }.font(PixelFont.font(15))
+                if let generation = generationFilter ?? generation {
+                    if generationFilter == nil { Button("‹ Generations") { self.generation = nil; page = 0 }.font(PixelFont.font(15)) }
                     Text("GEN \(generation.roman)").font(PixelFont.font(23))
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
                         ForEach(Array(games.dropFirst(min(page, pages - 1) * 6).prefix(6)), id: \.self) { game in

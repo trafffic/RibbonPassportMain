@@ -48,6 +48,81 @@ final class RibbonManagerTests: XCTestCase {
         let restricted = RibbonPokemon(species: "rayquaza", currentgame: "emerald", origingame: "emerald", currentlevel: 50)
         XCTAssertFalse(rules.isLastChance("winning-ribbon", game: "emerald", pokemon: restricted))
     }
+    func testTransferCheckIncludesOtherGamesInDepartureGeneration() {
+        var p = RibbonPokemon(species: "metagross", currentgame: "as", origingame: "emerald", metLevel: 5)
+        p.ribbons = rules.ribbonIDs.filter { $0 != "kalos-champion-ribbon" }
+        XCTAssertNotNil(rules.unavailableReason("kalos-champion-ribbon", game: "as", pokemon: p))
+        let check = rules.transferCheck(from: "as", pokemon: p)
+        XCTAssertEqual(check.generation, 6)
+        XCTAssertEqual(check.nextGeneration, 7)
+        XCTAssertEqual(check.lastChance, ["kalos-champion-ribbon"])
+        XCTAssertEqual(rules.generationEarningGames(for: "kalos-champion-ribbon", from: "as", pokemon: p), ["x", "y"])
+        XCTAssertFalse(check.isSafe)
+        XCTAssertTrue(p.recordRibbon("kalos-champion-ribbon", game: "x"))
+        XCTAssertTrue(rules.transferCheck(from: "as", pokemon: p).isSafe)
+        XCTAssertEqual(p.earnedGames?["kalos-champion-ribbon"], "x")
+        p.removeAward("kalos-champion-ribbon")
+        XCTAssertFalse(rules.transferCheck(from: "as", pokemon: p).isSafe)
+    }
+    func testFootprintLastChanceAtTransferLevelBoundary() {
+        var p = RibbonPokemon(species: "metagross", currentgame: "platinum", origingame: "emerald", currentlevel: 70, metLevel: 5)
+        p.ribbons = rules.ribbonIDs.filter { $0 != "footprint-ribbon" }
+        var check = rules.transferCheck(from: "platinum", pokemon: p)
+        XCTAssertTrue(check.isSafe)
+        XCTAssertEqual(check.canWait, ["footprint-ribbon"])
+        XCTAssertTrue(rules.laterGames(for: "footprint-ribbon", after: "platinum", pokemon: p).contains("bd"))
+        XCTAssertNil(rules.footprintTransferWarning(from: "platinum", pokemon: p))
+        p.currentlevel = 71
+        check = rules.transferCheck(from: "platinum", pokemon: p)
+        XCTAssertEqual(check.lastChance, ["footprint-ribbon"])
+        XCTAssertFalse(check.isSafe)
+        XCTAssertNotNil(rules.footprintTransferWarning(from: "platinum", pokemon: p))
+        XCTAssertNotNil(rules.footprintTransferWarning(from: "hg", pokemon: p))
+        XCTAssertNotNil(rules.unavailableReason("footprint-ribbon", game: "bd", pokemon: p))
+        let before = p
+        XCTAssertTrue(p.recordRibbon("footprint-ribbon", game: "platinum"))
+        XCTAssertTrue(rules.transferCheck(from: "platinum", pokemon: p).isSafe)
+        p = before
+        XCTAssertFalse(rules.transferCheck(from: "platinum", pokemon: p).isSafe)
+    }
+    func testFootprintFriendshipExceptionAndFinalGeneration() {
+        var voiceless = RibbonPokemon(species: "regigigas", currentgame: "platinum", origingame: "diamond", currentlevel: 100, metLevel: 100)
+        voiceless.ribbons = rules.ribbonIDs.filter { $0 != "footprint-ribbon" }
+        XCTAssertTrue(rules.transferCheck(from: "platinum", pokemon: voiceless).isSafe)
+        XCTAssertTrue(rules.laterGames(for: "footprint-ribbon", after: "platinum", pokemon: voiceless).contains("bd"))
+        var p = RibbonPokemon(species: "metagross", currentgame: "sw", origingame: "emerald", currentlevel: 100, metLevel: 70)
+        p.ribbons = rules.ribbonIDs.filter { $0 != "footprint-ribbon" }
+        let check = rules.transferCheck(from: "sw", pokemon: p)
+        XCTAssertEqual(check.lastChance, ["footprint-ribbon"])
+        XCTAssertEqual(rules.generationEarningGames(for: "footprint-ribbon", from: "sw", pokemon: p), ["bd", "sp"])
+        XCTAssertFalse(check.isSafe)
+    }
+    func testTransferSafetyRespectsRestrictionsAndUnknownMetLevel() {
+        var p = RibbonPokemon(species: "mew", currentgame: "as", origingame: "emerald", currentlevel: 100)
+        p.ribbons = rules.ribbonIDs.filter { !["footprint-ribbon", "skillful-battler-ribbon", "expert-battler-ribbon"].contains($0) }
+        var check = rules.transferCheck(from: "as", pokemon: p)
+        XCTAssertTrue(check.lastChance.isEmpty)
+        XCTAssertFalse(check.warnings.isEmpty)
+        XCTAssertFalse(check.isSafe)
+        p.metLevel = 70
+        check = rules.transferCheck(from: "as", pokemon: p)
+        XCTAssertTrue(check.warnings.isEmpty)
+        XCTAssertTrue(check.isSafe)
+        XCTAssertEqual(check.canWait, ["footprint-ribbon"])
+        var victini = RibbonPokemon(species: "victini", currentgame: "as", origingame: "black", metLevel: 50)
+        victini.ribbons = rules.ribbonIDs.filter { $0 != "coolness-master-ribbon" }
+        XCTAssertEqual(rules.transferCheck(from: "as", pokemon: victini).lastChance, ["coolness-master-ribbon"])
+    }
+    func testTransferCheckRequiresCompatibleGameAndDestination() {
+        XCTAssertFalse(rules.transferCheck(from: "", pokemon: RibbonPokemon(species: "metagross")).canAssess)
+        XCTAssertFalse(rules.transferCheck(from: "red", pokemon: RibbonPokemon(species: "metagross", currentgame: "as")).canAssess)
+        var p = RibbonPokemon(species: "pikachu-cosplay", currentgame: "as")
+        p.ribbons = rules.ribbonIDs
+        let check = rules.transferCheck(from: "as", pokemon: p)
+        XCTAssertTrue(check.canAssess)
+        XCTAssertNil(check.nextGeneration)
+        XCTAssertFalse(check.isSafe)
+    }
     func testRecordUsesOneSpecificGameAndOwnedCannotBeOverwritten() throws {
         var p = RibbonPokemon(species: "metagross", currentgame: "bd", origingame: "emerald")
         XCTAssertTrue(p.recordRibbon("effort-ribbon", game: "bd"))
@@ -107,6 +182,39 @@ final class RibbonManagerTests: XCTestCase {
         let entry = try XCTUnwrap((root["pokemon"] as? [[String: Any]])?.first)
         XCTAssertNil(entry["earnedGames"]); XCTAssertNil(entry["earnedGenerations"])
         XCTAssertEqual(try BackupImporter.parse(data).first?.metLevel, 50)
+    }
+    @MainActor func testNativeTransferDrawerRendersWarningAndSafeStates() throws {
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
+        let previous = scene.windows.first { $0.isKeyWindow }
+        let window = UIWindow(windowScene: scene)
+        let controller = UIHostingController(rootView: AnyView(EmptyView()))
+        window.rootViewController = controller
+        defer { controller.rootView = AnyView(EmptyView()); window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        let previews = FileManager.default.temporaryDirectory.appendingPathComponent("RibbonTransfer-Previews")
+        try FileManager.default.createDirectory(at: previews, withIntermediateDirectories: true)
+        print("Transfer preview directory: \(previews.path)")
+        var p = RibbonPokemon(species: "metagross", currentgame: "platinum", origingame: "emerald", currentlevel: 100, metLevel: 5)
+        p.ribbons = rules.ribbonIDs.filter { (rules.awards[$0]?.gen ?? 99) <= 4 && !["footprint-ribbon", "pair-ability-ribbon", "legend-ribbon"].contains($0) }
+        for width in [320.0, 390.0] {
+            for dark in [false, true] {
+                for safe in [false, true] {
+                    var sample = p
+                    if safe { sample.ribbons = rules.ribbonIDs }
+                    let check = rules.transferCheck(from: "platinum", pokemon: sample)
+                    XCTAssertEqual(check.isSafe, safe)
+                    window.frame = CGRect(x: 0, y: 0, width: width, height: 844)
+                    let view = RibbonTransferDrawer(pokemon: sample, game: "platinum", check: check, onRecord: { _, _ in }, onUndo: {}, onDone: {})
+                        .environment(\.colorScheme, dark ? .dark : .light)
+                    controller.rootView = AnyView(view.id("\(width)-\(dark)-\(safe)"))
+                    window.makeKeyAndVisible(); controller.view.frame = window.bounds; controller.view.layoutIfNeeded()
+                    RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+                    let image = UIGraphicsImageRenderer(size: window.bounds.size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+                    let name = "transfer-\(Int(width))-\(dark ? "dark" : "light")-\(safe ? "safe" : "warning")"
+                    let attachment = XCTAttachment(image: image); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+                    try image.pngData()?.write(to: previews.appendingPathComponent(name + ".png"))
+                }
+            }
+        }
     }
     @MainActor func testNativeManagerRendersEveryPageSizeAndOwnedDrawer() throws {
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)

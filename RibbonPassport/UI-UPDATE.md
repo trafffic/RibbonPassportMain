@@ -2,6 +2,10 @@
 
 ## Ribbon manager
 
+The transfer bar above **Owned ribbons** uses a large **!** beside **Not safe to leave Gen …**, and changes to a green check when the last required ribbon is recorded. **Review** opens the Transfer check drawer. It checks all compatible games in the selected generation, independently of the grid's filters or page. **Earn before leaving** has four ribbons per page; **Can wait** lists compatible later generations. Add directly in the selected game or choose a specific earning game from that generation. Undo updates the warning immediately; Save commits the manager's draft. A different selected generation is labelled **Planning view**.
+
+Footprint is last chance when transfer would make its later level requirement impossible, or when no compatible later game awards it. The drawer explains the Gen IV → V met-level reset for affected Pokémon. The BDSP friendship exception for voiceless Pokémon remains supported. Unknown met levels request an eligibility check, and Pokémon with no compatible later generation do not receive a green transfer status.
+
 Last-chance ribbons use an amber background, a stronger amber outline and an **!** corner marker. The marker also appears in the compact 32-per-page grid; the larger layouts keep the **LAST CHANCE** label. The Last chance filter and detail message share that colour, while owned ribbons retain their green styling.
 
 **Manage ribbons** opens from the selected Pokémon in a PC box, directly above the passport's Stamp Album, and from the Add/Edit Pokémon forms. The pixel interface includes all 106 ribbons, game choices grouped by generation, **Earnable only**, an **All** games switch, and **All / Last chance / Later gens** filters. The small per-page button cycles **12 → 16 → 32 → 12**. Its choice persists between sessions; older unsupported page sizes reset to 12.

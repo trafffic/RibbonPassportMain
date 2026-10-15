@@ -24,6 +24,28 @@ struct RibbonGameRule: Decodable {
     var service: Bool
 }
 
+struct RibbonTransferCheck {
+    var generation: Int?
+    var nextGeneration: Int?
+    var lastChance: [String] = []
+    var canWait: [String] = []
+    var warnings: [String] = []
+    var canAssess = false
+    var isSafe: Bool { canAssess && nextGeneration != nil && lastChance.isEmpty && warnings.isEmpty }
+    var title: String {
+        guard canAssess, let generation else { return "Choose a game to check transfer" }
+        guard nextGeneration != nil else { return "No compatible later generation" }
+        if !lastChance.isEmpty { return "Not safe to leave Gen \(generation.roman)" }
+        return warnings.isEmpty ? "Safe to leave Gen \(generation.roman)" : "Check before leaving Gen \(generation.roman)"
+    }
+    var summary: String {
+        guard canAssess else { return "Set a compatible current game first" }
+        guard nextGeneration != nil else { return "This Pokémon cannot move up yet" }
+        if !lastChance.isEmpty { return "\(lastChance.count) last-chance \(lastChance.count == 1 ? "ribbon remains" : "ribbons remain")" }
+        return warnings.isEmpty ? "No last-chance ribbons left" : "Footprint eligibility needs checking"
+    }
+}
+
 /// Offline snapshot of ribbons.guide's availability and directed transfer graph.
 struct RibbonRules: Decodable {
     var species: [String: RibbonSpeciesRule]
@@ -98,11 +120,14 @@ struct RibbonRules: Decodable {
             if award == "gorgeous-ribbon", ["bd", "sp"].contains(game), p.ribbons.contains("royal-ribbon") || p.ribbons.contains("gorgeous-royal-ribbon") { return "The earlier purchase is no longer available" }
             if award == "royal-ribbon", ["bd", "sp"].contains(game), p.ribbons.contains("gorgeous-royal-ribbon") { return "The earlier purchase is no longer available" }
             if award == "footprint-ribbon", !["diamond", "pearl", "platinum"].contains(game), !(info.voiceless && ["bd", "sp"].contains(game)) {
-                if let level = p.metLevel {
+                let current = p.currentgame.isEmpty ? p.origingame : p.currentgame
+                let resetsMetLevel = ["3", "4", "3DSVC"].contains(group(for: current) ?? "")
+                // Earlier games replace the met level on transfer; the old value cannot block a later ribbon.
+                if resetsMetLevel {
+                    if p.currentlevel > 70 { return "Transfer resets the met level above 70" }
+                } else if p.origingame != "go", let level = p.metLevel {
                     if level > 70 { return "Requires gaining 30 levels after being met" }
-                } else if p.currentlevel > 70 { return "Set the met level to check the 30-level requirement" }
-                let currentGroup = group(for: p.currentgame) ?? ""
-                if ["3", "4", "3DSVC"].contains(currentGroup), p.currentlevel > 70 { return "Transfer resets the met level above 70" }
+                } else if p.origingame != "go", p.currentlevel > 70 { return "Set the met level to check the 30-level requirement" }
             }
         }
         return nil
@@ -121,6 +146,50 @@ struct RibbonRules: Decodable {
     }
     func isLastChance(_ award: String, game: String, pokemon p: RibbonPokemon) -> Bool {
         !p.ribbons.contains(award) && unavailableReason(award, game: game, pokemon: p) == nil && laterGames(for: award, after: game, pokemon: p).isEmpty
+    }
+
+    func generationEarningGames(for award: String, from game: String, pokemon p: RibbonPokemon) -> [String] {
+        let generation = games[game]?.gen
+        let groups = reachableGroups(from: game)
+        return compatibleGames(for: p).filter {
+            games[$0]?.gen == generation && groups.contains(games[$0]?.group ?? "") &&
+            unavailableReason(award, game: $0, pokemon: p, checkCompatibility: false) == nil
+        }
+    }
+
+    /// Checks the whole departure generation, independently of grid filters and pagination.
+    func transferCheck(from game: String, pokemon p: RibbonPokemon) -> RibbonTransferCheck {
+        guard let generation = games[game]?.gen, species[p.species] != nil,
+              compatibleGames(for: p).contains(game) else { return RibbonTransferCheck() }
+        let groups = reachableGroups(from: game)
+        let later = compatibleGames(for: p).filter {
+            (games[$0]?.gen ?? 0) > generation && groups.contains(games[$0]?.group ?? "")
+        }
+        var check = RibbonTransferCheck(generation: generation, nextGeneration: later.compactMap { games[$0]?.gen }.min(), canAssess: true)
+        for award in ribbonIDs where !p.ribbons.contains(award) {
+            guard !generationEarningGames(for: award, from: game, pokemon: p).isEmpty else { continue }
+            if laterGames(for: award, after: game, pokemon: p).isEmpty { check.lastChance.append(award) }
+            else { check.canWait.append(award) }
+        }
+        let current = p.currentgame.isEmpty ? p.origingame : p.currentgame
+        if !p.ribbons.contains("footprint-ribbon"), p.metLevel == nil, p.currentlevel > 70, p.origingame != "go",
+           !["3", "4", "3DSVC"].contains(group(for: current) ?? ""),
+           compatibleGames(for: p).contains(where: {
+               games[$0]?.gen == generation && groups.contains(games[$0]?.group ?? "") &&
+               unavailableReason("footprint-ribbon", game: $0, pokemon: p, checkCompatibility: false) == "Set the met level to check the 30-level requirement"
+           }) {
+            check.warnings.append("Set Met level in Edit Pokémon to check whether Footprint can still be earned.")
+        }
+        return check
+    }
+
+    func footprintTransferWarning(from game: String, pokemon p: RibbonPokemon) -> String? {
+        guard !p.ribbons.contains("footprint-ribbon"),
+              !generationEarningGames(for: "footprint-ribbon", from: game, pokemon: p).isEmpty,
+              laterGames(for: "footprint-ribbon", after: game, pokemon: p).isEmpty,
+              ["3", "4"].contains(group(for: p.currentgame.isEmpty ? p.origingame : p.currentgame) ?? ""),
+              p.currentlevel > 70 else { return nil }
+        return "Last chance · Met level resets to \(p.currentlevel) in Gen V. The later 30-level requirement cannot be met."
     }
 }
 

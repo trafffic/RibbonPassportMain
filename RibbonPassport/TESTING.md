@@ -1,5 +1,13 @@
 # Current UI update validation
 
+## Transfer checklist
+
+The transfer update passed **15 focused unit/render tests** and **1 simulator interaction test**. A final focused run rechecked the Footprint boundary and the complete drawer interaction with **TEST SUCCEEDED**. The tests use the isolated in-memory Debug fixture, without reading or writing the user's collection. Native renders cover the warning/safe drawer states at 320- and 390-point widths in light/dark, alongside the manager's 12/16/32 layouts.
+
+Checks cover the whole departure generation (including X/Y ribbons while viewing Alpha Sapphire), compatible later destinations, species/challenge restrictions, the Footprint level-70/71 boundary, the Gen IV → V met-level reset, BDSP's voiceless friendship exception, unknown met levels, and species unable to transfer up. Simulator taps verify adding ribbons from the drawer, selecting HeartGold specifically for Legend, the green status, Undo, Save and reopening. The first interaction run exposed an empty-area tap issue in short checklist rows; the whole row now responds to taps. The app and widget extension also compile for iPhone with signing disabled.
+
+On device, open **Manage ribbons → Review**. Check that the warning covers every game in the selected generation even with a filter active, and review the **Can wait** generations. At larger accessibility text sizes or short screen heights, the drawer uses scrolling only when its content cannot fit. Existing signing settings are preserved.
+
 ## Drag interaction and last-chance highlights
 
 The final focused run completed **20 unit/render tests** and **4 simulator touch tests**, all passing. The app and widgets also completed an unsigned iPhone build. The project now includes 54 unit tests plus 4 UI tests; the earlier complete run below refers to the prior 51-test suite.

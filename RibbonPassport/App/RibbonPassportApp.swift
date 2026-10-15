@@ -12,7 +12,7 @@ final class AppStore: ObservableObject {
     @Published var openTeamID: String?
     static var interactionTesting: Bool {
         #if DEBUG
-        return ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "1"
+        return ["1", "transfer"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
         #else
         return false
         #endif
@@ -23,7 +23,14 @@ final class AppStore: ObservableObject {
         if Self.interactionTesting {
             preferences.removePersistentDomain(forName: "RibbonPassport.InteractionTests")
             preferences.set(true, forKey: "pc.ribbon.partyVisible")
-            let a = RibbonPokemon(id: "drag-a", species: "metagross", currentgame: "bd", origingame: "diamond")
+            var a = RibbonPokemon(id: "drag-a", species: "metagross", currentgame: "bd", origingame: "diamond")
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "transfer" {
+                a.currentgame = "platinum"; a.origingame = "emerald"; a.metLevel = 5
+                a.ribbons = RibbonRules.shared.ribbonIDs.filter {
+                    (RibbonRules.shared.awards[$0]?.gen ?? 99) <= 4 &&
+                    !["footprint-ribbon", "pair-ability-ribbon", "legend-ribbon"].contains($0)
+                }
+            }
             let b = RibbonPokemon(id: "drag-b", species: "rayquaza", currentgame: "bd", origingame: "ruby")
             let c = RibbonPokemon(id: "drag-c", species: "pikachu", currentgame: "sw", origingame: "sw")
             var first = PCBox(id: "drag-box-a", name: "Box 01"); first.slots[0] = a.id; first.slots[1] = b.id
