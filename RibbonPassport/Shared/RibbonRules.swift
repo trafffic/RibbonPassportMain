@@ -194,8 +194,8 @@ struct RibbonRules: Decodable {
 }
 
 enum RibbonPageSize {
-    static let options = [12, 16, 32]
-    static func validated(_ value: Int) -> Int { options.contains(value) ? value : 12 }
+    static let options = [12, 16, 24]
+    static func validated(_ value: Int) -> Int { value == 32 ? 24 : options.contains(value) ? value : 12 }
     static func next(_ value: Int) -> Int { options[((options.firstIndex(of: validated(value)) ?? 0) + 1) % options.count] }
 }
 

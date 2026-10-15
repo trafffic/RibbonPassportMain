@@ -113,20 +113,7 @@ struct RibbonManager: View {
     }
     private var managerBody: some View {
             VStack(spacing: 0) {
-                if typeSize.isAccessibilitySize {
-                    ScrollView { managerContent(gridHeight: CGFloat(size == 32 ? 8 : 4) * 80).padding(12) }
-                } else {
-                    GeometryReader { geometry in
-                        let minimum: CGFloat = size == 32 ? 259 : 239
-                        let overhead: CGFloat = embedded ? 406 : 463
-                        ViewThatFits(in: .vertical) {
-                            managerContent(gridHeight: max(minimum, geometry.size.height - overhead)).padding(12)
-                                .fixedSize(horizontal: false, vertical: true)
-                            ScrollView { managerContent(gridHeight: minimum).padding(12).fixedSize(horizontal: false, vertical: true) }
-                        }
-
-                    }
-                }
+                managerContent().padding(12)
                 footer
             }.background(theme.paper).foregroundStyle(theme.ink)
                 .navigationTitle("Ribbons").navigationBarTitleDisplayMode(.inline)
@@ -151,7 +138,7 @@ struct RibbonManager: View {
                     if embedded { destinationPokemon = value }
                 }
     }
-    private func managerContent(gridHeight: CGFloat) -> some View {
+    private func managerContent() -> some View {
         let check = transferCheck
         let list = matching
         let pages = max(1, (list.count + size - 1) / size)
@@ -207,7 +194,9 @@ struct RibbonManager: View {
                 }.buttonStyle(.plain).accessibilityLabel("\(size) ribbons per page. Change to \(RibbonPageSize.next(size))")
                     .accessibilityIdentifier("ribbons.pageSize")
             }.frame(height: 25)
-            ribbonGrid(height: gridHeight, ids: ids, lastChance: Set(check.lastChance))
+            GeometryReader { geometry in
+                ribbonGrid(height: geometry.size.height, ids: ids, lastChance: Set(check.lastChance))
+            }.frame(maxHeight: .infinity)
             HStack {
                 Button("‹ Previous") { page -= 1 }.disabled(page == 0)
                 Spacer(); Text("\(min(page + 1, pages)) / \(pages)").foregroundStyle(theme.muted); Spacer()
@@ -226,7 +215,7 @@ struct RibbonManager: View {
         }.onChange(of: earnable) { _, _ in page = 0 }
     }
     private func ribbonGrid(height: CGFloat, ids: [String], lastChance: Set<String>) -> some View {
-        let columns = size == 12 ? 3 : 4
+        let columns = size == 24 ? 6 : size == 12 ? 3 : 4
         let rows = size / columns
         let cellHeight = max(28, (height - CGFloat(rows - 1) * 5) / CGFloat(rows))
         return ZStack {
@@ -249,13 +238,13 @@ struct RibbonManager: View {
                 else { detail = RibbonDetails(id: id) }
             } label: {
                 VStack(spacing: 3) {
-                    AssetImage(key: "award-" + id).frame(height: size == 32 ? min(26, height - 5) : min(28, height * 0.36))
-                    if size != 32 {
+                    AssetImage(key: "award-" + id).frame(height: size == 24 ? min(26, height - 5) : min(28, height * 0.36))
+                    if size != 24 {
                         Text(name.replacingOccurrences(of: " Ribbon", with: "")).font(PixelFont.font(size == 16 ? 11 : 12)).lineLimit(2).multilineTextAlignment(.center).frame(maxWidth: .infinity)
                         Text(owned ? "✓ Owned" : last ? "LAST CHANCE" : laterLabel(id)).font(PixelFont.font(10)).lineLimit(1)
                             .foregroundStyle(last ? theme.warningInk : theme.muted)
                     }
-                }.padding(.horizontal, size == 32 ? 12 : 3).frame(maxWidth: .infinity).frame(height: height)
+                }.padding(.horizontal, 3).frame(maxWidth: .infinity).frame(height: height)
                     .background(owned ? theme.board : last ? theme.warningSurface : theme.panel)
                     .overlay(Rectangle().stroke(last ? theme.warningBorder : owned ? theme.accent : theme.border, lineWidth: last ? 2 : owned ? 2 : 1))
                     .overlay(alignment: .topLeading) {
@@ -266,9 +255,11 @@ struct RibbonManager: View {
                     }
             }.buttonStyle(.plain).accessibilityLabel(owned && !pokemon.ribbons.contains(id) ? "View original ribbons for \(name)" : owned ? "Remove \(name), \(pokemon.earningLocation(id))" : "\(name), \(status(id))")
                 .accessibilityIdentifier("ribbons.tile.\(id)")
+            if size != 24 {
             Button { detail = RibbonDetails(id: id) } label: { Text("i").font(PixelFont.font(12)).frame(width: 20, height: 22).background(theme.panel.opacity(0.9)) }
                 .buttonStyle(.plain).accessibilityLabel("Details for \(name)")
-        }
+            }
+        }.contextMenu { Button("Ribbon details") { detail = RibbonDetails(id: id) } }
     }
     private func laterLabel(_ id: String) -> String {
         let gens = Set(rules.laterGames(for: id, after: game, pokemon: pokemon).compactMap { rules.games[$0]?.gen }).sorted()

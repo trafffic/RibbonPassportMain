@@ -556,6 +556,9 @@ struct StampAlbumView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.colorScheme) private var scheme
     @State var section: PassportSection = .overview
+    @State private var stampPage = 0
+    @State private var earnedPage = 0
+    @State private var visitPage = 0
     @State private var generation = 0
     @State private var game = ""
     @AppStorage("album.grouping") private var grouping: AlbumGrouping = .generations
@@ -589,13 +592,10 @@ struct StampAlbumView: View {
                     }.padding(.horizontal, 16).overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
                     if section == .ribbons {
                         RibbonManager(pokemon: pokemonBinding, entryTitle: "Passport", embedded: true) { section = .overview }
+                    } else if section == .journey {
+                        journey(p).padding(16)
                     } else {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 18) {
-                                if section == .overview { overview(p) }
-                                else { journey(p) }
-                            }.padding(16)
-                        }
+                        ScrollView { overview(p).padding(16) }
                     }
                 }
             } else { ContentUnavailableView("Pokémon removed", systemImage: "tray") }
@@ -709,77 +709,100 @@ struct StampAlbumView: View {
         }
     }
     private func journey(_ p: RibbonPokemon) -> some View {
-        let activeGame = p.recordedVisits.contains { $0.game == game } ? game : p.recordedVisits.first?.game ?? ""
-        let active = grouping == .games ? RibbonCatalog.shared.gameInfo[activeGame]?.gen ?? 0 : p.visitedGenerations.contains(generation) ? generation : p.visitedGenerations.first ?? 0
-        return VStack(alignment: .leading, spacing: 16) {
-                    RetroHeading(title: "Stamp album", value: grouping == .generations ? "\(p.visitedGenerations.count) generations" : "\(p.recordedVisits.count) games")
-                    Picker("Album view", selection: $grouping) {
-                        ForEach(AlbumGrouping.allCases) { Text($0.name).tag($0) }
-                    }.pickerStyle(.segmented).accessibilityIdentifier("album.grouping")
-                    if grouping == .generations {
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 9) {
-                        ForEach(p.visitedGenerations, id: \.self) { gen in
-                            let games = p.games(in: gen)
-                            let representative = games.contains(p.currentgame) ? p.currentgame : games.first ?? ""
-                            Button { generation = gen } label: {
-                                VStack(spacing: 5) {
-                                    Text("GEN \(gen.roman)").font(PixelFont.font(12))
-                                    GameMascot(game: representative, size: representative == "scar" ? 42 : 52).frame(height: 54)
-                                    Text("\(games.count) \(games.count == 1 ? "game" : "games")").font(PixelFont.font(14))
-                                    Text("\(p.awards(earnedIn: gen).count) earned").font(PixelFont.font(12)).foregroundStyle(theme.muted)
-                                }.frame(maxWidth: .infinity).padding(.vertical, 10).padding(.horizontal, 3)
-                                    .background(gen == active ? theme.board : theme.panel)
-                                    .overlay(Rectangle().strokeBorder(theme.border, style: StrokeStyle(lineWidth: gen == active ? 2 : 1, dash: gen == active ? [] : [3])))
+        GeometryReader { geometry in
+            let perPage = geometry.size.height < 560 ? 3 : 6
+            let total = grouping == .games ? p.recordedVisits.count : p.visitedGenerations.count
+            let pages = max(1, (total + perPage - 1) / perPage)
+            let visiblePage = min(stampPage, pages - 1)
+            let activeGame = p.recordedVisits.contains { $0.game == game } ? game : p.recordedVisits.first?.game ?? ""
+            let active = grouping == .games ? RibbonCatalog.shared.gameInfo[activeGame]?.gen ?? 0 : p.visitedGenerations.contains(generation) ? generation : p.visitedGenerations.first ?? 0
+            let earned = grouping == .games ? p.awards(earnedInGame: activeGame) : p.awards(earnedIn: active)
+            let ribbonsPerPage = geometry.size.height < 560 ? 6 : 12
+            let ribbonPages = max(1, (earned.count + ribbonsPerPage - 1) / ribbonsPerPage)
+            let games = grouping == .games ? [activeGame] : p.games(in: active)
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    RetroHeading(title: "Stamp album", value: "\(total) \(grouping == .games ? "games" : "generations")")
+                    Button("Edit visits") { editingVisits = true }.font(PixelFont.font(12)).foregroundStyle(theme.accent)
+                }
+                Picker("Album view", selection: $grouping) {
+                    ForEach(AlbumGrouping.allCases) { Text($0.name).tag($0) }
+                }.pickerStyle(.segmented).accessibilityIdentifier("album.grouping")
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                    if grouping == .games {
+                        ForEach(Array(p.recordedVisits.dropFirst(visiblePage * perPage).prefix(perPage))) { visit in
+                            Button { game = visit.game; earnedPage = 0; visitPage = 0 } label: {
+                                albumStamp(game: visit.game, gen: visit.generation,
+                                           title: RibbonCatalog.shared.compactGameName(visit.game),
+                                           subtitle: visit.game == p.origingame && visit.game == p.currentgame ? "Origin · Current" : visit.game == p.origingame ? "Origin" : visit.game == p.currentgame ? "Current" : "Visited",
+                                           selected: visit.game == activeGame, compact: geometry.size.height < 480)
+                            }.buttonStyle(.plain).accessibilityIdentifier("album.game.\(visit.game)")
+                        }
+                    } else {
+                        ForEach(Array(p.visitedGenerations.dropFirst(visiblePage * perPage).prefix(perPage)), id: \.self) { gen in
+                            let visits = p.games(in: gen)
+                            Button { generation = gen; earnedPage = 0; visitPage = 0 } label: {
+                                albumStamp(game: visits.contains(p.currentgame) ? p.currentgame : visits.first ?? "", gen: gen,
+                                           title: "\(visits.count) games", subtitle: "\(p.awards(earnedIn: gen).count) earned", selected: gen == active, compact: geometry.size.height < 480)
                             }.buttonStyle(.plain).accessibilityIdentifier("album.generation.\(gen)")
                         }
                     }
-                    } else {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 9) {
-                            ForEach(p.recordedVisits) { visit in
-                                Button { game = visit.game } label: {
-                                    VStack(spacing: 6) {
-                                        Text("GEN \(visit.generation.roman)").font(PixelFont.font(11))
-                                        GameMascot(game: visit.game, size: visit.game == "scar" ? 42 : 52).frame(height: 54)
-                                        Text(RibbonCatalog.shared.compactGameName(visit.game)).font(PixelFont.font(14)).lineLimit(2).minimumScaleFactor(0.8).frame(minHeight: 32)
-                                        Text(visit.game == p.origingame && visit.game == p.currentgame ? "Origin · Current" : visit.game == p.origingame ? "Origin" : visit.game == p.currentgame ? "Current" : "Visited")
-                                            .font(PixelFont.font(11)).foregroundStyle(theme.muted)
-                                    }.frame(maxWidth: .infinity).padding(.vertical, 10).padding(.horizontal, 3)
-                                        .background(visit.game == activeGame ? theme.board : theme.panel)
-                                        .overlay(Rectangle().strokeBorder(theme.border, style: StrokeStyle(lineWidth: visit.game == activeGame ? 2 : 1, dash: visit.game == activeGame ? [] : [3])))
-                                }.buttonStyle(.plain).accessibilityIdentifier("album.game.\(visit.game)")
+                }
+                albumPager(page: visiblePage, count: pages, identifier: "album.stamps") { next in
+                    stampPage = next; earnedPage = 0; visitPage = 0
+                    let index = next * perPage
+                    if grouping == .games { game = p.recordedVisits[index].game }
+                    else { generation = p.visitedGenerations[index] }
+                }
+                if active > 0 {
+                    VStack(alignment: .leading, spacing: 8) {
+                        RetroHeading(title: grouping == .games ? RibbonCatalog.shared.compactGameName(activeGame) : "Generation \(active.roman)", value: "\(earned.count) earned")
+                        if let shownGame = games.dropFirst(min(visitPage, max(0, games.count - 1))).first {
+                            HStack(spacing: 6) {
+                                GameMascot(game: shownGame, size: 22)
+                                Text(RibbonCatalog.shared.compactGameName(shownGame)).font(PixelFont.font(13)).lineLimit(2)
+                                Spacer(minLength: 0)
+                                Text(shownGame == p.origingame && shownGame == p.currentgame ? "Origin · Current" : shownGame == p.origingame ? "Origin" : shownGame == p.currentgame ? "Current" : "Visited").font(PixelFont.font(10)).foregroundStyle(theme.muted)
+                                if games.count > 1 {
+                                    Button { visitPage = (visitPage + 1) % games.count } label: { Image(systemName: "chevron.right").frame(width: 32, height: 32) }
+                                        .accessibilityLabel("Next visited game, \(visitPage + 1) of \(games.count)")
+                                }
+                            }.frame(minHeight: 32)
+                        }
+                        if earned.isEmpty { Text("No ribbons assigned").font(PixelFont.font(14)).foregroundStyle(theme.muted) }
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 5), count: 6), spacing: 5) {
+                            ForEach(Array(earned.dropFirst(min(earnedPage, ribbonPages - 1) * ribbonsPerPage).prefix(ribbonsPerPage)), id: \.self) { id in
+                                Button { selectedAward = AwardLocationSelection(id: id) } label: {
+                                    AssetImage(key: "award-" + id).frame(height: 27).padding(3).frame(maxWidth: .infinity).background(theme.board)
+                                }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.ribbons[id] ?? id)
                             }
                         }
-                    }
-                    if active > 0 {
-                        VStack(alignment: .leading, spacing: 12) {
-                            let earned = grouping == .games ? p.awards(earnedInGame: activeGame) : p.awards(earnedIn: active)
-                            RetroHeading(title: grouping == .games ? RibbonCatalog.shared.compactGameName(activeGame) : "Generation \(active.roman)", value: "\(earned.count) earned")
-                            ForEach(grouping == .games ? [activeGame] : p.games(in: active), id: \.self) { game in
-                                HStack(spacing: 8) {
-                                    GameMascot(game: game, size: 25)
-                                    Text(RibbonCatalog.shared.gameName(game)).font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true)
-                                    Spacer(minLength: 3)
-                                    if game == p.origingame || game == p.currentgame {
-                                        Text(game == p.origingame && game == p.currentgame ? "Origin · Current" : game == p.origingame ? "Origin" : "Current")
-                                            .font(PixelFont.font(12)).foregroundStyle(theme.accent).fixedSize(horizontal: false, vertical: true)
-                                    }
-                                }
-                            }
-                            Divider()
-                            if earned.isEmpty { Text("No ribbons assigned").font(PixelFont.font(15)).foregroundStyle(theme.muted) }
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 7), count: 6), spacing: 8) {
-                                ForEach(earned, id: \.self) { id in
-                                    Button { selectedAward = AwardLocationSelection(id: id) } label: {
-                                        AssetImage(key: "award-" + id).frame(height: 34).padding(4).frame(maxWidth: .infinity).background(theme.board)
-                                    }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.ribbons[id] ?? id)
-                                }
-                            }
-                            Button("Ribbons ›") { section = .ribbons }.font(PixelFont.font(15)).buttonStyle(.plain).foregroundStyle(theme.accent)
-                        }.retroPanel()
-                    }
-
-            Button("Edit visits") { editingVisits = true }.font(PixelFont.font(15)).buttonStyle(.plain).foregroundStyle(theme.accent)
+                        if ribbonPages > 1 {
+                            albumPager(page: min(earnedPage, ribbonPages - 1), count: ribbonPages, identifier: "album.awards") { earnedPage = $0 }
+                        }
+                        Button("Ribbons ›") { section = .ribbons }.font(PixelFont.font(14)).foregroundStyle(theme.accent)
+                    }.retroPanel()
+                }
+                Spacer(minLength: 0)
+            }.onChange(of: grouping) { _, _ in stampPage = 0; earnedPage = 0; visitPage = 0 }
         }
+    }
+    private func albumStamp(game: String, gen: Int, title: String, subtitle: String, selected: Bool, compact: Bool) -> some View {
+        VStack(spacing: 4) {
+            Text("GEN \(gen.roman)").font(PixelFont.font(11))
+            GameMascot(game: game, size: compact ? 24 : 34).frame(height: compact ? 24 : 36)
+            Text(title).font(PixelFont.font(12)).lineLimit(2).minimumScaleFactor(0.8).frame(height: 30)
+            Text(subtitle).font(PixelFont.font(10)).foregroundStyle(theme.muted).lineLimit(1)
+        }.frame(maxWidth: .infinity).padding(.vertical, 7).padding(.horizontal, 3)
+            .background(selected ? theme.board : theme.panel)
+            .overlay(Rectangle().strokeBorder(theme.border, style: StrokeStyle(lineWidth: selected ? 2 : 1, dash: selected ? [] : [3])))
+    }
+    private func albumPager(page: Int, count: Int, identifier: String, select: @escaping (Int) -> Void) -> some View {
+        HStack {
+            Button("‹ Previous") { select(page - 1) }.disabled(page == 0).accessibilityIdentifier(identifier + ".previous")
+            Spacer(); Text("\(page + 1) / \(count)").foregroundStyle(theme.muted); Spacer()
+            Button("Next ›") { select(page + 1) }.disabled(page + 1 >= count).accessibilityIdentifier(identifier + ".next")
+        }.font(PixelFont.font(12)).frame(minHeight: 28)
     }
     private func endpoint(_ title: String, game: String) -> some View {
         VStack(alignment: .leading, spacing: 7) {

@@ -8,10 +8,11 @@ final class RibbonManagerTests: XCTestCase {
     func testCatalogueAndPageSizeCycle() {
         XCTAssertEqual(rules.ribbonIDs.count, 106)
         XCTAssertFalse(rules.ribbonIDs.contains { $0.hasSuffix("-mark") })
-        XCTAssertEqual(RibbonPageSize.options, [12, 16, 32])
-        XCTAssertEqual([RibbonPageSize.next(12), RibbonPageSize.next(16), RibbonPageSize.next(32)], [16, 32, 12])
+        XCTAssertEqual(RibbonPageSize.options, [12, 16, 24])
+        XCTAssertEqual([RibbonPageSize.next(12), RibbonPageSize.next(16), RibbonPageSize.next(24)], [16, 24, 12])
         XCTAssertEqual(RibbonPageSize.validated(8), 12)
-        XCTAssertEqual(RibbonPageSize.validated(24), 12)
+        XCTAssertEqual(RibbonPageSize.validated(24), 24)
+        XCTAssertEqual(RibbonPageSize.validated(32), 24)
     }
     func testReachableGamesRespectSpeciesFormsAndOneWayTransfers() {
         let metagross = RibbonPokemon(species: "metagross", currentgame: "diamond", origingame: "ruby")
@@ -943,6 +944,9 @@ final class TerminalPassportRenderTests: XCTestCase {
     @MainActor func testTerminalAndPassportTabsRenderAtCompactWidthsInBothThemes() throws {
         var snapshot = SharedStore.demo()
         snapshot.organizeSections()
+        let sample = try XCTUnwrap(snapshot.pokemon(for: .ribbon).first)
+        let index = try XCTUnwrap(snapshot.pokemon.firstIndex { $0.id == sample.id })
+        snapshot.pokemon[index].visits = RibbonRules.shared.games.keys.sorted().map { JourneyVisit(game: $0) }
         let store = AppStore(snapshot: snapshot, save: { _ in })
         let pokemon = try XCTUnwrap(store.snapshot.pokemon(for: .ribbon).first)
         let defaultsName = "RibbonPassport.TerminalRender." + UUID().uuidString
@@ -952,6 +956,7 @@ final class TerminalPassportRenderTests: XCTestCase {
             for dark in [false, true] {
                 for screen in ["terminal", "terminal-party", "overview", "ribbons", "journey"] {
                     defaults.set(screen == "terminal-party", forKey: "pc.ribbon.partyVisible")
+                    defaults.set(AlbumGrouping.games.rawValue, forKey: "album.grouping")
                     let view: AnyView
                     if screen.hasPrefix("terminal") { view = AnyView(PCStorageView()) }
                     else {
