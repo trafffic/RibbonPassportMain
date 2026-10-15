@@ -171,8 +171,23 @@ struct RibbonManager: View {
                     .accessibilityLabel("Earnable only").accessibilityIdentifier("ribbons.earnable")
                 Text("Earnable only").font(PixelFont.font(14))
                 Spacer()
-                Button { catalogue.toggle(); page = 0 } label: { Text("All").font(PixelFont.font(14)).padding(.horizontal, 11).padding(.vertical, 7).background(catalogue ? theme.board : theme.panel).overlay(Rectangle().stroke(theme.border)) }
-                    .buttonStyle(.plain).accessibilityLabel("All games").accessibilityValue(catalogue ? "On" : "Off").accessibilityIdentifier("ribbons.allGames")
+                Button {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        catalogue.toggle(); category = .all; page = 0
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        if catalogue { Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)) }
+                        Text("All").font(PixelFont.font(14))
+                    }.padding(.horizontal, 11).frame(minHeight: 34)
+                        .foregroundStyle(catalogue ? theme.paper : theme.ink)
+                        .background(catalogue ? theme.accent : theme.panel)
+                        .overlay(Rectangle().stroke(catalogue ? theme.accent : theme.border, lineWidth: catalogue ? 2 : 1))
+                }.buttonStyle(.borderless).accessibilityLabel("All games")
+                    .accessibilityValue(catalogue ? "On" : "Off")
+                    .accessibilityAddTraits(catalogue ? .isSelected : [])
+                    .accessibilityHint("Show ribbons across all games. Earnable only still applies.")
+                    .accessibilityIdentifier("ribbons.allGames")
             }.frame(height: 34)
             HStack(spacing: 5) {
                 ForEach(RibbonCategory.allCases, id: \.self) { value in
@@ -185,7 +200,7 @@ struct RibbonManager: View {
                 }
             }
             HStack {
-                Text("\(list.count) shown · \(category == .all ? "Last chance first" : category.rawValue)").font(PixelFont.font(11)).foregroundStyle(theme.muted)
+                Text("\(list.count) shown · \(catalogue ? "All games" : "This game")").font(PixelFont.font(11)).foregroundStyle(theme.muted).accessibilityIdentifier("ribbons.resultCount")
                 Spacer(minLength: 4)
                 Button { savedSize = RibbonPageSize.next(size); page = 0 } label: {
                     Text("\(size)/pg").font(PixelFont.font(11)).padding(.horizontal, 5).padding(.vertical, 3)
@@ -215,7 +230,7 @@ struct RibbonManager: View {
         }.onChange(of: earnable) { _, _ in page = 0 }
     }
     private func ribbonGrid(height: CGFloat, ids: [String], lastChance: Set<String>) -> some View {
-        let columns = size == 24 ? 6 : size == 12 ? 3 : 4
+        let columns = size == 24 ? 6 : 3
         let rows = size / columns
         let cellHeight = max(28, (height - CGFloat(rows - 1) * 5) / CGFloat(rows))
         return ZStack {
@@ -281,6 +296,7 @@ struct RibbonManager: View {
     private var gamePicker: some View {
         RibbonGamePicker(pokemon: pokemon, selected: game, award: pending) { chosen in
             game = chosen; page = 0
+            if pending == nil { catalogue = false; category = .all }
             if let id = pending { pending = nil; record(id, in: chosen) }
             panel = nil
         }

@@ -8,9 +8,10 @@ final class RibbonManagerTests: XCTestCase {
     func testCatalogueAndPageSizeCycle() {
         XCTAssertEqual(rules.ribbonIDs.count, 106)
         XCTAssertFalse(rules.ribbonIDs.contains { $0.hasSuffix("-mark") })
-        XCTAssertEqual(RibbonPageSize.options, [12, 16, 24])
-        XCTAssertEqual([RibbonPageSize.next(12), RibbonPageSize.next(16), RibbonPageSize.next(24)], [16, 24, 12])
+        XCTAssertEqual(RibbonPageSize.options, [6, 12, 24])
+        XCTAssertEqual([RibbonPageSize.next(6), RibbonPageSize.next(12), RibbonPageSize.next(24)], [12, 24, 6])
         XCTAssertEqual(RibbonPageSize.validated(8), 12)
+        XCTAssertEqual(RibbonPageSize.validated(16), 12)
         XCTAssertEqual(RibbonPageSize.validated(24), 24)
         XCTAssertEqual(RibbonPageSize.validated(32), 24)
     }

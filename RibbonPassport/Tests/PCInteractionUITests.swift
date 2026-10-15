@@ -146,6 +146,26 @@ final class TerminalPassportUITests: XCTestCase {
     private func capture(_ name: String) {
         let image = XCTAttachment(screenshot: app.screenshot()); image.name = name; image.lifetime = .keepAlways; add(image)
     }
+    func testAllGamesResetsCategoryAndShowsScopeFeedback() {
+        app.buttons["Passport ▸"].tap()
+        app.buttons["passport.tab.ribbons"].tap()
+        let all = app.buttons["ribbons.allGames"]
+        XCTAssertTrue(all.waitForExistence(timeout: 5))
+        XCTAssertEqual(all.value as? String, "Off")
+        app.buttons["Last chance"].tap()
+        all.tap()
+        XCTAssertEqual(all.value as? String, "On")
+        XCTAssertTrue(all.isSelected)
+        let count = app.staticTexts["ribbons.resultCount"]
+        XCTAssertTrue(count.label.contains("All games"))
+        XCTAssertTrue(app.buttons["All"].isSelected)
+        app.switches["ribbons.earnable"].tap()
+        XCTAssertTrue(count.label.contains("106 shown"))
+        all.tap()
+        XCTAssertEqual(all.value as? String, "Off")
+        XCTAssertTrue(count.label.contains("This game"))
+        XCTAssertFalse(count.label.contains("106 shown"))
+    }
     func testPassportTabsSaveRibbonChangesAcrossNavigation() {
         capture("terminal-home")
         app.buttons["Passport ▸"].tap()
