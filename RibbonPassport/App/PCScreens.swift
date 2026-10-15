@@ -285,9 +285,9 @@ struct PCStorageView: View {
     private func ribbonStrip(_ p: RibbonPokemon) -> some View {
         Button { passportSection = .ribbons; store.openPokemonID = p.id } label: {
             HStack(spacing: 12) {
-                ForEach(Array(p.ownedRibbonIDs.prefix(4)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 23, height: 27) }
+                ForEach(Array(p.displayedRibbonIDs.prefix(4)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 23, height: 27) }
                 Spacer(minLength: 0)
-                Text("\(p.ownedRibbonIDs.count) ribbons ›").font(PixelFont.font(14))
+                Text("\(p.displayedRibbonIDs.count) ribbons ›").font(PixelFont.font(14))
             }.padding(.vertical, 9).contentShape(Rectangle())
         }.buttonStyle(.plain).foregroundStyle(theme.muted).accessibilityIdentifier("ribbons.manage")
             .overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
@@ -564,6 +564,7 @@ struct StampAlbumView: View {
     @State private var editingVisits = false
     @State private var selectedAward: AwardLocationSelection?
     @State private var describedAward: AwardLocationSelection?
+    @State private var descriptionHeight: CGFloat = 120
     @State private var reviewingTransfer = false
     @State private var transferUndo: RibbonPokemon?
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
@@ -578,7 +579,7 @@ struct StampAlbumView: View {
                     if section == .overview { hero(p).padding(.horizontal, 16).padding(.vertical, 12) }
                     HStack(spacing: 8) {
                         ForEach(PassportSection.allCases, id: \.self) { tab in
-                            Button { section = tab } label: {
+                            Button { describedAward = nil; section = tab } label: {
                                 Text(tab.rawValue).font(PixelFont.font(16)).frame(maxWidth: .infinity, minHeight: 44)
                                     .foregroundStyle(section == tab ? theme.accent : theme.muted)
                                     .overlay(alignment: .bottom) { if section == tab { Rectangle().fill(theme.accent).frame(height: 2) } }
@@ -598,7 +599,38 @@ struct StampAlbumView: View {
                     }
                 }
             } else { ContentUnavailableView("Pokémon removed", systemImage: "tray") }
-        }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        }
+        .overlayPreferenceValue(RibbonDescriptionAnchors.self) { anchors in
+            GeometryReader { geometry in
+                if section == .overview, let id = describedAward?.id, let anchor = anchors[id] {
+                    let target = geometry[anchor]
+                    let placement = RibbonBubblePlacement(container: geometry.size, anchor: target, contentHeight: descriptionHeight)
+                    ZStack(alignment: .topLeading) {
+                        Color.clear.contentShape(RibbonBubbleOutsideShape(holes: anchors.values.map { geometry[$0] }), eoFill: true)
+                            .onTapGesture { describedAward = nil }.accessibilityHidden(true)
+                        RibbonDescriptionBubble(awardID: id)
+                            .frame(width: placement.frame.width, height: placement.frame.height)
+                            .background(theme.panel, in: RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.border, lineWidth: 1))
+                            .overlay(alignment: .topLeading) {
+                                RibbonBubblePointer(pointsDown: placement.above)
+                                    .fill(placement.above ? theme.panel : theme.board)
+                                    .overlay { RibbonBubblePointer(pointsDown: placement.above, borderOnly: true).stroke(theme.border, lineWidth: 1) }
+                                    .frame(width: 14, height: 8)
+                                    .offset(x: placement.tipX - 7, y: placement.above ? placement.frame.height - 1 : -7)
+                            }
+                            .shadow(color: theme.ink.opacity(0.12), radius: 4, y: 2)
+                            .contentShape(Rectangle()).onTapGesture { }
+                            .position(x: placement.frame.midX, y: placement.frame.midY)
+                            .accessibilityAction(.escape) { describedAward = nil }
+                    }
+                    .onPreferenceChange(RibbonDescriptionHeight.self) { height in
+                        if height > 0, abs(height - descriptionHeight) > 0.5 { descriptionHeight = height }
+                    }
+                }
+            }
+        }
+        .background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .principal) { Text(section == .ribbons ? p?.displayName.uppercased() ?? "PASSPORT" : "PASSPORT").font(PixelFont.font(20)).lineLimit(1) }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -616,7 +648,6 @@ struct StampAlbumView: View {
             .sheet(isPresented: $editing) { if let p { NavigationStack { PokemonEditor(pokemon: p) }.font(PixelFont.font(16)) } }
             .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
             .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }
-            .sheet(item: $describedAward) { choice in RibbonDescriptionView(awardID: choice.id) }
             .sheet(isPresented: $reviewingTransfer) {
                 if let p {
                     RibbonTransferDrawer(pokemon: p, game: p.currentgame, check: RibbonRules.shared.transferCheck(from: p.currentgame, pokemon: p), canUndo: transferUndo != nil, onRecord: { id, game in
@@ -635,7 +666,7 @@ struct StampAlbumView: View {
             VStack(alignment: .leading, spacing: 6) {
                 PokemonName(pokemon: p, theme: theme, size: 25)
                 EquippedTitleLabel(pokemon: p, theme: theme).font(PixelFont.font(14))
-                Text("Lv. \(p.currentlevel) · \(p.ownedRibbonIDs.count) ribbons").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                Text("Lv. \(p.currentlevel) · \(p.displayedRibbonIDs.count) ribbons").font(PixelFont.font(13)).foregroundStyle(theme.muted)
             }
             Spacer(minLength: 0)
         }
@@ -648,13 +679,19 @@ struct StampAlbumView: View {
             }.padding(.vertical, 10)
             Divider()
             Button { section = .ribbons } label: {
-                HStack { Text("Owned ribbons").font(PixelFont.font(19)); Spacer(); Text("\(p.ownedRibbonIDs.count) ›").font(PixelFont.font(14)) }
+                HStack { Text("Owned ribbons").font(PixelFont.font(19)); Spacer(); Text("\(p.displayedRibbonIDs.count) ›").font(PixelFont.font(14)) }
             }.buttonStyle(.plain).accessibilityIdentifier("passport.owned")
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 18) {
-                ForEach(Array(p.ownedRibbonIDs.suffix(12)), id: \.self) { id in
-                    Button { describedAward = AwardLocationSelection(id: id) } label: {
+                ForEach(Array(p.displayedRibbonIDs.suffix(12)), id: \.self) { id in
+                    Button { describedAward = describedAward?.id == id ? nil : AwardLocationSelection(id: id) } label: {
                         AssetImage(key: "award-" + id).frame(width: 30, height: 34).frame(maxWidth: .infinity, minHeight: 44)
-                    }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.awardPickerName(id)).accessibilityIdentifier("passport.ribbon.\(id)")
+                    }.buttonStyle(.plain)
+                        .background(describedAward?.id == id ? theme.panel : .clear, in: RoundedRectangle(cornerRadius: 4))
+                        .overlay { if describedAward?.id == id { RoundedRectangle(cornerRadius: 4).strokeBorder(theme.accent, lineWidth: 2) } }
+                        .anchorPreference(key: RibbonDescriptionAnchors.self, value: .bounds) { [id: $0] }
+                        .accessibilityValue(describedAward?.id == id ? "Description shown" : "")
+                        .accessibilityHint("Tap again to hide the description")
+                        .accessibilityLabel(RibbonCatalog.shared.awardPickerName(id)).accessibilityIdentifier("passport.ribbon.\(id)")
                 }
             }
             let check = RibbonRules.shared.transferCheck(from: p.currentgame, pokemon: p)
@@ -755,34 +792,85 @@ struct StampAlbumView: View {
     }
 }
 
-/// Inspecting an owned ribbon never changes ownership or opens the editor.
-struct RibbonDescriptionView: View {
+private struct RibbonDescriptionAnchors: PreferenceKey {
+    static var defaultValue: [String: Anchor<CGRect>] { [:] }
+    static func reduce(value: inout [String: Anchor<CGRect>], nextValue: () -> [String: Anchor<CGRect>]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, next in next })
+    }
+}
+private struct RibbonDescriptionHeight: PreferenceKey {
+    static var defaultValue: CGFloat { 0 }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+/// Keep the bubble inside the visible passport, preferring the space above its ribbon.
+struct RibbonBubblePlacement {
+    var frame: CGRect
+    var above: Bool
+    var tipX: CGFloat
+    init(container: CGSize, anchor: CGRect, contentHeight: CGFloat) {
+        let margin: CGFloat = 12, gap: CGFloat = 12
+        let width = max(1, min(280, container.width - margin * 2))
+        let height = max(1, contentHeight)
+        let roomAbove = max(1, anchor.minY - gap - margin)
+        let roomBelow = max(1, container.height - anchor.maxY - gap - margin)
+        above = height <= roomAbove || (height > roomBelow && roomAbove >= roomBelow)
+        let fittedHeight = min(height, above ? roomAbove : roomBelow)
+        let x = max(margin, min(container.width - margin - width, anchor.midX - width / 2))
+        let y = above ? anchor.minY - gap - fittedHeight : anchor.maxY + gap
+        frame = CGRect(x: x, y: y, width: width, height: fittedHeight)
+        tipX = max(14, min(width - 14, anchor.midX - x))
+    }
+}
+
+/// The outside tap layer leaves holes over every ribbon, so a single tap can switch bubbles.
+private struct RibbonBubbleOutsideShape: Shape {
+    var holes: [CGRect]
+    func path(in rect: CGRect) -> Path {
+        var path = Path(); path.addRect(rect)
+        for hole in holes {
+            let visible = hole.intersection(rect)
+            if !visible.isNull, !visible.isEmpty { path.addRect(visible) }
+        }
+        return path
+    }
+}
+private struct RibbonBubblePointer: Shape {
+    var pointsDown: Bool
+    var borderOnly = false
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: pointsDown ? rect.minY : rect.maxY))
+        path.addLine(to: CGPoint(x: rect.midX, y: pointsDown ? rect.maxY : rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: pointsDown ? rect.minY : rect.maxY))
+        if !borderOnly { path.closeSubpath() }
+        return path
+    }
+}
+struct RibbonDescriptionBubble: View {
     var awardID: String
-    @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: "") }
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    HStack(spacing: 14) {
-                        AssetImage(key: "award-" + awardID).frame(width: 44, height: 52).accessibilityHidden(true)
-                        Text(RibbonCatalog.shared.awardPickerName(awardID)).font(PixelFont.font(23))
-                            .fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("ribbon.description.name")
-                    }
-                    Text(RibbonRules.shared.awards[awardID]?.description ?? "No in-game description available.")
-                        .font(PixelFont.font(18)).fixedSize(horizontal: false, vertical: true)
-                        .accessibilityIdentifier("ribbon.description.text")
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(20)
-            }.background(theme.paper).foregroundStyle(theme.ink)
-                .navigationTitle("Ribbon details").navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .principal) { Text("Ribbon details").font(PixelFont.font(20)) }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("Done") { dismiss() }.font(PixelFont.font(15)).accessibilityIdentifier("ribbon.description.done")
-                    }
-                }
-        }.tint(theme.accent).presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+        ViewThatFits(in: .vertical) {
+            content.fixedSize(horizontal: false, vertical: true)
+            ScrollView { content.fixedSize(horizontal: false, vertical: true) }
+        }.clipShape(RoundedRectangle(cornerRadius: 8)).foregroundStyle(theme.ink)
+    }
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(RibbonCatalog.shared.ribbons[awardID] ?? awardID).font(PixelFont.font(17))
+                .fixedSize(horizontal: false, vertical: true).padding(.horizontal, 12).padding(.vertical, 10)
+                .frame(maxWidth: .infinity, alignment: .leading).background(theme.board)
+                .overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
+                .accessibilityIdentifier("ribbon.description.name")
+            Text(RibbonRules.shared.awards[awardID]?.description ?? "No in-game description available.")
+                .font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true).padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading).background(theme.panel)
+                .accessibilityIdentifier("ribbon.description.text")
+        }.background {
+            GeometryReader { geometry in Color.clear.preference(key: RibbonDescriptionHeight.self, value: geometry.size.height) }
+        }
     }
 }
 

@@ -200,7 +200,17 @@ enum RibbonPageSize {
 }
 
 extension RibbonPokemon {
+    /// Original records remain editable and retain their individual earning locations.
     var ownedRibbonIDs: [String] { RibbonCatalog.shared.chronologicalAwards(ribbons.filter { RibbonRules.shared.awards[$0]?.mark == false }) }
+    /// The current game's visible ribbons, including automatic Gen VI+ Memory consolidation.
+    var displayedRibbonIDs: [String] {
+        let catalog = RibbonCatalog.shared
+        return catalog.chronologicalAwards(catalog.awards(for: self).filter { RibbonRules.shared.awards[$0]?.mark == false })
+    }
+    func originalRibbonIDs(representedBy memory: String) -> [String] {
+        guard let group = ["contest", "battle"].first(where: { memory == "\($0)-memory-ribbon" || memory == "\($0)-memory-ribbon-gold" }) else { return [] }
+        return ownedRibbonIDs.filter { RibbonCatalog.shared.merges[$0] == group }
+    }
     func awards(earnedInGame game: String) -> [String] { RibbonCatalog.shared.chronologicalAwards(ribbons.filter { earnedGames?[$0] == game }) }
     func earningLocation(_ award: String) -> String {
         if let game = earnedGames?[award] { return RibbonCatalog.shared.gameName(game) }

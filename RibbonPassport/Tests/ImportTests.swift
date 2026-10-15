@@ -973,3 +973,92 @@ final class TerminalPassportRenderTests: XCTestCase {
         }
     }
 }
+
+final class RibbonBubblePlacementTests: XCTestCase {
+    func testBubbleStaysInsideCompactScreensAndPointsAtBothEdgeColumns() {
+        for width: CGFloat in [320, 390] {
+            for x: CGFloat in [16, width - 60] {
+                let anchor = CGRect(x: x, y: 360, width: 44, height: 44)
+                let placement = RibbonBubblePlacement(container: CGSize(width: width, height: 650), anchor: anchor, contentHeight: 110)
+                XCTAssertTrue(placement.above)
+                XCTAssertGreaterThanOrEqual(placement.frame.minX, 12)
+                XCTAssertLessThanOrEqual(placement.frame.maxX, width - 12)
+                XCTAssertLessThan(placement.frame.maxY, anchor.minY)
+                XCTAssertEqual(placement.frame.minX + placement.tipX, anchor.midX, accuracy: 0.5)
+            }
+        }
+    }
+    func testBubbleMovesBelowHighRibbonAndLimitsTallAccessibilityContent() {
+        let top = CGRect(x: 100, y: 30, width: 44, height: 44)
+        let below = RibbonBubblePlacement(container: CGSize(width: 320, height: 600), anchor: top, contentHeight: 120)
+        XCTAssertFalse(below.above)
+        XCTAssertGreaterThan(below.frame.minY, top.maxY)
+        let middle = CGRect(x: 240, y: 330, width: 44, height: 44)
+        let tall = RibbonBubblePlacement(container: CGSize(width: 320, height: 600), anchor: middle, contentHeight: 800)
+        XCTAssertTrue(tall.above)
+        XCTAssertGreaterThanOrEqual(tall.frame.minY, 12)
+        XCTAssertLessThanOrEqual(tall.frame.maxY, middle.minY - 12)
+        XCTAssertLessThan(tall.frame.height, 800)
+    }
+    @MainActor func testLongBubbleContentRendersInBothThemesAtNarrowWidth() throws {
+        for dark in [false, true] {
+            for accessibility in [false, true] {
+                let view = RibbonDescriptionBubble(awardID: "contest-memory-ribbon-gold")
+                    .frame(width: 280, height: accessibility ? 300 : 140)
+                    .environment(\.colorScheme, dark ? .dark : .light)
+                    .environment(\.dynamicTypeSize, accessibility ? .accessibility3 : .large)
+                let size = CGSize(width: 280, height: accessibility ? 300 : 140)
+                let window = UIWindow(frame: CGRect(origin: .zero, size: size))
+                let controller = UIHostingController(rootView: view.ignoresSafeArea())
+                window.rootViewController = controller; window.makeKeyAndVisible()
+                controller.view.frame = window.bounds; controller.view.layoutIfNeeded()
+                RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+                let image = UIGraphicsImageRenderer(size: size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+                let attachment = XCTAttachment(image: image); attachment.name = "ribbon-bubble-\(dark ? "dark" : "light")-\(accessibility ? "large-text" : "normal")"; attachment.lifetime = .keepAlways; add(attachment)
+                window.isHidden = true
+            }
+        }
+    }
+}
+
+final class MemoryRibbonDisplayTests: XCTestCase {
+    private let catalog = RibbonCatalog.shared
+    func testCurrentGameDisplayConsolidatesFromGenSixWithoutChangingOriginalHistory() throws {
+        let original = ["cool-ribbon-hoenn", "cool-ribbon-super-hoenn", "winning-ribbon", "ability-ribbon", "effort-ribbon", "rare-mark"]
+        var p = RibbonPokemon(species: "metagross", currentgame: "platinum", origingame: "emerald", ribbons: original,
+                              earnedGenerations: ["winning-ribbon": 3, "ability-ribbon": 4],
+                              earnedGames: ["cool-ribbon-hoenn": "ruby", "winning-ribbon": "ruby", "ability-ribbon": "platinum"])
+        let originalGames = p.earnedGames, originalGenerations = p.earnedGenerations
+        for game in ["emerald", "platinum", "white"] {
+            p.currentgame = game
+            XCTAssertEqual(Set(p.displayedRibbonIDs), Set(original.filter { $0 != "rare-mark" }))
+        }
+        for game in ["x", "as", "sun", "sw", "scar", "home"] {
+            p.currentgame = game
+            XCTAssertEqual(Set(p.displayedRibbonIDs), Set(["contest-memory-ribbon", "battle-memory-ribbon", "effort-ribbon"]))
+            XCTAssertEqual(Set(p.originalRibbonIDs(representedBy: "contest-memory-ribbon")), Set(["cool-ribbon-hoenn", "cool-ribbon-super-hoenn"]))
+            XCTAssertEqual(Set(p.originalRibbonIDs(representedBy: "battle-memory-ribbon")), Set(["winning-ribbon", "ability-ribbon"]))
+            XCTAssertEqual(p.ribbons, original); XCTAssertEqual(p.earnedGames, originalGames); XCTAssertEqual(p.earnedGenerations, originalGenerations)
+        }
+        let restored = try JSONDecoder().decode(RibbonPokemon.self, from: JSONEncoder().encode(p))
+        XCTAssertEqual(restored, p)
+        XCTAssertEqual(restored.awards(earnedInGame: "ruby"), catalog.chronologicalAwards(["cool-ribbon-hoenn", "winning-ribbon"]))
+    }
+    func testGoldVariantsAndRemovingOriginalsRecalculateWithoutDuplicateMemoryIcons() {
+        let contest = catalog.merges.filter { $0.value == "contest" }.map(\.key)
+        let battle = catalog.merges.filter { $0.value == "battle" }.map(\.key)
+        var p = RibbonPokemon(species: "metagross", currentgame: "as", ribbons: contest + battle)
+        XCTAssertEqual(Set(p.displayedRibbonIDs), Set(["contest-memory-ribbon-gold", "battle-memory-ribbon-gold"]))
+        XCTAssertEqual(p.originalRibbonIDs(representedBy: "contest-memory-ribbon-gold").count, 40)
+        p.removeAward(contest[0]); p.removeAward(battle[0])
+        XCTAssertEqual(Set(p.displayedRibbonIDs), Set(["contest-memory-ribbon", "battle-memory-ribbon"]))
+        p.currentgame = "scar"
+        XCTAssertEqual(Set(p.displayedRibbonIDs), Set(["contest-memory-ribbon", "battle-memory-ribbon-gold"]))
+        p.ribbons += ["contest-memory-ribbon", "contest-memory-ribbon-gold", "battle-memory-ribbon"]
+        XCTAssertEqual(Set(p.displayedRibbonIDs), Set(["contest-memory-ribbon-gold", "battle-memory-ribbon-gold"]))
+        XCTAssertEqual(p.displayedRibbonIDs.count, 2)
+        let memoryOnly = RibbonPokemon(species: "metagross", currentgame: "as", ribbons: ["contest-memory-ribbon"])
+        XCTAssertEqual(memoryOnly.displayedRibbonIDs, ["contest-memory-ribbon"])
+        XCTAssertTrue(memoryOnly.originalRibbonIDs(representedBy: "contest-memory-ribbon").isEmpty)
+    }
+}

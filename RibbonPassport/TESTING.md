@@ -1,8 +1,12 @@
 # Current UI update validation
 
+## Memory Ribbon display regression
+
+Five focused model regressions passed: pre-Gen VI originals, consolidation across Gen VI–IX and HOME, normal/gold thresholds, no duplicate Memory icons, explicit Memory-only imports, mark exclusion, original earning history and JSON round trips. The simulator checks passed the modern PC/passport count and icons, Memory description bubble, expanding the Owned groups, removing an original ribbon, Undo, and the existing pre-Gen VI passport edit/save/navigation flow. The iPhone app and widget extension pass an unsigned Release build. These displays use the existing merge logic without rewriting original ribbon records or changing transfer eligibility.
+
 ## Owned ribbon descriptions
 
-The focused simulator interaction test opens two different owned ribbon icons from Passport Overview, verifies each selected name and exact in-game description, closes the sheet and confirms the owned count is unchanged. It passed with **TEST SUCCEEDED**; the app/widget unsigned Release build passed with **BUILD SUCCEEDED**. The descriptions are bundled offline, including normal/gold Memory variants. Source attribution and wording references are recorded in CREDITS.md.
+The description bubble passed two placement tests for compact widths, edge columns, below-icon fallback and bounded accessibility content, plus a native render check in light/dark with normal/larger text. The simulator interaction test passed direct switching between two ribbons, exact names and descriptions, selected-icon toggling, outside-tap dismissal, unchanged ownership and Journey navigation. The final iPhone app/widget unsigned Release build passed. Source attribution and offline in-game wording are recorded in CREDITS.md.
 
 ## PC terminal and passport tabs
 

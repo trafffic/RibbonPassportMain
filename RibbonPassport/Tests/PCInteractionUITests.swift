@@ -175,31 +175,44 @@ final class TerminalPassportUITests: XCTestCase {
         app.buttons["Passport ▸"].tap()
         XCTAssertEqual(owned.label, changed)
     }
-    func testOverviewRibbonTapShowsThatRibbonsDescriptionWithoutEditing() {
+    func testOverviewRibbonBubbleSwitchesAndDismissesWithoutEditing() {
         app.buttons["Passport ▸"].tap()
         let owned = app.buttons["passport.owned"]
         XCTAssertTrue(owned.waitForExistence(timeout: 5))
         let originalCount = owned.label
         let examples = [
-            ("tough-ribbon-ultra-sinnoh", "Super Contest Tough Category Ultra Rank winner!"),
-            ("tough-ribbon-master-sinnoh", "Super Contest Tough Category Master Rank winner!")
+            ("tough-ribbon-ultra-sinnoh", "Tough Ribbon Ultra", "Super Contest Tough Category Ultra Rank winner!"),
+            ("tough-ribbon-master-sinnoh", "Tough Ribbon Master", "Super Contest Tough Category Master Rank winner!")
         ]
-        for (id, description) in examples {
+        for (id, name, description) in examples {
             let ribbon = app.buttons["passport.ribbon.\(id)"]
-            XCTAssertTrue(ribbon.exists)
-            let name = ribbon.label
-            ribbon.tap()
+            XCTAssertTrue(ribbon.exists); ribbon.tap()
             let text = app.staticTexts["ribbon.description.text"]
-            XCTAssertTrue(text.waitForExistence(timeout: 5))
+            let found = text.waitForExistence(timeout: 5)
+            if !found { capture("bubble-not-found"); print(app.debugDescription) }
+            XCTAssertTrue(found)
             XCTAssertEqual(text.label, description)
             XCTAssertEqual(app.staticTexts["ribbon.description.name"].label, name)
-            XCTAssertFalse(app.buttons["ribbons.owned"].exists)
+            XCTAssertEqual(ribbon.value as? String, "Description shown")
+            let nameFrame = app.staticTexts["ribbon.description.name"].frame
+            XCTAssertGreaterThanOrEqual(nameFrame.minX, app.frame.minX)
+            XCTAssertLessThanOrEqual(nameFrame.maxX, app.frame.maxX)
             XCTAssertFalse(app.buttons["ribbons.save"].exists)
-            capture("owned-description-" + id)
-            app.buttons["ribbon.description.done"].tap()
-            XCTAssertTrue(owned.waitForExistence(timeout: 5))
-            XCTAssertEqual(owned.label, originalCount)
+            XCTAssertFalse(app.buttons["ribbon.description.done"].exists)
+            capture("owned-ribbon-bubble-" + id)
         }
+        // The second ribbon was selected directly while the first bubble remained open.
+        let selected = app.buttons["passport.ribbon.tough-ribbon-master-sinnoh"]
+        selected.tap()
+        XCTAssertFalse(app.staticTexts["ribbon.description.text"].exists)
+        selected.tap()
+        XCTAssertTrue(app.staticTexts["ribbon.description.text"].waitForExistence(timeout: 5))
+        // Tap blank space well below the ribbons and transfer status.
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.82)).tap()
+        XCTAssertFalse(app.staticTexts["ribbon.description.text"].exists)
+        XCTAssertEqual(owned.label, originalCount)
+        app.buttons["passport.tab.journey"].tap()
+        XCTAssertTrue(app.segmentedControls["album.grouping"].waitForExistence(timeout: 5))
     }
     func testWallpaperSelectionPersistsAndDoesNotChangeOtherBoxes() {
         app.buttons["pc.boxOptions"].tap(); app.buttons["Wallpaper"].tap()
@@ -215,5 +228,53 @@ final class TerminalPassportUITests: XCTestCase {
         app.buttons["Next box"].tap()
         app.buttons["pc.boxOptions"].tap(); app.buttons["Wallpaper"].tap()
         XCTAssertEqual(app.buttons["pc.wallpaper.sm02"].value as? String, "Selected")
+    }
+}
+
+final class MemoryRibbonUITests: XCTestCase {
+    func testModernPassportAndOwnedDrawerConsolidateButKeepOriginalsEditable() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "memory"; app.launch()
+        defer { app.terminate() }
+        XCTAssertTrue(app.buttons["pc.box.slot.0"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["ribbons.manage"].label.contains("3 ribbons"))
+        app.buttons["Passport ▸"].tap()
+        let owned = app.buttons["passport.owned"]
+        XCTAssertTrue(owned.waitForExistence(timeout: 5))
+        let count = owned.label
+        XCTAssertTrue(count.contains("3"))
+        XCTAssertTrue(app.buttons["passport.ribbon.contest-memory-ribbon"].exists)
+        XCTAssertTrue(app.buttons["passport.ribbon.battle-memory-ribbon"].exists)
+        XCTAssertFalse(app.buttons["passport.ribbon.winning-ribbon"].exists)
+        XCTAssertFalse(app.buttons["passport.ribbon.cool-ribbon-hoenn"].exists)
+        app.buttons["passport.ribbon.battle-memory-ribbon"].tap()
+        XCTAssertTrue(app.staticTexts["ribbon.description.text"].waitForExistence(timeout: 5))
+        app.buttons["passport.ribbon.battle-memory-ribbon"].tap()
+        let image = XCTAttachment(screenshot: app.screenshot()); image.name = "modern-passport-memory-ribbons"; image.lifetime = .keepAlways; add(image)
+        app.buttons["passport.tab.ribbons"].tap()
+        let drawer = app.buttons["ribbons.owned"]
+        if !drawer.isHittable { app.swipeUp() }
+        XCTAssertTrue(drawer.waitForExistence(timeout: 5)); drawer.tap()
+        let battle = app.buttons["ribbons.memory.battle-memory-ribbon"]
+        XCTAssertTrue(battle.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["ribbons.memory.contest-memory-ribbon"].exists)
+        let winning = app.buttons["ribbons.owned.remove.winning-ribbon"]
+        XCTAssertFalse(winning.exists)
+        battle.tap()
+        XCTAssertTrue(winning.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["ribbons.owned.remove.ability-ribbon"].exists)
+        winning.tap()
+        XCTAssertFalse(winning.exists)
+        XCTAssertTrue(battle.exists)
+        app.buttons["ribbons.owned.undo"].tap()
+        let restored = winning.waitForExistence(timeout: 5)
+        if !restored {
+            let image = XCTAttachment(screenshot: app.screenshot()); image.name = "memory-undo-state"; image.lifetime = .keepAlways; add(image)
+            print(app.debugDescription)
+        }
+        XCTAssertTrue(restored)
+        app.navigationBars.buttons["Done"].tap()
+        app.buttons["passport.tab.overview"].tap()
+        XCTAssertEqual(owned.label, count)
     }
 }

@@ -8,7 +8,7 @@ struct ManageRibbonsButton: View {
             HStack(spacing: 8) {
                 Text("Ribbons").font(PixelFont.font(18))
                 Spacer(minLength: 4)
-                Text("\(pokemon.ownedRibbonIDs.count) owned ›").font(PixelFont.font(14)).foregroundStyle(.secondary)
+                Text("\(pokemon.displayedRibbonIDs.count) owned ›").font(PixelFont.font(14)).foregroundStyle(.secondary)
             }.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading).contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityIdentifier("ribbons.manage")
     }
@@ -76,6 +76,7 @@ struct RibbonManager: View {
     @State private var pending: String?
     @State private var undo: RibbonPokemon?
     @State private var message = ""
+    @State private var expandedMemories: Set<String> = []
     private let rules = RibbonRules.shared
     private var size: Int { RibbonPageSize.validated(savedSize) }
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: game) }
@@ -85,7 +86,7 @@ struct RibbonManager: View {
         let lastChance = Set(transferCheck.lastChance)
         let candidates = rules.ribbonIDs.filter { id in
             if !catalogue && !(rules.awards[id]?.games.contains(game) ?? false) { return false }
-            let owned = pokemon.ribbons.contains(id)
+            let owned = pokemon.ribbons.contains(id) || pokemon.displayedRibbonIDs.contains(id)
             if earnable && (owned || (catalogue ? rules.earningGames(for: id, pokemon: pokemon).isEmpty : rules.unavailableReason(id, game: game, pokemon: pokemon) != nil)) { return false }
             if category == .last { return lastChance.contains(id) }
             if category == .later { return !owned && !rules.laterGames(for: id, after: game, pokemon: pokemon).isEmpty }
@@ -99,7 +100,7 @@ struct RibbonManager: View {
     }
     private var pageCount: Int { max(1, (matching.count + size - 1) / size) }
     private func priority(_ id: String, lastChance: Set<String>) -> Int {
-        if pokemon.ribbons.contains(id) { return 3 }
+        if pokemon.ribbons.contains(id) || pokemon.displayedRibbonIDs.contains(id) { return 3 }
         if lastChance.contains(id) { return 0 }
         if !rules.laterGames(for: id, after: game, pokemon: pokemon).isEmpty { return 2 }
         return rules.unavailableReason(id, game: game, pokemon: pokemon) == nil ? 1 : 4
@@ -217,9 +218,9 @@ struct RibbonManager: View {
             }.buttonStyle(.plain).disabled(!check.canAssess).accessibilityIdentifier("ribbons.transfer.review")
             Button { panel = .owned } label: {
                 HStack {
-                    Text("Owned ribbons · \(pokemon.ownedRibbonIDs.count) ▴").font(PixelFont.font(16))
+                    Text("Owned ribbons · \(pokemon.displayedRibbonIDs.count) ▴").font(PixelFont.font(16))
                     Spacer(minLength: 2)
-                    ForEach(Array(pokemon.ownedRibbonIDs.suffix(3)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 22, height: 26) }
+                    ForEach(Array(pokemon.displayedRibbonIDs.suffix(3)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 22, height: 26) }
                 }.padding(.horizontal, 9).frame(minHeight: 43).background(theme.board).overlay(Rectangle().stroke(theme.border))
             }.buttonStyle(.plain).accessibilityIdentifier("ribbons.owned")
         }.onChange(of: earnable) { _, _ in page = 0 }
@@ -236,11 +237,17 @@ struct RibbonManager: View {
         }.frame(height: height)
     }
     private func ribbonTile(_ id: String, height: CGFloat, last: Bool) -> some View {
-        let owned = pokemon.ribbons.contains(id)
+        let owned = pokemon.ribbons.contains(id) || pokemon.displayedRibbonIDs.contains(id)
         let allowed = catalogue ? !rules.earningGames(for: id, pokemon: pokemon).isEmpty : rules.unavailableReason(id, game: game, pokemon: pokemon) == nil
         let name = RibbonCatalog.shared.awardPickerName(id)
         return ZStack(alignment: .topTrailing) {
-            Button { if owned { remove(id) } else if allowed { add(id) } else { detail = RibbonDetails(id: id) } } label: {
+            Button {
+                if owned, !pokemon.ribbons.contains(id) {
+                    expandedMemories.insert(id.replacingOccurrences(of: "-gold", with: "")); panel = .owned
+                } else if owned { remove(id) }
+                else if allowed { add(id) }
+                else { detail = RibbonDetails(id: id) }
+            } label: {
                 VStack(spacing: 3) {
                     AssetImage(key: "award-" + id).frame(height: size == 32 ? min(26, height - 5) : min(28, height * 0.36))
                     if size != 32 {
@@ -257,7 +264,7 @@ struct RibbonManager: View {
                                 .background(theme.warningBorder).foregroundStyle(theme.warningSurface).accessibilityHidden(true)
                         }
                     }
-            }.buttonStyle(.plain).accessibilityLabel(owned ? "Remove \(name), \(pokemon.earningLocation(id))" : "\(name), \(status(id))")
+            }.buttonStyle(.plain).accessibilityLabel(owned && !pokemon.ribbons.contains(id) ? "View original ribbons for \(name)" : owned ? "Remove \(name), \(pokemon.earningLocation(id))" : "\(name), \(status(id))")
                 .accessibilityIdentifier("ribbons.tile.\(id)")
             Button { detail = RibbonDetails(id: id) } label: { Text("i").font(PixelFont.font(12)).frame(width: 20, height: 22).background(theme.panel.opacity(0.9)) }
                 .buttonStyle(.plain).accessibilityLabel("Details for \(name)")
@@ -269,12 +276,13 @@ struct RibbonManager: View {
     }
     private func status(_ id: String) -> String {
         if pokemon.ribbons.contains(id) { return "Owned · " + pokemon.earningLocation(id) }
+        if pokemon.displayedRibbonIDs.contains(id) { return "Owned · Combined from \(pokemon.originalRibbonIDs(representedBy: id).count) original ribbons" }
         if transferCheck.lastChance.contains(id) { return "Last chance before leaving this generation" }
         return rules.unavailableReason(id, game: game, pokemon: pokemon) ?? laterLabel(id)
     }
     private var footer: some View {
         HStack(spacing: 8) {
-            Text(message.isEmpty ? "\(pokemon.ownedRibbonIDs.count) owned ribbons" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.updatesFrequently)
+            Text(message.isEmpty ? "\(pokemon.displayedRibbonIDs.count) owned ribbons" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.updatesFrequently)
             Button("Undo") { restore() }.disabled(undo == nil).font(PixelFont.font(14)).buttonStyle(.bordered)
             Button(embedded ? "Done" : "Save") { destinationPokemon = pokemon; onSave() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.save")
         }.padding(.horizontal, 12).padding(.vertical, 7).background(theme.paper).overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
@@ -295,34 +303,66 @@ struct RibbonManager: View {
             VStack(spacing: 0) {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        if pokemon.ownedRibbonIDs.isEmpty { Text("No ribbons recorded").font(PixelFont.font(17)).padding(24) }
-                        ForEach(pokemon.ownedRibbonIDs.reversed(), id: \.self) { id in
-                            HStack(spacing: 9) {
-                                Button { remove(id) } label: {
-                                    HStack(spacing: 8) {
-                                        AssetImage(key: "award-" + id).frame(width: 28, height: 34)
-                                        VStack(alignment: .leading, spacing: 4) {
-                                            Text(RibbonCatalog.shared.awardPickerName(id)).font(PixelFont.font(16))
-                                            Text(pokemon.earningLocation(id)).font(PixelFont.font(12)).foregroundStyle(theme.muted)
-                                        }.frame(maxWidth: .infinity, alignment: .leading)
-                                    }.padding(.vertical, 10)
-                                }.buttonStyle(.plain).accessibilityLabel("Remove \(RibbonCatalog.shared.awardPickerName(id))")
-                                if pokemon.earnedGames?[id] == nil {
-                                    NavigationLink {
-                                        RibbonGamePicker(pokemon: pokemon, selected: "", award: id, historical: true) { chosen in
-                                            undo = pokemon; pokemon.assignAward(id, game: chosen); message = "Earning game saved"; panel = nil
+                        if pokemon.displayedRibbonIDs.isEmpty { Text("No ribbons recorded").font(PixelFont.font(17)).padding(24) }
+                        ForEach(pokemon.displayedRibbonIDs.reversed(), id: \.self) { id in
+                            let originals = pokemon.originalRibbonIDs(representedBy: id)
+                            if originals.isEmpty { ownedRow(id) }
+                            else {
+                                let group = id.replacingOccurrences(of: "-gold", with: "")
+                                let expanded = expandedMemories.contains(group)
+                                VStack(spacing: 0) {
+                                    Button {
+                                        if expanded { expandedMemories.remove(group) } else { expandedMemories.insert(group) }
+                                    } label: {
+                                        HStack(spacing: 9) {
+                                            AssetImage(key: "award-" + id).frame(width: 28, height: 34)
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(RibbonCatalog.shared.awardPickerName(id)).font(PixelFont.font(16))
+                                                Text("\(originals.count) original ribbons").font(PixelFont.font(12)).foregroundStyle(theme.muted)
+                                            }.frame(maxWidth: .infinity, alignment: .leading)
+                                            Image(systemName: expanded ? "chevron.up" : "chevron.down").font(.system(size: 12))
+                                        }.frame(minHeight: 60).contentShape(Rectangle())
+                                    }.buttonStyle(.plain).accessibilityIdentifier("ribbons.memory.\(group)")
+                                        .accessibilityValue(expanded ? "Expanded" : "Collapsed")
+                                    if expanded {
+                                        ForEach(originals, id: \.self) { original in ownedRow(original).padding(.leading, 12) }
+                                        // An imported Memory record can coexist with its original awards.
+                                        // Keep that stored record editable too, without duplicating its display icon.
+                                        ForEach(pokemon.ownedRibbonIDs.filter { $0 == group || $0 == group + "-gold" }, id: \.self) { recorded in
+                                            ownedRow(recorded).padding(.leading, 12)
                                         }
-                                    } label: { Text("Set game").font(PixelFont.font(12)) }
-                                }
-                                Button("Remove") { remove(id) }.font(PixelFont.font(12)).buttonStyle(.bordered)
-                            }.overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
+                                    }
+                                }.overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
+                            }
                         }
                     }.padding(.horizontal, 14)
                 }.scrollIndicators(.visible)
-                HStack { Text(message).font(PixelFont.font(12)).frame(maxWidth: .infinity, alignment: .leading); Button("Undo") { restore() }.disabled(undo == nil) }.padding(14)
-            }.background(theme.panel).foregroundStyle(theme.ink).navigationTitle("Owned ribbons · \(pokemon.ownedRibbonIDs.count)").navigationBarTitleDisplayMode(.inline)
+                HStack { Text(message).font(PixelFont.font(12)).frame(maxWidth: .infinity, alignment: .leading); Button("Undo") { restore() }.disabled(undo == nil).accessibilityIdentifier("ribbons.owned.undo") }.padding(14)
+            }.background(theme.panel).foregroundStyle(theme.ink).navigationTitle("Owned ribbons · \(pokemon.displayedRibbonIDs.count)").navigationBarTitleDisplayMode(.inline)
                 .toolbar { Button("Done") { panel = nil }.font(PixelFont.font(15)) }
         }.presentationDetents([.fraction(0.75), .large]).presentationDragIndicator(.visible)
+    }
+    private func ownedRow(_ id: String) -> some View {
+        HStack(spacing: 9) {
+            Button { remove(id) } label: {
+                HStack(spacing: 8) {
+                    AssetImage(key: "award-" + id).frame(width: 28, height: 34)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(RibbonCatalog.shared.awardPickerName(id)).font(PixelFont.font(16))
+                        Text(pokemon.earningLocation(id)).font(PixelFont.font(12)).foregroundStyle(theme.muted)
+                    }.frame(maxWidth: .infinity, alignment: .leading)
+                }.padding(.vertical, 10)
+            }.buttonStyle(.plain).accessibilityLabel("Remove \(RibbonCatalog.shared.awardPickerName(id))")
+                .accessibilityIdentifier("ribbons.owned.remove.\(id)")
+            if pokemon.earnedGames?[id] == nil, rules.awards[id]?.memory != true {
+                NavigationLink {
+                    RibbonGamePicker(pokemon: pokemon, selected: "", award: id, historical: true) { chosen in
+                        undo = pokemon; pokemon.assignAward(id, game: chosen); message = "Earning game saved"; panel = nil
+                    }
+                } label: { Text("Set game").font(PixelFont.font(12)) }
+            }
+            Button("Remove") { remove(id) }.font(PixelFont.font(12)).buttonStyle(.bordered)
+        }.overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
     }
     private func detailView(_ id: String) -> some View {
         NavigationStack {
