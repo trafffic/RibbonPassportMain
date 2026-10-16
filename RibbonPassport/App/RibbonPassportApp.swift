@@ -14,7 +14,7 @@ final class AppStore: ObservableObject {
     private let refreshWidgets: Bool
     static var interactionTesting: Bool {
         #if DEBUG
-        return ["1", "transfer", "recovery", "memory", "marks"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
+        return ["1", "transfer", "recovery", "memory", "marks", "journey"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
         #else
         return false
         #endif
@@ -44,6 +44,12 @@ final class AppStore: ObservableObject {
             if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "marks" {
                 a.currentgame = "scar"; a.origingame = "emerald"; a.sizeScale = 255
                 preferences.set(24, forKey: "ribbons.pageSize")
+            }
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "journey" {
+                a.currentgame = "as"; a.origingame = "emerald"
+                a.ribbons = ["cool-ribbon-hoenn", "effort-ribbon", "alert-ribbon"]
+                a.visits = [JourneyVisit(game: "ruby"), JourneyVisit(game: "pearl"), JourneyVisit(game: "platinum")]
+                a.earnedGames = ["cool-ribbon-hoenn": "emerald", "effort-ribbon": "ruby", "alert-ribbon": "pearl"]
             }
             let b = RibbonPokemon(id: "drag-b", species: "rayquaza", currentgame: "bd", origingame: "ruby")
             let c = RibbonPokemon(id: "drag-c", species: "pikachu", currentgame: "sw", origingame: "sw")

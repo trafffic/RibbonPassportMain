@@ -73,7 +73,7 @@ final class RibbonTransferUITests: XCTestCase {
         XCTAssertTrue(status.label.contains("1 last-chance ribbon remains"))
         app.buttons["ribbons.transfer.done"].tap()
         XCTAssertTrue(review.label.contains("Not safe to leave Gen IV"))
-        app.buttons["ribbons.save"].tap()
+        app.buttons["passport.tab.overview"].tap()
         let ribbonTab = app.buttons["passport.tab.ribbons"]
         XCTAssertTrue(ribbonTab.waitForExistence(timeout: 5)); ribbonTab.tap(); review.tap()
         XCTAssertFalse(app.buttons["ribbons.transfer.add.footprint-ribbon"].exists)
@@ -188,7 +188,7 @@ final class TerminalPassportUITests: XCTestCase {
         let changed = owned.label
         app.buttons["passport.tab.ribbons"].tap()
         capture("passport-ribbons")
-        app.buttons["ribbons.save"].tap()
+        app.buttons["passport.tab.overview"].tap()
         XCTAssertEqual(owned.label, changed)
         app.navigationBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.buttons["pc.box.slot.0"].waitForExistence(timeout: 5))
@@ -257,7 +257,7 @@ final class MemoryRibbonUITests: XCTestCase {
         let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "memory"; app.launch()
         defer { app.terminate() }
         XCTAssertTrue(app.buttons["pc.box.slot.0"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["ribbons.manage"].label.contains("3 ribbons"))
+        XCTAssertTrue(app.buttons["ribbons.manage"].label.contains("3 awards"))
         app.buttons["Passport ▸"].tap()
         let owned = app.buttons["passport.owned"]
         XCTAssertTrue(owned.waitForExistence(timeout: 5))
@@ -388,5 +388,138 @@ final class MarkAndNavigationUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         app.buttons["navigation.tab.0"].tap()
         XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 5))
+    }
+}
+
+final class JourneyEditingUITests: XCTestCase {
+    private var app: XCUIApplication!
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "journey"; app.launch()
+        XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 10)); app.buttons["Passport ▸"].tap()
+    }
+    override func tearDownWithError() throws { app.terminate(); app = nil }
+    private func openVisits() {
+        app.buttons["Passport options"].tap()
+        app.buttons["passport.editVisits"].tap()
+        XCTAssertTrue(app.buttons["visits.generation.3"].waitForExistence(timeout: 5))
+    }
+    private func capture(_ title: String) {
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = title; shot.lifetime = .keepAlways; add(shot)
+    }
+    func testGenerationBoardAssignsMovesClearsAndUndoesSpecificGames() {
+        openVisits()
+        XCTAssertFalse(app.buttons["visits.remove.emerald"].exists)
+        XCTAssertFalse(app.buttons["visits.remove.ruby"].exists)
+        app.buttons["visits.generation.4"].tap()
+        XCTAssertTrue(app.buttons["visits.game.pearl"].exists)
+        XCTAssertFalse(app.buttons["visits.game.ruby"].exists)
+        capture("game-journal-gen-four")
+        app.buttons["visits.game.platinum"].tap()
+        let effort = app.buttons["visits.award.effort-ribbon"]
+        XCTAssertTrue(effort.waitForExistence(timeout: 5))
+        XCTAssertTrue((effort.value as? String ?? "").contains("Ruby"))
+        effort.tap()
+        XCTAssertEqual(effort.value as? String, "Recorded here")
+        capture("game-journal-assign-ribbons")
+        effort.tap()
+        XCTAssertEqual(effort.value as? String, "Game not set")
+        app.buttons["visits.awards.undo"].tap()
+        XCTAssertEqual(effort.value as? String, "Recorded here")
+        app.buttons["visits.awards.done"].tap()
+        XCTAssertFalse(app.buttons["visits.remove.platinum"].exists)
+        app.buttons["visits.generation.3"].tap()
+        XCTAssertTrue(app.buttons["visits.remove.ruby"].exists)
+        app.buttons["visits.game.ruby"].tap()
+        XCTAssertTrue(effort.waitForExistence(timeout: 5)); effort.tap()
+        XCTAssertEqual(effort.value as? String, "Recorded here")
+        app.buttons["visits.awards.done"].tap()
+        app.buttons["visits.mode.add"].tap()
+        app.buttons["visits.generation.4"].tap()
+        app.buttons["visits.game.ss"].tap()
+        XCTAssertTrue(app.buttons["visits.remove.ss"].waitForExistence(timeout: 5))
+        app.buttons["visits.remove.ss"].tap()
+        app.buttons["visits.undo"].tap()
+        XCTAssertTrue(app.buttons["visits.remove.ss"].exists)
+    }
+    func testTappingAJourneyRibbonOpensItsSpecificGameSelector() {
+        app.buttons["passport.tab.journey"].tap()
+        app.buttons["album.grouping.games"].tap()
+        app.buttons["album.game.ruby"].tap()
+        app.buttons["Effort Ribbon"].tap()
+        XCTAssertTrue(app.buttons["ribbons.generation.4"].waitForExistence(timeout: 5))
+        app.buttons["ribbons.generation.4"].tap()
+        app.buttons["ribbons.game.platinum"].tap()
+        XCTAssertTrue(app.buttons["passport.tab.journey"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["No ribbons assigned"].exists)
+        openVisits()
+        app.buttons["visits.generation.4"].tap()
+        app.buttons["visits.game.platinum"].tap()
+        let effort = app.buttons["visits.award.effort-ribbon"]
+        XCTAssertTrue(effort.waitForExistence(timeout: 5))
+        XCTAssertEqual(effort.value as? String, "Recorded here")
+    }
+}
+
+final class AwardGalleryFeedbackUITests: XCTestCase {
+    func testGalleryIsReadOnlyAndConsolidatesMemoryAwards() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "memory"; app.launch()
+        defer { app.terminate() }
+        XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 10)); app.buttons["Passport ▸"].tap()
+        let owned = app.buttons["passport.owned"]
+        let original = owned.label
+        owned.tap()
+        let battle = app.buttons["awards.gallery.battle-memory-ribbon"]
+        let found = battle.waitForExistence(timeout: 5)
+        if !found { print(app.debugDescription) }
+        XCTAssertTrue(found)
+        XCTAssertTrue(app.buttons["awards.gallery.contest-memory-ribbon"].exists)
+        XCTAssertFalse(app.buttons["awards.gallery.winning-ribbon"].exists)
+        XCTAssertEqual(app.staticTexts["awards.gallery.count"].label, "3")
+        XCTAssertFalse(app.buttons["ribbons.owned.remove.effort-ribbon"].exists)
+        battle.tap()
+        XCTAssertTrue(app.staticTexts["ribbon.description.text"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["ribbon.description.name"].label.contains("Battle Memory"))
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "expanded-owned-awards-gallery"; shot.lifetime = .keepAlways; add(shot)
+        app.buttons["awards.gallery.close"].tap()
+        XCTAssertEqual(owned.label, original)
+        XCTAssertFalse(app.buttons["ribbons.tile.effort-ribbon"].exists)
+    }
+    func testAddingShowsNamedFeedbackUndoAndAutomaticallySavedGalleryAward() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "marks"; app.launch()
+        defer { app.terminate() }
+        XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 10)); app.buttons["Passport ▸"].tap()
+        app.buttons["passport.tab.ribbons"].tap()
+        XCTAssertFalse(app.buttons["ribbons.save"].exists)
+        let effort = app.buttons["ribbons.tile.effort-ribbon"]
+        XCTAssertTrue(effort.waitForExistence(timeout: 5)); effort.tap()
+        let title = app.staticTexts["ribbons.feedback.title"]
+        XCTAssertTrue(title.waitForExistence(timeout: 5))
+        XCTAssertTrue(title.label.contains("Added")); XCTAssertTrue(title.label.contains("Effort Ribbon"))
+        XCTAssertEqual(app.staticTexts["ribbons.feedback.subtitle"].label, "Scarlet")
+        XCTAssertFalse(effort.exists)
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "ribbon-added-feedback-without-footer"; shot.lifetime = .keepAlways; add(shot)
+        app.buttons["ribbons.feedback.undo"].tap()
+        XCTAssertTrue(effort.waitForExistence(timeout: 5))
+        XCTAssertEqual(title.label, "Change undone")
+        effort.tap()
+        let hidden = NSPredicate(format: "exists == false")
+        XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: hidden, object: title)], timeout: 10), .completed)
+        XCTAssertTrue(app.staticTexts["ribbons.resultCount"].exists)
+        app.buttons["passport.tab.overview"].tap()
+        app.buttons["passport.owned"].tap()
+        XCTAssertTrue(app.buttons["awards.gallery.effort-ribbon"].waitForExistence(timeout: 5))
+        app.buttons["awards.gallery.close"].tap()
+        app.buttons["passport.tab.ribbons"].tap()
+        app.buttons["ribbons.owned"].tap()
+        let remove = app.buttons["ribbons.owned.remove.effort-ribbon"]
+        XCTAssertTrue(remove.waitForExistence(timeout: 5)); remove.tap()
+        app.navigationBars.buttons["Done"].tap()
+        XCTAssertTrue(title.label.contains("Removed"))
+        app.buttons["ribbons.feedback.undo"].tap()
+        app.buttons["passport.tab.overview"].tap()
+        XCTAssertTrue(app.buttons["passport.owned"].label.contains("1"))
     }
 }

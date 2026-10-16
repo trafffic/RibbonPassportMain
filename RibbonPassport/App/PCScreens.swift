@@ -566,6 +566,7 @@ struct StampAlbumView: View {
     @State private var editing = false
     @State private var editingVisits = false
     @State private var selectedAward: AwardLocationSelection?
+    @State private var showingOwnedAwards = false
     @State private var describedAward: AwardLocationSelection?
     @State private var descriptionHeight: CGFloat = 120
     @State private var reviewingTransfer = false
@@ -636,7 +637,7 @@ struct StampAlbumView: View {
                 TerminalToolbarItem(placement: .topBarTrailing) {
                     TerminalMenu(compact: true) {
                         Button("Edit Pokémon") { editing = true }
-                        Button("Edit visits") { editingVisits = true }
+                        Button("Edit visits") { editingVisits = true }.accessibilityIdentifier("passport.editVisits")
                         Button("Export", systemImage: "square.and.arrow.up") {
                             if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
                         }
@@ -645,6 +646,7 @@ struct StampAlbumView: View {
                 }
             }
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
+            .sheet(isPresented: $showingOwnedAwards) { if let p { OwnedAwardGallery(pokemon: p) } }
             .sheet(isPresented: $editing) { if let p { NavigationStack { PokemonEditor(pokemon: p) }.font(PixelFont.font(16)) } }
             .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
             .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }
@@ -666,7 +668,7 @@ struct StampAlbumView: View {
             VStack(alignment: .leading, spacing: 6) {
                 PokemonName(pokemon: p, theme: theme, size: 25)
                 EquippedTitleLabel(pokemon: p, theme: theme).font(PixelFont.font(14))
-                Text("Lv. \(p.currentlevel) · \(p.displayedRibbonIDs.count) awards").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                Text("Lv. \(p.currentlevel) · \(p.displayedAwardIDs.count) awards").font(PixelFont.font(13)).foregroundStyle(theme.muted)
             }
             Spacer(minLength: 0)
         }
@@ -678,11 +680,12 @@ struct StampAlbumView: View {
                 endpoint("CURRENT", game: p.currentgame)
             }.padding(.vertical, 10)
             Divider()
-            Button { section = .ribbons } label: {
-                HStack { Text("Owned awards").font(PixelFont.font(19)); Spacer(); Text("\(p.displayedRibbonIDs.count) ›").font(PixelFont.font(14)) }
+            Button { describedAward = nil; showingOwnedAwards = true } label: {
+                HStack { Text("Owned awards").font(PixelFont.font(19)); Spacer(); Text("\(p.displayedAwardIDs.count) ›").font(PixelFont.font(14)) }
+                    .frame(minHeight: 44).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("passport.owned")
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 18) {
-                ForEach(Array(p.displayedRibbonIDs.suffix(12)), id: \.self) { id in
+                ForEach(Array(p.displayedAwardIDs.suffix(12)), id: \.self) { id in
                     Button { describedAward = describedAward?.id == id ? nil : AwardLocationSelection(id: id) } label: {
                         AssetImage(key: "award-" + id).frame(width: 30, height: 34).frame(maxWidth: .infinity, minHeight: 44)
                     }.buttonStyle(.plain)
@@ -758,7 +761,7 @@ struct StampAlbumView: View {
                         if let shownGame = games.dropFirst(min(visitPage, max(0, games.count - 1))).first {
                             HStack(spacing: 6) {
                                 GameMascot(game: shownGame, size: 22)
-                                Text(RibbonCatalog.shared.compactGameName(shownGame)).font(PixelFont.font(13)).lineLimit(2)
+                                GameTitle(game: shownGame, size: 13).lineLimit(2)
                                 Spacer(minLength: 0)
                                 Text(shownGame == p.origingame && shownGame == p.currentgame ? "Origin · Current" : shownGame == p.origingame ? "Origin" : shownGame == p.currentgame ? "Current" : "Visited").font(PixelFont.font(10)).foregroundStyle(theme.muted)
                                 if games.count > 1 {
@@ -789,7 +792,7 @@ struct StampAlbumView: View {
         VStack(spacing: 4) {
             Text("GEN \(gen.roman)").font(PixelFont.font(11))
             GameMascot(game: game, size: compact ? 24 : 34).frame(height: compact ? 24 : 36)
-            Text(title).font(PixelFont.font(12)).lineLimit(2).minimumScaleFactor(0.8).frame(height: 30)
+            Text(title).font(PixelFont.font(12)).foregroundStyle(grouping == .games ? GameTitleColour.colour(game, dark: scheme == .dark) : theme.ink).lineLimit(2).minimumScaleFactor(0.8).frame(height: 30)
             Text(subtitle).font(PixelFont.font(10)).foregroundStyle(theme.muted).lineLimit(1)
         }.frame(maxWidth: .infinity).padding(.vertical, 7).padding(.horizontal, 3)
             .background(selected ? theme.board : theme.panel)
@@ -807,7 +810,7 @@ struct StampAlbumView: View {
             Text(title).font(PixelFont.font(12)).foregroundStyle(theme.muted)
             HStack(alignment: .center, spacing: 6) {
                 if !game.isEmpty { GameMascot(game: game, size: 27) }
-                Text(RibbonCatalog.shared.gameName(game)).font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true)
+                GameTitle(game: game, size: 16, compact: false).fixedSize(horizontal: false, vertical: true)
             }
         }.frame(maxWidth: .infinity, alignment: .leading).accessibilityElement(children: .combine)
     }
@@ -895,50 +898,258 @@ struct RibbonDescriptionBubble: View {
     }
 }
 
-struct AwardLocationEditor: View {
-    var pokemonID: String
-    var initialAward: String
+struct OwnedAwardGallery: View {
+    var pokemon: RibbonPokemon
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var scheme
+    @State private var selectedAward: String?
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: pokemon.currentgame) }
     var body: some View {
-        StoredRibbonManager(pokemonID: pokemonID, showOwned: true)
+        VStack(spacing: 14) {
+            HStack {
+                Text("OWNED AWARDS").font(PixelFont.font(21)).lineLimit(2)
+                Spacer(); TerminalCornerButton("Close") { dismiss() }.accessibilityIdentifier("awards.gallery.close")
+            }
+            HStack(spacing: 12) {
+                PokemonSprite(pokemon: pokemon).frame(width: 64, height: 64)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(pokemon.displayName).font(PixelFont.font(23)).lineLimit(2)
+                    HStack(spacing: 5) {
+                        Text("Lv. \(pokemon.currentlevel) ·").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                        GameTitle(game: pokemon.currentgame, size: 13).lineLimit(2)
+                    }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack {
+                Text("Ribbons and marks").font(PixelFont.font(18))
+                Spacer(); Text("\(pokemon.displayedAwardIDs.count)").font(PixelFont.font(18)).accessibilityIdentifier("awards.gallery.count")
+            }.padding(10).background(theme.board)
+            ScrollView {
+                if pokemon.displayedAwardIDs.isEmpty {
+                    Text("No awards recorded").font(PixelFont.font(17)).foregroundStyle(theme.muted).padding(.vertical, 32)
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 48), spacing: 8)], spacing: 12) {
+                    ForEach(pokemon.displayedAwardIDs, id: \.self) { id in
+                        Button { selectedAward = selectedAward == id ? nil : id } label: {
+                            AssetImage(key: "award-" + id).frame(width: 40, height: 44)
+                                .frame(maxWidth: .infinity, minHeight: 56)
+                                .background(selectedAward == id ? theme.board : .clear)
+                                .overlay { if selectedAward == id { Rectangle().stroke(theme.accent, lineWidth: 2) } }
+                        }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.awardPickerName(id))
+                            .accessibilityValue(selectedAward == id ? "Description shown" : "")
+                            .accessibilityHint("Tap to read its description. Tap again to hide it.")
+                            .accessibilityIdentifier("awards.gallery." + id)
+                    }
+                }.padding(2)
+            }
+            if let selectedAward {
+                RibbonDescriptionBubble(awardID: selectedAward).frame(maxHeight: 200)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(theme.border))
+            }
+        }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(theme.paper).foregroundStyle(theme.ink).presentationDetents([.large])
     }
 }
 
+struct AwardLocationEditor: View {
+    var pokemonID: String
+    var initialAward: String
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        if let pokemon = store.snapshot.pokemon.first(where: { $0.id == pokemonID }) {
+            RibbonGamePicker(pokemon: pokemon, selected: pokemon.earnedGames?[initialAward] ?? "", award: initialAward, historical: true) { game in
+                var updated = pokemon
+                updated.assignAward(initialAward, game: game)
+                store.update(updated)
+                if store.error == nil { dismiss() }
+            }
+        } else { ContentUnavailableView("Pokémon removed", systemImage: "tray") }
+    }
+}
+
+private enum VisitBoardMode: String, CaseIterable { case visited = "Visited", add = "Add games" }
+private struct VisitGameSelection: Identifiable { var id: String }
 struct JourneyEditorView: View {
     var pokemonID: String
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
-    @State private var game = ""
+    @Environment(\.colorScheme) private var scheme
+    @State private var mode = VisitBoardMode.visited
+    @State private var generation: Int?
+    @State private var page = 0
+    @State private var assigning: VisitGameSelection?
+    @State private var undo: RibbonPokemon?
+    @State private var message = ""
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: p?.currentgame ?? "") }
     var body: some View {
-        NavigationStack {
-            List {
-                if let p {
-                    Section("Recorded visits") {
-                        ForEach(p.recordedVisits) { visit in
-                            HStack {
-                                GameMascot(game: visit.game, size: 30)
-                                Text(RibbonCatalog.shared.gameName(visit.game))
-                                Spacer()
-                                Text("Gen \(visit.generation.roman)").foregroundStyle(.secondary)
-                            }.deleteDisabled(visit.game == p.origingame || visit.game == p.currentgame || p.earnedGames?.values.contains(visit.game) == true)
-                        }.onDelete { indices in
-                            var next = p
-                            let games = indices.map { p.recordedVisits[$0].game }.filter { $0 != p.origingame && $0 != p.currentgame }
-                            next.visits = next.recordedVisits.filter { !games.contains($0.game) }
-                            store.update(next)
-                        }
-                    }
-                    Section("Add visit") {
-                        GamePicker(title: "Game", value: $game)
-                        Button("Add visit") {
-                            guard !game.isEmpty else { return }
-                            var next = p; var visits = next.recordedVisits
-                            if !visits.contains(where: { $0.game == game }) { visits.append(JourneyVisit(game: game)) }
-                            next.visits = visits; store.update(next); game = ""
-                        }.disabled(game.isEmpty || p.recordedVisits.contains { $0.game == game })
+        VStack(spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("GAME JOURNAL").font(PixelFont.font(23))
+                    Text(p?.displayName ?? "Visits").font(PixelFont.font(14)).foregroundStyle(theme.muted)
+                }
+                Spacer(); TerminalCornerButton("Done") { dismiss() }.accessibilityIdentifier("visits.done")
+            }
+            if let p {
+                TerminalSelector(title: "Visits", selection: $mode, values: VisitBoardMode.allCases, name: { $0.rawValue }, inline: true, identifier: "visits.mode")
+                visitBoard(p)
+                HStack {
+                    Text(message.isEmpty ? "\(p.recordedVisits.count) \(p.recordedVisits.count == 1 ? "game" : "games") visited" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2)
+                    Spacer()
+                    Button("Undo") { if let undo { store.update(undo); self.undo = nil; message = "Change undone" } }.buttonStyle(RetroAction()).disabled(undo == nil).accessibilityIdentifier("visits.undo")
+                }
+            } else { ContentUnavailableView("Pokémon removed", systemImage: "tray") }
+        }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .background(theme.paper).foregroundStyle(theme.ink)
+            .onChange(of: mode) { _, _ in generation = nil; page = 0 }
+            .sheet(item: $assigning) { selection in GameAwardAssignmentView(pokemonID: pokemonID, game: selection.id) }
+    }
+    private func visitBoard(_ p: RibbonPokemon) -> some View {
+        GeometryReader { board in
+        let rows = board.size.height < 460 ? 2 : 3
+        let perPage = rows * 2
+        let all = mode == .visited ? p.recordedVisits.map(\.game) : p.journeyGameChoices
+        let generations = Array(Set(all.compactMap { RibbonCatalog.shared.gameInfo[$0]?.gen })).sorted()
+        let active = generation.flatMap { generations.contains($0) ? $0 : nil } ?? generations.first ?? 0
+        let games = all.filter { RibbonCatalog.shared.gameInfo[$0]?.gen == active }
+        let pages = max(1, (games.count + perPage - 1) / perPage)
+        VStack(spacing: 12) {
+            ScrollView(.horizontal) {
+                HStack(spacing: 6) {
+                    ForEach(generations, id: \.self) { gen in
+                        Button { generation = gen; page = 0 } label: {
+                            Text("GEN \(gen.roman)").font(PixelFont.font(14)).padding(.horizontal, 12).frame(height: 40)
+                                .background(gen == active ? theme.board : theme.panel).overlay(Rectangle().stroke(gen == active ? theme.accent : theme.border))
+                        }.buttonStyle(.plain).accessibilityAddTraits(gen == active ? .isSelected : []).accessibilityIdentifier("visits.generation.\(gen)")
                     }
                 }
-            }.navigationTitle("Visits").font(PixelFont.font(17)).toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { dismiss() }  } }
+            }.scrollIndicators(.hidden)
+            HStack {
+                Text(active > 0 ? "GENERATION \(active.roman)" : "No recorded games").font(PixelFont.font(18))
+                Spacer(); Text("\(games.count) \(games.count == 1 ? "game" : "games")").font(PixelFont.font(12)).foregroundStyle(theme.muted)
+            }
+            GeometryReader { geometry in
+                let height = max(80, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
+                    ForEach(Array(games.dropFirst(min(page, pages - 1) * perPage).prefix(perPage)), id: \.self) { game in
+                        visitCard(p, game: game, height: height)
+                    }
+                }
+            }
+            HStack {
+                Button("‹ Previous") { page -= 1 }.disabled(page == 0)
+                Spacer(); Text("\(min(page + 1, pages)) / \(pages)").foregroundStyle(theme.muted); Spacer()
+                Button("Next ›") { page += 1 }.disabled(page + 1 >= pages)
+            }.font(PixelFont.font(13)).frame(height: 32)
+        }
+        }
+    }
+    private func visitCard(_ p: RibbonPokemon, game: String, height: CGFloat) -> some View {
+        let visited = p.recordedVisits.contains { $0.game == game }
+        let colour = GameTitleColour.colour(game, dark: scheme == .dark)
+        let count = p.awards(earnedInGame: game).count
+        return VStack(spacing: 6) {
+            HStack(spacing: 4) {
+                Text(game == p.origingame && game == p.currentgame ? "Origin · Current" : game == p.origingame ? "Origin" : game == p.currentgame ? "Current" : visited ? "Visited" : "").font(PixelFont.font(10)).foregroundStyle(theme.muted)
+                Spacer(minLength: 0)
+                if visited && p.canRemoveVisit(game) {
+                    Button { change(p) { $0.removeJourneyVisit(game) }; message = "Visit removed" } label: { Text("×").font(PixelFont.font(18)).frame(width: 32, height: 32) }
+                        .buttonStyle(.plain).accessibilityLabel("Remove visit to " + RibbonCatalog.shared.compactGameName(game)).accessibilityIdentifier("visits.remove.\(game)")
+                }
+            }.frame(height: 24)
+            Button {
+                if visited { assigning = VisitGameSelection(id: game) }
+                else { change(p) { $0.addJourneyVisit(game) }; message = "Visit added" }
+            } label: {
+                VStack(spacing: 7) {
+                    HStack(spacing: 6) {
+                        GameMascot(game: game, size: 30)
+                        GameTitle(game: game, size: 15).lineLimit(2).minimumScaleFactor(0.8).frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    Text(visited ? "\(count) \(count == 1 ? "award" : "awards") · Assign ›" : "+ Add visit").font(PixelFont.font(12)).foregroundStyle(visited ? theme.ink : colour)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center).contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityLabel((visited ? "Assign ribbons in " : "Add visit to ") + RibbonCatalog.shared.compactGameName(game)).accessibilityIdentifier("visits.game.\(game)")
+        }.padding(10).frame(height: height).background(visited ? theme.board : theme.panel)
+            .overlay(Rectangle().stroke(theme.border)).overlay(alignment: .leading) { Rectangle().fill(colour).frame(width: 3) }
+    }
+    private func change(_ before: RibbonPokemon, action: (inout RibbonPokemon) -> Bool) {
+        var next = before
+        if action(&next) { undo = before; store.update(next) }
+    }
+}
+
+struct GameAwardAssignmentView: View {
+    var pokemonID: String
+    var game: String
+    @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var scheme
+    @State private var page = 0
+    @State private var undo: RibbonPokemon?
+    private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: game) }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                GameMascot(game: game, size: 32)
+                VStack(alignment: .leading, spacing: 2) {
+                    GameTitle(game: game, size: 20).lineLimit(2)
+                    Text("ASSIGN OWNED RIBBONS").font(PixelFont.font(11)).foregroundStyle(theme.muted)
+                }
+                Spacer(); TerminalCornerButton("Done") { dismiss() }.accessibilityIdentifier("visits.awards.done")
+            }
+            Text("Tap to record a ribbon here. Tap it again to clear its game. A ribbon keeps just one earning game.").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+            if let p {
+                assignmentGrid(p)
+                HStack {
+                    Text("\(p.awards(earnedInGame: game).count) recorded here").font(PixelFont.font(13)).foregroundStyle(theme.muted).accessibilityIdentifier("visits.awards.count")
+                    Spacer()
+                    Button("Undo") { if let undo { store.update(undo); self.undo = nil } }.buttonStyle(RetroAction()).disabled(undo == nil).accessibilityIdentifier("visits.awards.undo")
+                }
+            }
+        }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top).background(theme.paper).foregroundStyle(theme.ink)
+    }
+    private func assignmentGrid(_ p: RibbonPokemon) -> some View {
+        GeometryReader { board in
+        let rows = board.size.height < 400 ? 2 : 4
+        let perPage = rows * 2
+        let awards = p.ownedRibbonIDs.filter { RibbonRules.shared.unavailableReason($0, game: game, pokemon: p, historical: true) == nil }
+        let pages = max(1, (awards.count + perPage - 1) / perPage)
+        VStack(spacing: 10) {
+            if awards.isEmpty {
+                Text("No owned ribbons can be assigned to this game.").font(PixelFont.font(17)).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            } else {
+                GeometryReader { geometry in
+                    let height = max(60, (geometry.size.height - CGFloat(rows - 1) * 8) / CGFloat(rows))
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
+                        ForEach(Array(awards.dropFirst(min(page, pages - 1) * perPage).prefix(perPage)), id: \.self) { id in
+                            let here = p.earnedGames?[id] == game
+                            Button {
+                                var next = p; undo = p
+                                if here { next.clearAwardLocation(id) } else { next.assignAward(id, game: game) }
+                                store.update(next)
+                            } label: {
+                                VStack(spacing: 5) {
+                                    AssetImage(key: "award-" + id).frame(height: 26)
+                                    Text(RibbonCatalog.shared.awardPickerName(id)).font(PixelFont.font(12)).lineLimit(2)
+                                    Text(here ? "✓ Recorded here" : p.earnedGames?[id].map { "Move from " + RibbonCatalog.shared.compactGameName($0) } ?? "Assign here")
+                                        .font(PixelFont.font(10)).lineLimit(2).foregroundStyle(here ? theme.accent : theme.muted)
+                                }.frame(maxWidth: .infinity).frame(height: height).padding(.horizontal, 5)
+                                    .background(here ? theme.board : theme.panel).overlay(Rectangle().stroke(here ? theme.accent : theme.border, lineWidth: here ? 2 : 1))
+                            }.buttonStyle(.plain).accessibilityLabel(RibbonCatalog.shared.awardPickerName(id)).accessibilityValue(here ? "Recorded here" : p.earningLocation(id)).accessibilityIdentifier("visits.award.\(id)")
+                        }
+                    }
+                }
+                HStack {
+                    Button("‹ Previous") { page -= 1 }.disabled(page == 0)
+                    Spacer(); Text("\(min(page + 1, pages)) / \(pages)"); Spacer()
+                    Button("Next ›") { page += 1 }.disabled(page + 1 >= pages)
+                }.font(PixelFont.font(13)).frame(height: 32)
+            }
+        }
         }
     }
 }

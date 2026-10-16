@@ -43,6 +43,41 @@ final class RibbonManagerTests: XCTestCase {
             for mark in RibbonRules.optionalSizeMarks { XCTAssertFalse(rules.isLastChance(mark, game: "scar", pokemon: p)) }
         }
     }
+    func testJourneyChoicesAndRemovalKeepTheRouteAndAwardsIntact() {
+        var p = RibbonPokemon(species: "metagross", currentgame: "as", origingame: "emerald")
+        p.ribbons = ["effort-ribbon"]
+        p.visits = [JourneyVisit(game: "ruby")]
+        p.earnedGames = ["effort-ribbon": "ruby"]
+        XCTAssertFalse(p.journeyGameChoices.contains("red"))
+        XCTAssertFalse(p.journeyGameChoices.contains("sun"))
+        XCTAssertTrue(p.journeyGameChoices.contains("ss"))
+        XCTAssertFalse(p.removeJourneyVisit("ruby"))
+        XCTAssertFalse(p.removeJourneyVisit("emerald"))
+        XCTAssertFalse(p.removeJourneyVisit("as"))
+        XCTAssertTrue(p.addJourneyVisit("ss"))
+        XCTAssertFalse(p.addJourneyVisit("ss"))
+        XCTAssertFalse(p.addJourneyVisit("red"))
+        XCTAssertFalse(p.addJourneyVisit("sun"))
+        p.assignAward("effort-ribbon", game: "ss")
+        XCTAssertEqual(p.earnedGames?["effort-ribbon"], "ss")
+        XCTAssertEqual(p.earnedGenerations?["effort-ribbon"], 4)
+        XCTAssertTrue(p.canRemoveVisit("ruby"))
+        XCTAssertFalse(p.canRemoveVisit("ss"))
+        p.clearAwardLocation("effort-ribbon")
+        XCTAssertEqual(p.ribbons, ["effort-ribbon"])
+        XCTAssertNil(p.earnedGames?["effort-ribbon"])
+        XCTAssertNil(p.earnedGenerations?["effort-ribbon"])
+        XCTAssertTrue(p.removeJourneyVisit("ss"))
+        XCTAssertEqual(p.recordedVisits.map(\.game), ["ruby", "emerald", "as"])
+    }
+    func testOwnedGalleryIncludesEveryMarkAndConsolidatesLegacyRibbons() {
+        let p = RibbonPokemon(species: "metagross", currentgame: "as", origingame: "emerald", ribbons: ["cool-ribbon-hoenn", "cool-ribbon-super-hoenn", "winning-ribbon", "ability-ribbon", "rare-mark", "partner-mark"])
+        XCTAssertEqual(Set(p.displayedAwardIDs), Set(["contest-memory-ribbon", "battle-memory-ribbon", "rare-mark", "partner-mark"]))
+        XCTAssertFalse(p.displayedAwardIDs.contains("winning-ribbon"))
+        XCTAssertEqual(p.ribbons.count, 6)
+        XCTAssertTrue(p.displayedRibbonIDs.contains("partner-mark"))
+        XCTAssertFalse(p.displayedRibbonIDs.contains("rare-mark"))
+    }
     func testCatalogueAndPageSizeCycle() {
         XCTAssertEqual(rules.ribbonIDs.count, 106)
         XCTAssertFalse(rules.ribbonIDs.contains { $0.hasSuffix("-mark") })
@@ -993,16 +1028,24 @@ final class TerminalPassportRenderTests: XCTestCase {
         defer { defaults.removePersistentDomain(forName: defaultsName) }
         for width: CGFloat in [320, 390] {
             for dark in [false, true] {
-                for screen in ["terminal", "terminal-party", "overview", "ribbons", "journey"] {
+                for screen in ["terminal", "terminal-party", "overview", "ribbons", "journey", "visit-editor", "game-awards", "awards-gallery"] {
                     defaults.set(screen == "terminal-party", forKey: "pc.ribbon.partyVisible")
                     defaults.set(AlbumGrouping.games.rawValue, forKey: "album.grouping")
                     let view: AnyView
                     if screen.hasPrefix("terminal") { view = AnyView(PCStorageView()) }
+                    else if screen == "visit-editor" { view = AnyView(JourneyEditorView(pokemonID: pokemon.id)) }
+                    else if screen == "game-awards" { view = AnyView(GameAwardAssignmentView(pokemonID: pokemon.id, game: pokemon.currentgame)) }
+                    else if screen == "awards-gallery" {
+                        var sample = pokemon
+                        sample.currentgame = "platinum"
+                        sample.ribbons = RibbonRules.shared.ribbonIDs.filter { (RibbonRules.shared.awards[$0]?.gen ?? 99) <= 4 } + ["rare-mark"]
+                        view = AnyView(OwnedAwardGallery(pokemon: sample))
+                    }
                     else {
                         let section = PassportSection.allCases.first { $0.rawValue.lowercased() == screen }!
                         view = AnyView(NavigationStack { StampAlbumView(pokemonID: pokemon.id, section: section) })
                     }
-                    let size = CGSize(width: width, height: 844)
+                    let size = CGSize(width: width, height: ["visit-editor", "game-awards"].contains(screen) ? 667 : 844)
                     let window = UIWindow(frame: CGRect(origin: .zero, size: size))
                     let controller = UIHostingController(rootView: view.environmentObject(store).defaultAppStorage(defaults).environment(\.colorScheme, dark ? .dark : .light))
                     window.rootViewController = controller; window.makeKeyAndVisible()

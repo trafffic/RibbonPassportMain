@@ -208,7 +208,9 @@ enum RibbonPageSize {
 extension RibbonPokemon {
     /// Original records remain editable and retain their individual earning locations.
     var ownedRibbonIDs: [String] { RibbonCatalog.shared.chronologicalAwards(ribbons.filter { RibbonRules.shared.isManagedAward($0) }) }
-    /// The current game's visible ribbons, including automatic Gen VI+ Memory consolidation.
+    /// All visible owned awards, including marks and automatic Memory Ribbon consolidation.
+    var displayedAwardIDs: [String] { RibbonCatalog.shared.chronologicalAwards(RibbonCatalog.shared.awards(for: self)) }
+    /// The current game's managed ribbons and earnable marks.
     var displayedRibbonIDs: [String] {
         let catalog = RibbonCatalog.shared
         return catalog.chronologicalAwards(catalog.awards(for: self).filter { RibbonRules.shared.isManagedAward($0) })

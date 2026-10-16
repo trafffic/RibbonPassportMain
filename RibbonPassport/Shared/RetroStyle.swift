@@ -506,3 +506,51 @@ private struct TerminalMenuButtonStyle: ButtonStyle {
         }
     }
 }
+
+/// Version colours keep titles distinct in both appearances without relying on colour alone.
+enum GameTitleColour {
+    static func colour(_ game: String, dark: Bool) -> Color {
+        let pair: (String, String)
+        switch game {
+        case "red", "ruby": pair = ("A93241", "F48B8D")
+        case "blue", "sapphire", "as": pair = ("2361AE", "82B2FF")
+        case "green", "emerald", "lg", "lg-switch": pair = ("167455", "79DCB6")
+        case "yellow", "lgp": pair = ("827210", "F8E681")
+        case "gold", "hg": pair = ("805D0B", "F4D279")
+        case "silver", "ss": pair = ("556B7B", "C5D4E4")
+        case "crystal": pair = ("236E8A", "8EDDEB")
+        case "fr", "fr-switch", "or": pair = ("B54426", "F8A38B")
+        case "colosseum": pair = ("745298", "D1ABE8")
+        case "xd", "xd-nso": pair = ("785120", "F6C276")
+        case "diamond", "bd": pair = ("376889", "9ED5F4")
+        case "pearl", "sp": pair = ("915076", "F0AED8")
+        case "platinum": pair = ("625587", "CDC0F2")
+        case "black", "black2": pair = ("272E3C", "B9C4DA")
+        case "white", "white2": pair = ("607588", "E1EAF4")
+        case "x": pair = ("2565A7", "8DB8FF")
+        case "y": pair = ("B73549", "F79CA7")
+        case "sun", "usun": pair = ("915A08", "FFD085")
+        case "moon", "umoon": pair = ("65499B", "C2AAFF")
+        case "sw": pair = ("337594", "95D8FF")
+        case "sh": pair = ("AC3F70", "F9A9CF")
+        case "pla": pair = ("507257", "B4D5A7")
+        case "scar": pair = ("B54138", "FF9D8D")
+        case "vio": pair = ("6B43A3", "CAB0FF")
+        case "go": pair = ("296EAD", "9DC9FD")
+        case "lge": pair = ("775131", "D5B18A")
+        case "plza": pair = ("2C7A64", "99E2CC")
+        default: pair = ("315D7B", "A6CCE8")
+        }
+        return Color(hex: dark ? pair.1 : pair.0)
+    }
+}
+struct GameTitle: View {
+    var game: String
+    var size: CGFloat = 16
+    var compact = true
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        Text(compact ? RibbonCatalog.shared.compactGameName(game) : RibbonCatalog.shared.gameName(game))
+            .font(PixelFont.font(size)).foregroundStyle(GameTitleColour.colour(game, dark: scheme == .dark))
+    }
+}

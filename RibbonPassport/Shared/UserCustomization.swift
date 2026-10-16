@@ -302,3 +302,36 @@ enum RibbonsGuideExporter {
         return try JSONSerialization.data(withJSONObject: root, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
     }
 }
+
+extension RibbonPokemon {
+    /// Historic visits must fit between the origin and the current game, including one-way transfers.
+    var journeyGameChoices: [String] {
+        let rules = RibbonRules.shared
+        let originGroups = origingame.isEmpty ? nil : rules.reachableGroups(from: origingame)
+        let currentGroup = rules.group(for: currentgame)
+        return rules.compatibleGames(for: self, reachableOnly: false).filter { game in
+            guard let group = rules.group(for: game) else { return false }
+            if let originGroups, !originGroups.contains(group) { return false }
+            if let currentGroup, !rules.reachableGroups(from: game).contains(currentGroup) { return false }
+            return true
+        }
+    }
+    func canRemoveVisit(_ game: String) -> Bool {
+        game != origingame && game != currentgame && earnedGames?.values.contains(game) != true
+    }
+    @discardableResult mutating func addJourneyVisit(_ game: String) -> Bool {
+        guard journeyGameChoices.contains(game), !recordedVisits.contains(where: { $0.game == game }) else { return false }
+        visits = recordedVisits + [JourneyVisit(game: game)]
+        return true
+    }
+    @discardableResult mutating func removeJourneyVisit(_ game: String) -> Bool {
+        guard canRemoveVisit(game), recordedVisits.contains(where: { $0.game == game }) else { return false }
+        visits = recordedVisits.filter { $0.game != game }
+        return true
+    }
+    /// Removing an earning location preserves ownership of the award itself.
+    mutating func clearAwardLocation(_ award: String) {
+        earnedGames?[award] = nil
+        earnedGenerations?[award] = nil
+    }
+}

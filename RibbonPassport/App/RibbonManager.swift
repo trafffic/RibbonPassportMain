@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct ManageRibbonsButton: View {
     var pokemon: RibbonPokemon
@@ -51,6 +52,13 @@ struct StoredRibbonManager: View {
 private enum RibbonCategory: String, CaseIterable { case all = "All", last = "Last chance", later = "Later gens" }
 private enum RibbonPanel: String, Identifiable { case games, owned, transfer, sizeMarks; var id: String { rawValue } }
 private struct RibbonDetails: Identifiable { var id: String }
+private struct RibbonFeedback: Identifiable {
+    let id = UUID()
+    var award: String?
+    var title: String
+    var subtitle: String
+    var removed = false
+}
 
 struct RibbonManager: View {
     @Binding private var destinationPokemon: RibbonPokemon
@@ -68,6 +76,7 @@ struct RibbonManager: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("ribbons.pageSize") private var savedSize = 12
     @State private var game = ""
     @State private var catalogue = false
@@ -79,6 +88,7 @@ struct RibbonManager: View {
     @State private var pending: String?
     @State private var undo: RibbonPokemon?
     @State private var message = ""
+    @State private var feedback: RibbonFeedback?
     @State private var expandedMemories: Set<String> = []
     private let rules = RibbonRules.shared
     private var size: Int { RibbonPageSize.validated(savedSize) }
@@ -117,13 +127,15 @@ struct RibbonManager: View {
     private var managerBody: some View {
             VStack(spacing: 0) {
                 managerContent().padding(12)
-                footer
             }.background(theme.paper).foregroundStyle(theme.ink)
                 .navigationTitle("Ribbons").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     if !embedded {
                     TerminalToolbarItem(placement: .principal) { Text("RIBBONS").font(PixelFont.font(21)) }
                     TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Back to " + entryTitle, kind: .back) { dismiss() } }
+                    TerminalToolbarItem(placement: .confirmationAction) {
+                        TerminalCornerButton("Save") { destinationPokemon = pokemon; onSave() }.accessibilityIdentifier("ribbons.save")
+                    }
                     }
                 }
                 .onAppear {
@@ -140,6 +152,11 @@ struct RibbonManager: View {
                 .sheet(item: $detail) { choice in detailView(choice.id) }
                 .onChange(of: pokemon) { _, value in
                     if embedded { destinationPokemon = value }
+                }
+                .task(id: feedback?.id) {
+                    guard feedback != nil else { return }
+                    do { try await Task.sleep(for: .seconds(6)) } catch { return }
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { feedback = nil }
                 }
     }
     private func managerContent() -> some View {
@@ -164,7 +181,7 @@ struct RibbonManager: View {
             HStack(spacing: 7) {
                 if !game.isEmpty { GameMascot(game: game, size: 25) }
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(game.isEmpty ? "Choose a game" : RibbonCatalog.shared.compactGameName(game)).font(PixelFont.font(17)).lineLimit(1).minimumScaleFactor(0.75)
+                    GameTitle(game: game, size: 17).lineLimit(1).minimumScaleFactor(0.75)
                     if let gen = rules.games[game]?.gen { Text("GEN \(gen.roman) · \(game == pokemon.currentgame ? "Current game" : "Planning view")").font(PixelFont.font(11)).foregroundStyle(theme.muted) }
                 }
                 Spacer(minLength: 0)
@@ -203,15 +220,18 @@ struct RibbonManager: View {
                 }
             }
             HStack {
-                Text("\(list.count) shown · \(catalogue ? "All games" : "This game")").font(PixelFont.font(11)).foregroundStyle(theme.muted).accessibilityIdentifier("ribbons.resultCount")
-                Spacer(minLength: 4)
+                if let feedback { feedbackNotice(feedback) }
+                else {
+                    Text("\(list.count) shown · \(catalogue ? "All games" : "This game")").font(PixelFont.font(11)).foregroundStyle(theme.muted).accessibilityIdentifier("ribbons.resultCount")
+                    Spacer(minLength: 4)
+                }
                 Button { savedSize = RibbonPageSize.next(size); page = 0 } label: {
                     Text("\(size)/pg").font(PixelFont.font(11)).padding(.horizontal, 5).padding(.vertical, 3)
                         .background(theme.panel).overlay(RoundedRectangle(cornerRadius: 3).stroke(theme.border))
                         .frame(minWidth: 44, minHeight: 30).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityLabel("\(size) ribbons per page. Change to \(RibbonPageSize.next(size))")
                     .accessibilityIdentifier("ribbons.pageSize")
-            }.frame(height: 25)
+            }.frame(height: 46)
             GeometryReader { geometry in
                 ribbonGrid(height: geometry.size.height, ids: ids, lastChance: Set(check.lastChance))
             }.frame(maxHeight: .infinity)
@@ -268,6 +288,12 @@ struct RibbonManager: View {
                 }.padding(.horizontal, 3).frame(maxWidth: .infinity).frame(height: height)
                     .background(owned ? theme.board : last ? theme.warningSurface : theme.panel)
                     .overlay(Rectangle().stroke(last ? theme.warningBorder : owned ? theme.accent : theme.border, lineWidth: last ? 2 : owned ? 2 : 1))
+                    .overlay(alignment: .bottomTrailing) {
+                        if owned && size == 24 {
+                            Text("✓").font(PixelFont.font(11)).frame(width: 16, height: 16).background(theme.accent).foregroundStyle(theme.paper).accessibilityHidden(true)
+                        }
+                    }
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: owned)
                     .overlay(alignment: .topLeading) {
                         if RibbonRules.optionalSizeMarks.contains(id) {
                             Text("OPT").font(PixelFont.font(8)).padding(2).background(theme.board).foregroundStyle(theme.accent).accessibilityHidden(true)
@@ -295,12 +321,28 @@ struct RibbonManager: View {
         if transferCheck.lastChance.contains(id) { return "Last chance before leaving this generation" }
         return rules.unavailableReason(id, game: game, pokemon: pokemon) ?? laterLabel(id)
     }
-    private var footer: some View {
-        HStack(spacing: 8) {
-            Text(message.isEmpty ? "\(pokemon.displayedRibbonIDs.count) owned awards" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.updatesFrequently)
-            Button("Undo") { restore() }.disabled(undo == nil).font(PixelFont.font(14)).buttonStyle(RetroAction())
-            Button(embedded ? "Done" : "Save") { destinationPokemon = pokemon; onSave() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.save")
-        }.padding(.horizontal, 12).padding(.vertical, 7).background(theme.paper).overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
+    private func feedbackNotice(_ notice: RibbonFeedback) -> some View {
+        HStack(spacing: 5) {
+            if let award = notice.award { AssetImage(key: "award-" + award).frame(width: 22, height: 28) }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(notice.title).font(PixelFont.font(12)).lineLimit(2).minimumScaleFactor(0.8).accessibilityIdentifier("ribbons.feedback.title")
+                Text(notice.subtitle).font(PixelFont.font(10)).foregroundStyle(theme.muted).lineLimit(1).minimumScaleFactor(0.75).accessibilityIdentifier("ribbons.feedback.subtitle")
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            if undo != nil {
+                Button("Undo") { restore() }.font(PixelFont.font(12)).frame(minWidth: 42, minHeight: 44).contentShape(Rectangle())
+                    .buttonStyle(.plain).foregroundStyle(theme.accent).accessibilityIdentifier("ribbons.feedback.undo")
+            }
+        }.padding(.horizontal, 6).frame(maxWidth: .infinity, minHeight: 44)
+            .background(notice.removed ? theme.warningSurface : theme.board)
+            .foregroundStyle(notice.removed ? theme.warningInk : theme.ink)
+            .overlay(Rectangle().stroke(notice.removed ? theme.warningBorder : theme.accent))
+            .accessibilityElement(children: .contain).accessibilityAddTraits(.updatesFrequently)
+    }
+    private func showFeedback(award: String?, title: String, subtitle: String, removed: Bool = false) {
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) {
+            feedback = RibbonFeedback(award: award, title: title, subtitle: subtitle, removed: removed)
+        }
+        UIAccessibility.post(notification: .announcement, argument: title + ". " + subtitle)
     }
     private var sizeMarksPanel: some View {
         TerminalPanel(title: "Size marks", onClose: { panel = nil }) {
@@ -450,10 +492,25 @@ struct RibbonManager: View {
     }
     private func record(_ id: String, in game: String) {
         let before = pokemon
-        if pokemon.recordRibbon(id, game: game) { undo = before; message = "Added · \(RibbonCatalog.shared.compactGameName(game))" }
+        if pokemon.recordRibbon(id, game: game) {
+            undo = before; message = "Added · " + RibbonCatalog.shared.compactGameName(game)
+            showFeedback(award: id, title: "Added · " + RibbonCatalog.shared.awardPickerName(id), subtitle: RibbonCatalog.shared.compactGameName(game))
+            page = min(page, pageCount - 1)
+        }
     }
-    private func remove(_ id: String) { undo = pokemon; pokemon.removeAward(id); message = "\(RibbonCatalog.shared.ribbons[id] ?? id) removed"; page = min(page, pageCount - 1) }
-    private func restore() { if let previous = undo { pokemon = previous; undo = nil; message = "Change undone" } }
+    private func remove(_ id: String) {
+        undo = pokemon; pokemon.removeAward(id)
+        message = RibbonCatalog.shared.awardPickerName(id) + " removed"
+        showFeedback(award: id, title: "Removed · " + RibbonCatalog.shared.awardPickerName(id), subtitle: "Removed from owned awards", removed: true)
+        page = min(page, pageCount - 1)
+    }
+    private func restore() {
+        if let previous = undo {
+            pokemon = previous; undo = nil; message = "Change undone"
+            showFeedback(award: nil, title: "Change undone", subtitle: "Owned awards restored")
+            page = min(page, pageCount - 1)
+        }
+    }
 }
 
 struct RibbonTransferStatus: View {
@@ -644,6 +701,15 @@ struct RibbonGamePicker: View {
         let pages = max(1, (games.count + 5) / 6)
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
+                if let award {
+                    HStack(spacing: 9) {
+                        AssetImage(key: "award-" + award).frame(width: 30, height: 36)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(RibbonCatalog.shared.awardPickerName(award)).font(PixelFont.font(18))
+                            Text("Choose its earning game").font(PixelFont.font(12)).foregroundStyle(theme.muted)
+                        }
+                    }
+                }
                 if let generation = generationFilter ?? generation {
                     if generationFilter == nil { Button("‹ Generations") { self.generation = nil; page = 0 }.font(PixelFont.font(15)) }
                     Text("GEN \(generation.roman)").font(PixelFont.font(23))
@@ -653,7 +719,7 @@ struct RibbonGamePicker: View {
                                 HStack(spacing: 8) {
                                     GameMascot(game: game, size: 29)
                                     VStack(alignment: .leading, spacing: 5) {
-                                        Text(RibbonCatalog.shared.compactGameName(game)).font(PixelFont.font(16))
+                                        GameTitle(game: game, size: 16).lineLimit(2)
                                         Text(game == pokemon.currentgame ? "Current game" : "Compatible").font(PixelFont.font(11)).foregroundStyle(theme.muted)
                                     }
                                     Spacer(minLength: 0)
