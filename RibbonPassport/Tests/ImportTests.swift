@@ -33,6 +33,16 @@ final class RibbonManagerTests: XCTestCase {
         let incompatible = RibbonPokemon(species: "unown", currentgame: "bd", origingame: "emerald")
         XCTAssertTrue(rules.earningGames(for: "partner-mark", pokemon: incompatible).isEmpty)
     }
+    func testSizeMarksAreOptionalForTransferCompletion() {
+        for scale in [0, 255] {
+            var p = RibbonPokemon(species: "mew", currentgame: "scar", origingame: "emerald")
+            p.sizeScale = scale
+            let check = rules.transferCheck(from: "scar", pokemon: p)
+            XCTAssertTrue(Set(check.lastChance).isDisjoint(with: RibbonRules.optionalSizeMarks))
+            XCTAssertTrue(Set(check.canWait).isDisjoint(with: RibbonRules.optionalSizeMarks))
+            for mark in RibbonRules.optionalSizeMarks { XCTAssertFalse(rules.isLastChance(mark, game: "scar", pokemon: p)) }
+        }
+    }
     func testCatalogueAndPageSizeCycle() {
         XCTAssertEqual(rules.ribbonIDs.count, 106)
         XCTAssertFalse(rules.ribbonIDs.contains { $0.hasSuffix("-mark") })

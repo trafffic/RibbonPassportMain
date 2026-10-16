@@ -26,11 +26,9 @@ struct AddPokemonView: View {
                         }
                     }.accessibilityIdentifier("pokemon.chooseSpecies")
                     TextField("Nickname", text: $pokemon.nickname)
-                    Stepper("Level \(pokemon.currentlevel)", value: $pokemon.currentlevel, in: 1...100)
+                    TerminalStepper("Level \(pokemon.currentlevel)", value: $pokemon.currentlevel, in: 1...100)
                     Toggle("Shiny", isOn: $pokemon.shiny)
-                    Picker("Gender", selection: $pokemon.gender) {
-                        Text("Not specified").tag(""); Text("Male").tag("male"); Text("Female").tag("female")
-                    }
+                    TerminalSelector(title: "Gender", selection: $pokemon.gender, values: ["", "male", "female"], name: { $0.isEmpty ? "Not specified" : $0.capitalized })
                     if RibbonRules.shared.species[pokemon.species]?.flags.contains(where: { ["colShadow", "xdShadow"].contains($0) }) == true { Toggle("Shadow Pokémon", isOn: $pokemon.shadow) }
                     if RibbonCatalog.shared.gmaxSpecies.contains(pokemon.species) { Toggle("Gigantamax factor", isOn: $pokemon.gmax) }
                 }
@@ -40,7 +38,7 @@ struct AddPokemonView: View {
                     RibbonMetLevelEditor(pokemon: $pokemon)
                 }
                 Section {
-                    DisclosureGroup("Capture details") {
+                    TerminalDisclosureGroup("Capture details") {
                         SearchableChoicePicker(title: "Ball", value: Binding(get: { pokemon.ball ?? "" }, set: { pokemon.ball = $0.isEmpty ? nil : $0 }), choices: RibbonsGuideExporter.balls, emptyLabel: "Not specified")
                         SearchableChoicePicker(title: "Language", value: Binding(get: { pokemon.language ?? "" }, set: { pokemon.language = $0.isEmpty ? nil : $0 }), choices: RibbonsGuideExporter.languages, emptyLabel: "Not specified")
                         TextField("Original trainer", text: Binding(get: { pokemon.trainername ?? "" }, set: { pokemon.trainername = $0 }))
@@ -68,8 +66,8 @@ struct AddPokemonView: View {
                 }
             }.font(PixelFont.font(17)).navigationTitle("Add Pokémon").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                    ToolbarItem(placement: .confirmationAction) {
+                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .confirmationAction) {
                         Button("Add") {
                             var entry = pokemon
                             if kind == .showdown {
@@ -116,10 +114,10 @@ struct SpeciesPicker: View {
                         if selection == id { Image(systemName: "checkmark") }
                     }.padding(.vertical, 5)
                 }
-            }.searchable(text: $search, prompt: "Name, form or Pokédex number")
+            }.terminalSearchable(text: $search, prompt: "Name, form or Pokédex number")
                 .overlay { if matches.isEmpty { ContentUnavailableView.search(text: search) } }
                 .navigationTitle("Species & forms").navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Cancel") { dismiss() } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() }  } }
         }
     }
 }
@@ -127,13 +125,11 @@ struct SpeciesPicker: View {
 struct WallpaperControls: View {
     @Binding var settings: WallpaperSettings
     var body: some View {
-        Picker("Background", selection: $settings.design) {
-            ForEach(PixelWallpaper.allCases) { Text($0.name).tag($0) }
-        }
-        ColorPicker("Tint", selection: Binding(get: { Color(hex: settings.colorHex) }, set: { settings.tint = $0.rgbHex }), supportsOpacity: false)
+        TerminalSelector(title: "Background", selection: $settings.design, values: PixelWallpaper.allCases, name: { $0.name })
+        TerminalColorPicker("Tint", selection: Binding(get: { Color(hex: settings.colorHex) }, set: { settings.tint = $0.rgbHex }), supportsOpacity: false)
         if settings.tint != nil { Button("Reset tint") { settings.tint = nil } }
         HStack { Text("Pattern strength"); Spacer(); Text("\(Int((settings.strength * 100).rounded()))%") }
-        Slider(value: $settings.strength, in: 0...1, step: 0.05).accessibilityLabel("Pattern strength")
+        TerminalSlider(value: $settings.strength, in: 0...1, step: 0.05).accessibilityLabel("Pattern strength")
     }
 }
 extension Color {
@@ -186,15 +182,15 @@ struct BoxWallpaperEditor: View {
                 Section("Customise") {
                     Toggle("Custom tint", isOn: Binding(get: { settings.tint != nil }, set: { settings.tint = $0 ? "719957" : nil }))
                     if settings.tint != nil {
-                        ColorPicker("Tint", selection: Binding(get: { Color(hex: settings.colorHex) }, set: { settings.tint = $0.rgbHex }), supportsOpacity: false)
+                        TerminalColorPicker("Tint", selection: Binding(get: { Color(hex: settings.colorHex) }, set: { settings.tint = $0.rgbHex }), supportsOpacity: false)
                         Text("Tint strength")
-                        Slider(value: $settings.strength, in: 0...1, step: 0.05).accessibilityLabel("Tint strength")
+                        TerminalSlider(value: $settings.strength, in: 0...1, step: 0.05).accessibilityLabel("Tint strength")
                     }
                 }
             }.font(PixelFont.font(17)).navigationTitle(box.name + " wallpaper").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                    ToolbarItem(placement: .confirmationAction) {
+                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .confirmationAction) {
                         Button("Save") {
                             store.editStorage(kind: kind) { layout in
                                 if let i = layout.boxes.firstIndex(where: { $0.id == box.id }) { layout.boxes[i].wallpaper = settings }
@@ -247,10 +243,10 @@ struct SearchableChoiceList: View {
                 ForEach(results) { item in choice(item.id, name: item.name) }
             }.font(PixelFont.font(17))
                 .overlay { if results.isEmpty && !search.isEmpty { ContentUnavailableView.search(text: search) } }
-                .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search " + title.lowercased())
+                .terminalSearchable(text: $search, prompt: "Search " + title.lowercased())
                 .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Cancel") { dismiss() } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() }  } }
         }
     }
     private func choice(_ id: String, name: String) -> some View {
@@ -305,7 +301,7 @@ struct PokemonExportView: View {
             Form {
                 Section {
                     Text("\(selection.pokemon.count) Pokémon").font(PixelFont.font(23))
-                    Picker("Export to", selection: $target) { ForEach(PokemonExportTarget.allCases) { Text($0.name).tag($0) } }.pickerStyle(.segmented)
+                    TerminalSelector(title: "Export to", selection: $target, values: PokemonExportTarget.allCases, name: { $0.name }, inline: true)
                 }
                 if target == .ribbonsGuide {
                     Section("ribbons.guide backup") {
@@ -343,13 +339,13 @@ struct PokemonExportView: View {
                 }
                 if failure.isEmpty && !data.isEmpty {
                     Section {
-                        DisclosureGroup("Preview") {
+                        TerminalDisclosureGroup("Preview") {
                             Text(text).font(.system(size: 12, design: .monospaced)).textSelection(.enabled)
                         }
                     }
                 }
             }.font(PixelFont.font(17)).navigationTitle("Export Pokémon").navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Done") { dismiss() } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
                 .onAppear { prepare() }
                 .onChange(of: target) { _, _ in prepare() }
                 .onChange(of: fallbackBall) { _, _ in prepare() }

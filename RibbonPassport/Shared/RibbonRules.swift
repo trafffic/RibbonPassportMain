@@ -60,6 +60,7 @@ struct RibbonRules: Decodable {
         }
         return rules
     }()
+    static let optionalSizeMarks: Set<String> = ["mini-mark", "jumbo-mark"]
     static let postCaptureMarks: Set<String> = ["partner-mark", "gourmand-mark", "itemfinder-mark", "jumbo-mark", "mini-mark"]
     func isManagedAward(_ id: String) -> Bool { awards[id]?.mark == false || Self.postCaptureMarks.contains(id) }
     var managedAwardIDs: [String] { RibbonCatalog.shared.chronologicalAwards(awards.keys.filter { isManagedAward($0) }) }
@@ -150,7 +151,7 @@ struct RibbonRules: Decodable {
         }
     }
     func isLastChance(_ award: String, game: String, pokemon p: RibbonPokemon) -> Bool {
-        !p.ribbons.contains(award) && unavailableReason(award, game: game, pokemon: p) == nil && laterGames(for: award, after: game, pokemon: p).isEmpty
+        !Self.optionalSizeMarks.contains(award) && !p.ribbons.contains(award) && unavailableReason(award, game: game, pokemon: p) == nil && laterGames(for: award, after: game, pokemon: p).isEmpty
     }
 
     func generationEarningGames(for award: String, from game: String, pokemon p: RibbonPokemon) -> [String] {
@@ -171,7 +172,7 @@ struct RibbonRules: Decodable {
             (games[$0]?.gen ?? 0) > generation && groups.contains(games[$0]?.group ?? "")
         }
         var check = RibbonTransferCheck(generation: generation, nextGeneration: later.compactMap { games[$0]?.gen }.min(), canAssess: true)
-        for award in managedAwardIDs where !p.ribbons.contains(award) {
+        for award in managedAwardIDs where !Self.optionalSizeMarks.contains(award) && !p.ribbons.contains(award) {
             guard !generationEarningGames(for: award, from: game, pokemon: p).isEmpty else { continue }
             if laterGames(for: award, after: game, pokemon: p).isEmpty { check.lastChance.append(award) }
             else { check.canWait.append(award) }

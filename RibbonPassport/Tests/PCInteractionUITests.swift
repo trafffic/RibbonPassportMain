@@ -126,7 +126,7 @@ final class RecoveryHistoryUITests: XCTestCase {
     }
     func testRestoreEarlierDetailsKeepsReplacedVersion() {
         preview("drag-a"); restore()
-        app.navigationBars.buttons["Saved versions"].tap()
+        app.buttons["navigation.back"].tap()
         XCTAssertTrue(app.staticTexts["Before restore"].waitForExistence(timeout: 5))
         let version = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "recovery.version.")).firstMatch
         version.tap()
@@ -181,7 +181,7 @@ final class TerminalPassportUITests: XCTestCase {
         XCTAssertTrue(remove.waitForExistence(timeout: 5)); remove.tap()
         app.navigationBars.buttons["Done"].tap()
         app.buttons["passport.tab.journey"].tap()
-        XCTAssertTrue(app.segmentedControls["album.grouping"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["album.grouping.games"].waitForExistence(timeout: 5))
         capture("passport-journey")
         app.buttons["passport.tab.overview"].tap()
         XCTAssertNotEqual(owned.label, before)
@@ -232,7 +232,7 @@ final class TerminalPassportUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["ribbon.description.text"].exists)
         XCTAssertEqual(owned.label, originalCount)
         app.buttons["passport.tab.journey"].tap()
-        XCTAssertTrue(app.segmentedControls["album.grouping"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["album.grouping.games"].waitForExistence(timeout: 5))
     }
     func testWallpaperSelectionPersistsAndDoesNotChangeOtherBoxes() {
         app.buttons["pc.boxOptions"].tap(); app.buttons["Wallpaper"].tap()
@@ -300,6 +300,33 @@ final class MemoryRibbonUITests: XCTestCase {
 }
 
 final class MarkAndNavigationUITests: XCTestCase {
+    func testOptionalSizeMarksAndCustomOptionBoards() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "marks"; app.launch()
+        defer { app.terminate() }
+        XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 10)); app.buttons["Passport ▸"].tap()
+        app.buttons["passport.tab.ribbons"].tap()
+        app.buttons["ribbons.sizeMarks"].tap()
+        XCTAssertTrue(app.staticTexts["ribbons.sizeMarks.optional"].waitForExistence(timeout: 5))
+        app.buttons["Confirmed size: Jumbo"].tap()
+        let mini = app.buttons["Mini"]
+        XCTAssertTrue(mini.waitForExistence(timeout: 5)); mini.tap()
+        let add = app.buttons["ribbons.size.add.mini-mark.scar"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5)); add.tap()
+        let remove = app.buttons["ribbons.size.remove.mini-mark"]
+        XCTAssertTrue(remove.waitForExistence(timeout: 5)); remove.tap()
+        XCTAssertTrue(add.waitForExistence(timeout: 5))
+        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "optional-size-marks"; screenshot.lifetime = .keepAlways; self.add(screenshot)
+        app.buttons["Close"].tap()
+        app.buttons["Passport options"].tap()
+        let edit = app.buttons["Edit Pokémon"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 5)); edit.tap()
+        XCTAssertTrue(app.navigationBars.buttons["Save"].waitForExistence(timeout: 5)); app.navigationBars.buttons["Save"].tap()
+        XCTAssertTrue(app.buttons["passport.tab.journey"].waitForExistence(timeout: 5)); app.buttons["passport.tab.journey"].tap()
+        XCTAssertTrue(app.buttons["album.grouping.games"].waitForExistence(timeout: 5)); app.buttons["album.grouping.games"].tap()
+        XCTAssertTrue(app.buttons["album.grouping.games"].isSelected)
+    }
+
     func testEarnableMarksAndCustomNavigation() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "marks"; app.launch()

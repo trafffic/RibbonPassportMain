@@ -164,7 +164,7 @@ struct RibbonPassportApp: App {
     @StateObject private var store = AppStore()
     var body: some Scene {
         WindowGroup {
-            RootView().environmentObject(store)
+            RootView().environmentObject(store).toggleStyle(TerminalToggleStyle()).buttonStyle(RetroAction()).textFieldStyle(TerminalFieldStyle())
                 .defaultAppStorage(store.preferences)
                 .preferredColorScheme(store.snapshot.appearance == .automatic ? nil : store.snapshot.appearance == .dark ? .dark : .light)
                 .onOpenURL { url in
@@ -190,10 +190,10 @@ struct RootView: View {
         }.font(PixelFont.font(17)).tint(Color(hex: "718F4E"))
         TerminalDock(selection: $store.tab)
         }
-        .alert("Something needs attention", isPresented: Binding(get: { store.error != nil }, set: { if !$0 { store.error = nil } })) {
+        .terminalAlert("Something needs attention", isPresented: Binding(get: { store.error != nil }, set: { if !$0 { store.error = nil } })) {
             Button("OK") { store.error = nil }
         } message: { Text(store.error ?? "") }
-        .alert("Collection updated", isPresented: Binding(get: { store.notice != nil }, set: { if !$0 { store.notice = nil } })) {
+        .terminalAlert("Collection updated", isPresented: Binding(get: { store.notice != nil }, set: { if !$0 { store.notice = nil } })) {
             Button("OK") { store.notice = nil }
         } message: { Text(store.notice ?? "") }
     }
@@ -252,14 +252,14 @@ struct CollectionView: View {
                 }
             }
             .navigationTitle("Ribbon Passport")
-            .searchable(text: $search, prompt: "Find a Pokémon")
-            .toolbar {
-                Menu {
+            .terminalSearchable(text: $search, prompt: "Find a Pokémon")
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) {
+                TerminalMenu {
                     Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
                     Button("Paste Showdown team", systemImage: "doc.on.clipboard") { showdown = true }
                     Button("Add / refresh demo team", systemImage: "sparkles") { store.demo() }
-                } label: { Image(systemName: "plus.circle") }
-            }
+                } label: { Text("Add").font(PixelFont.font(14)) }
+             } }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json], allowsMultipleSelection: false) { result in
                 switch result { case .success(let urls): if let url = urls.first { store.importBackup(url) }; case .failure(let error): store.error = error.localizedDescription }
             }
@@ -319,9 +319,9 @@ struct PokemonEditor: View {
             Section("Pokémon") {
                 Text(RibbonCatalog.shared.pokemon[pokemon.species]?.name ?? pokemon.species)
                 TextField("Nickname", text: $pokemon.nickname)
-                Stepper("Level \(pokemon.currentlevel)", value: $pokemon.currentlevel, in: 1...100)
+                TerminalStepper("Level \(pokemon.currentlevel)", value: $pokemon.currentlevel, in: 1...100)
                 Toggle("Shiny", isOn: $pokemon.shiny)
-                Picker("Gender", selection: $pokemon.gender) { Text("Not specified").tag(""); Text("Male").tag("male"); Text("Female").tag("female") }
+                TerminalSelector(title: "Gender", selection: $pokemon.gender, values: ["", "male", "female"], name: { $0.isEmpty ? "Not specified" : $0.capitalized })
                 if RibbonRules.shared.species[pokemon.species]?.flags.contains(where: { ["colShadow", "xdShadow"].contains($0) }) == true { Toggle("Shadow Pokémon", isOn: $pokemon.shadow) }
                 if RibbonCatalog.shared.gmaxSpecies.contains(pokemon.species) { Toggle("Gigantamax factor", isOn: $pokemon.gmax) }
             }
@@ -354,7 +354,7 @@ struct PokemonEditor: View {
                 Button("Use for single-Pokémon widgets") { store.choose(pokemon.id) }
             }
         }.navigationTitle(pokemon.displayName).navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Save") { store.update(pokemon); dismiss() }.fontWeight(.semibold) }
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Save") { store.update(pokemon); dismiss() }.fontWeight(.semibold)  } }
             .sheet(isPresented: $awards) { RibbonManager(pokemon: $pokemon) { awards = false } }
             .sheet(isPresented: $marks) { AwardPicker(selection: $pokemon.ribbons) }
     }
@@ -388,8 +388,8 @@ struct AwardPicker: View {
                         }
                     }
                 }
-            }.navigationTitle("Marks").searchable(text: $search)
-                .toolbar { Button("Done") { dismiss() } }
+            }.navigationTitle("Marks").terminalSearchable(text: $search)
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
         }
     }
 }
@@ -411,7 +411,7 @@ struct TeamsView: View {
                     }
                 }
             }.navigationTitle("Your teams")
-                .toolbar { Menu { Button("Create team") { create = true }; Button("Paste Showdown team") { showdown = true } } label: { Image(systemName: "plus.circle") } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalMenu { Button("Create team") { create = true }; Button("Paste Showdown team") { showdown = true } } label: { Text("Add").font(PixelFont.font(14)) }  } }
                 .sheet(isPresented: $create) { NavigationStack { TeamEditor(team: RibbonTeam(name: "My Ribbon Team", memberIDs: [])) } }
                 .sheet(isPresented: $showdown) { ShowdownImportView() }
         }
@@ -448,7 +448,7 @@ struct TeamEditor: View {
             }
             Section { Text("Medium widgets show the first three members. Large widgets show up to six. Saving makes this your default widget team.").font(.caption).foregroundStyle(.secondary) }
         }.navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button("Save") { store.saveTeam(team); dismiss() }.disabled(team.memberIDs.isEmpty || team.name.trimmingCharacters(in: .whitespaces).isEmpty) }
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Save") { store.saveTeam(team); dismiss() }.disabled(team.memberIDs.isEmpty || team.name.trimmingCharacters(in: .whitespaces).isEmpty)  } }
     }
 }
 struct ShowdownImportView: View {
@@ -476,8 +476,8 @@ struct ShowdownImportView: View {
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }.navigationTitle("Import Showdown team").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                    ToolbarItem(placement: .confirmationAction) {
+                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .confirmationAction) {
                         Button("Import") {
                             do { try store.addShowdown(export, name: name, current: current, origin: origin); if store.error == nil { dismiss() } }
                             catch { self.error = error.localizedDescription }
@@ -493,9 +493,7 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section("Appearance") {
-                    Picker("Theme", selection: Binding(get: { store.snapshot.appearance }, set: { value in var next = store.snapshot; next.appearance = value; store.commit(next) })) {
-                        Text("Follow iPhone").tag(Appearance.automatic); Text("Light").tag(Appearance.light); Text("Dark").tag(Appearance.dark)
-                    }
+                    TerminalSelector(title: "Theme", selection: Binding(get: { store.snapshot.appearance }, set: { value in var next = store.snapshot; next.appearance = value; store.commit(next) }), values: Appearance.allCases, name: { $0 == .automatic ? "Follow iPhone" : $0.rawValue.capitalized })
                 }
                 Section("Home Screen widgets") {
                     NavigationLink("Ribbon widgets") { WidgetStudioView(section: .ribbon) }

@@ -106,9 +106,9 @@ struct PCStorageView: View {
                     HStack {
                         Text(kind.title.uppercased()).font(PixelFont.font(25))
                         Spacer(minLength: 4)
-                        Menu {
-                            NavigationLink("Teams") { RetroTeamsView(kind: kind) }
-                            NavigationLink("Widgets") { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) }
+                        TerminalMenu {
+                            TerminalMenuLink("Teams") { RetroTeamsView(kind: kind) }
+                            TerminalMenuLink("Widgets") { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) }
                             Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
                             if kind == .ribbon {
                                 Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
@@ -121,7 +121,7 @@ struct PCStorageView: View {
                                 store.editStorage(kind: kind) { $0.boxes.append(PCBox(name: String(format: "Box %02d", $0.boxes.count + 1))) }
                                 boxIndex = layout.boxes.count - 1
                             }
-                        } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44) }.buttonStyle(.plain).accessibilityLabel("Collection options")
+                        } label: { Text("Options").font(PixelFont.font(13)) }.buttonStyle(.plain).accessibilityLabel("Collection options")
                     }
                     if store.snapshot.pokemon(for: kind).isEmpty { emptyCollection }
                     HStack {
@@ -145,7 +145,7 @@ struct PCStorageView: View {
                     HStack {
                         Button { choosingBox = true } label: { Label("All boxes", systemImage: "square.grid.2x2") }
                         Spacer()
-                        Menu {
+                        TerminalMenu {
                             Button("Wallpaper") { editingWallpaper = true }
                             Button("Rename box") { boxName = box.name; renaming = true }
                             Button("New box") {
@@ -194,7 +194,7 @@ struct PCStorageView: View {
                     drag?.target = nil
                 }
                 .sheet(isPresented: $showdown) { RetroShowdownImportView() }
-                .alert("Box name", isPresented: $renaming) {
+                .terminalAlert("Box name", isPresented: $renaming) {
                     TextField("Name", text: $boxName)
                     Button("Save") {
                         let id = box.id, name = boxName.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -279,7 +279,7 @@ struct PCStorageView: View {
                     }
                 }.padding(16)
             }.background(theme.paper).navigationTitle("All boxes").navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Done") { choosingBox = false } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { choosingBox = false }  } }
         }
     }
     private func ribbonStrip(_ p: RibbonPokemon) -> some View {
@@ -367,7 +367,7 @@ struct PCStorageView: View {
                 }
             }
             Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { passportSection = .overview; store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
-            Menu { pokemonMenu(p) } label: { Image(systemName: "ellipsis").frame(width: 32, height: 44) }.accessibilityLabel("Pokémon actions")
+            TerminalMenu { pokemonMenu(p) } label: { Text("Edit").font(PixelFont.font(12)) }.accessibilityLabel("Pokémon actions")
         }.padding(9).background(theme.panel, in: RoundedRectangle(cornerRadius: 4))
     }
     @ViewBuilder private var dragSprites: some View {
@@ -632,16 +632,16 @@ struct StampAlbumView: View {
         }
         .background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar {
-                ToolbarItem(placement: .principal) { Text(section == .ribbons ? p?.displayName.uppercased() ?? "PASSPORT" : "PASSPORT").font(PixelFont.font(20)).lineLimit(1) }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
+                TerminalToolbarItem(placement: .principal) { Text(section == .ribbons ? p?.displayName.uppercased() ?? "PASSPORT" : "PASSPORT").font(PixelFont.font(20)).lineLimit(1) }
+                TerminalToolbarItem(placement: .topBarTrailing) {
+                    TerminalMenu {
                         Button("Edit Pokémon") { editing = true }
                         Button("Edit visits") { editingVisits = true }
                         Button("Export", systemImage: "square.and.arrow.up") {
                             if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
                         }
-                        NavigationLink("Saved versions") { RecoveryItemHistoryView(kind: .pokemon, objectID: pokemonID) }
-                    } label: { Image(systemName: "ellipsis").frame(width: 36, height: 36) }.accessibilityLabel("Passport options")
+                        TerminalMenuLink("Saved versions") { RecoveryItemHistoryView(kind: .pokemon, objectID: pokemonID) }
+                    } label: { Text("Options").font(PixelFont.font(13)) }.accessibilityLabel("Passport options")
                 }
             }
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
@@ -725,9 +725,7 @@ struct StampAlbumView: View {
                     RetroHeading(title: "Stamp album", value: "\(total) \(grouping == .games ? "games" : "generations")")
                     Button("Edit visits") { editingVisits = true }.font(PixelFont.font(12)).foregroundStyle(theme.accent)
                 }
-                Picker("Album view", selection: $grouping) {
-                    ForEach(AlbumGrouping.allCases) { Text($0.name).tag($0) }
-                }.pickerStyle(.segmented).accessibilityIdentifier("album.grouping")
+                TerminalSelector(title: "Album view", selection: $grouping, values: AlbumGrouping.allCases, name: { $0.name }, inline: true, identifier: "album.grouping")
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
                     if grouping == .games {
                         ForEach(Array(p.recordedVisits.dropFirst(visiblePage * perPage).prefix(perPage))) { visit in
@@ -940,7 +938,7 @@ struct JourneyEditorView: View {
                         }.disabled(game.isEmpty || p.recordedVisits.contains { $0.game == game })
                     }
                 }
-            }.navigationTitle("Visits").font(PixelFont.font(17)).toolbar { Button("Done") { dismiss() } }
+            }.navigationTitle("Visits").font(PixelFont.font(17)).toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
         }
     }
 }

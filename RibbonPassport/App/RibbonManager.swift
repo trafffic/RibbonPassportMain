@@ -18,14 +18,11 @@ struct RibbonMetLevelEditor: View {
     @Binding var pokemon: RibbonPokemon
     var body: some View {
         Toggle("Met level known", isOn: Binding(get: { pokemon.metLevel != nil }, set: { pokemon.metLevel = $0 ? pokemon.currentlevel : nil }))
-        Picker("Size", selection: Binding(get: { pokemon.sizeScale ?? -1 }, set: { pokemon.sizeScale = $0 == -1 ? nil : $0 })) {
-            Text("Unknown").tag(-1)
-            Text("Mini (0)").tag(0)
-            Text("Standard").tag(128)
-            Text("Jumbo (255)").tag(255)
-        }
+        TerminalSelector(title: "Size", selection: Binding(get: { pokemon.sizeScale ?? -1 }, set: { pokemon.sizeScale = $0 == -1 ? nil : $0 }), values: [-1, 0, 128, 255], name: { value in
+            switch value { case 0: return "Mini"; case 255: return "Jumbo"; case 128: return "Standard"; default: return "Unknown" }
+        })
         if pokemon.metLevel != nil {
-            Stepper("Met at level \(pokemon.metLevel ?? 1)", value: Binding(get: { pokemon.metLevel ?? 1 }, set: { pokemon.metLevel = $0 }), in: 1...100)
+            TerminalStepper("Met at level \(pokemon.metLevel ?? 1)", value: Binding(get: { pokemon.metLevel ?? 1 }, set: { pokemon.metLevel = $0 }), in: 1...100)
         }
     }
 }
@@ -52,7 +49,7 @@ struct StoredRibbonManager: View {
 }
 
 private enum RibbonCategory: String, CaseIterable { case all = "All", last = "Last chance", later = "Later gens" }
-private enum RibbonPanel: String, Identifiable { case games, owned, transfer; var id: String { rawValue } }
+private enum RibbonPanel: String, Identifiable { case games, owned, transfer, sizeMarks; var id: String { rawValue } }
 private struct RibbonDetails: Identifiable { var id: String }
 
 struct RibbonManager: View {
@@ -125,8 +122,8 @@ struct RibbonManager: View {
                 .navigationTitle("Ribbons").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     if !embedded {
-                    ToolbarItem(placement: .principal) { Text("RIBBONS").font(PixelFont.font(21)) }
-                    ToolbarItem(placement: .cancellationAction) { Button("‹ \(entryTitle)") { dismiss() }.font(PixelFont.font(14)) }
+                    TerminalToolbarItem(placement: .principal) { Text("RIBBONS").font(PixelFont.font(21)) }
+                    TerminalToolbarItem(placement: .cancellationAction) { Button { dismiss() } label: { TerminalGlyph(kind: .back).frame(width: 16, height: 16) }.accessibilityLabel("Back to " + entryTitle) }
                     }
                 }
                 .onAppear {
@@ -137,6 +134,7 @@ struct RibbonManager: View {
                 .sheet(item: $panel, onDismiss: { pending = nil }) { target in
                     if target == .owned { ownedDrawer }
                     else if target == .transfer { transferDrawer }
+                    else if target == .sizeMarks { sizeMarksPanel }
                     else { gamePicker }
                 }
                 .sheet(item: $detail) { choice in detailView(choice.id) }
@@ -170,10 +168,10 @@ struct RibbonManager: View {
                     if let gen = rules.games[game]?.gen { Text("GEN \(gen.roman) · \(game == pokemon.currentgame ? "Current game" : "Planning view")").font(PixelFont.font(11)).foregroundStyle(theme.muted) }
                 }
                 Spacer(minLength: 0)
-                Button("Change") { pending = nil; panel = .games }.font(PixelFont.font(13)).buttonStyle(.bordered).disabled(availableGames.isEmpty)
+                Button("Change") { pending = nil; panel = .games }.font(PixelFont.font(13)).buttonStyle(RetroAction()).disabled(availableGames.isEmpty)
             }.frame(minHeight: 38)
             HStack {
-                Toggle("Earnable only", isOn: $earnable).toggleStyle(.switch).labelsHidden().scaleEffect(0.8).frame(width: 42)
+                Toggle("Earnable only", isOn: $earnable).toggleStyle(TerminalToggleStyle()).labelsHidden().frame(width: 48)
                     .accessibilityLabel("Earnable only").accessibilityIdentifier("ribbons.earnable")
                 Text("Earnable only").font(PixelFont.font(14))
                 Spacer()
@@ -226,13 +224,16 @@ struct RibbonManager: View {
             Button { panel = .transfer } label: {
                 RibbonTransferStatus(check: check, theme: theme, review: true).fixedSize(horizontal: false, vertical: true)
             }.buttonStyle(.plain).disabled(!check.canAssess).accessibilityIdentifier("ribbons.transfer.review")
+            HStack(spacing: 6) {
             Button { panel = .owned } label: {
                 HStack {
-                    Text("Owned awards · \(pokemon.displayedRibbonIDs.count) ▴").font(PixelFont.font(16))
+                    Text("Owned · \(pokemon.displayedRibbonIDs.count) ▴").font(PixelFont.font(14)).lineLimit(1).minimumScaleFactor(0.8)
                     Spacer(minLength: 2)
-                    ForEach(Array(pokemon.displayedRibbonIDs.suffix(3)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 22, height: 26) }
+                    ForEach(Array(pokemon.displayedRibbonIDs.suffix(1)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 22, height: 26) }
                 }.padding(.horizontal, 9).frame(minHeight: 43).background(theme.board).overlay(Rectangle().stroke(theme.border))
             }.buttonStyle(.plain).accessibilityIdentifier("ribbons.owned")
+                Button("Size marks") { panel = .sizeMarks }.font(PixelFont.font(12)).buttonStyle(RetroAction()).accessibilityIdentifier("ribbons.sizeMarks")
+            }
         }.onChange(of: earnable) { _, _ in page = 0 }
     }
     private func ribbonGrid(height: CGFloat, ids: [String], lastChance: Set<String>) -> some View {
@@ -262,14 +263,16 @@ struct RibbonManager: View {
                     AssetImage(key: "award-" + id).frame(height: size == 24 ? min(26, height - 5) : min(28, height * 0.36))
                     if size != 24 {
                         Text(name.replacingOccurrences(of: " Ribbon", with: "")).font(PixelFont.font(size == 16 ? 11 : 12)).lineLimit(2).multilineTextAlignment(.center).frame(maxWidth: .infinity)
-                        Text(owned ? "✓ Owned" : last ? "LAST CHANCE" : laterLabel(id)).font(PixelFont.font(10)).lineLimit(1)
+                        Text(owned ? "✓ Owned" : RibbonRules.optionalSizeMarks.contains(id) ? "OPTIONAL" : last ? "LAST CHANCE" : laterLabel(id)).font(PixelFont.font(10)).lineLimit(1)
                             .foregroundStyle(last ? theme.warningInk : theme.muted)
                     }
                 }.padding(.horizontal, 3).frame(maxWidth: .infinity).frame(height: height)
                     .background(owned ? theme.board : last ? theme.warningSurface : theme.panel)
                     .overlay(Rectangle().stroke(last ? theme.warningBorder : owned ? theme.accent : theme.border, lineWidth: last ? 2 : owned ? 2 : 1))
                     .overlay(alignment: .topLeading) {
-                        if last {
+                        if RibbonRules.optionalSizeMarks.contains(id) {
+                            Text("OPT").font(PixelFont.font(8)).padding(2).background(theme.board).foregroundStyle(theme.accent).accessibilityHidden(true)
+                        } else if last {
                             Text("!").font(PixelFont.font(12)).frame(width: 15, height: 17)
                                 .background(theme.warningBorder).foregroundStyle(theme.warningSurface).accessibilityHidden(true)
                         }
@@ -280,13 +283,14 @@ struct RibbonManager: View {
             Button { detail = RibbonDetails(id: id) } label: { Text("i").font(PixelFont.font(12)).frame(width: 20, height: 22).background(theme.panel.opacity(0.9)) }
                 .buttonStyle(.plain).accessibilityLabel("Details for \(name)")
             }
-        }.contextMenu { Button("Award details") { detail = RibbonDetails(id: id) } }
+        }.onLongPressGesture { detail = RibbonDetails(id: id) }
     }
     private func laterLabel(_ id: String) -> String {
         let gens = Set(rules.laterGames(for: id, after: game, pokemon: pokemon).compactMap { rules.games[$0]?.gen }).sorted()
         return gens.isEmpty ? "Details" : "Later · " + gens.map(\.roman).joined(separator: ", ")
     }
     private func status(_ id: String) -> String {
+        if RibbonRules.optionalSizeMarks.contains(id) { return "Optional · Not required for Ribbon Master completion" }
         if pokemon.ribbons.contains(id) { return "Owned · " + pokemon.earningLocation(id) }
         if pokemon.displayedRibbonIDs.contains(id) { return "Owned · Combined from \(pokemon.originalRibbonIDs(representedBy: id).count) original ribbons" }
         if transferCheck.lastChance.contains(id) { return "Last chance before leaving this generation" }
@@ -295,9 +299,41 @@ struct RibbonManager: View {
     private var footer: some View {
         HStack(spacing: 8) {
             Text(message.isEmpty ? "\(pokemon.displayedRibbonIDs.count) owned awards" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.updatesFrequently)
-            Button("Undo") { restore() }.disabled(undo == nil).font(PixelFont.font(14)).buttonStyle(.bordered)
+            Button("Undo") { restore() }.disabled(undo == nil).font(PixelFont.font(14)).buttonStyle(RetroAction())
             Button(embedded ? "Done" : "Save") { destinationPokemon = pokemon; onSave() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.save")
         }.padding(.horizontal, 12).padding(.vertical, 7).background(theme.paper).overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
+    }
+    private var sizeMarksPanel: some View {
+        TerminalPanel(title: "Size marks", onClose: { panel = nil }) {
+            Text("Optional · Not required for a Ribbon Master").font(PixelFont.font(18)).accessibilityIdentifier("ribbons.sizeMarks.optional")
+            Text("Choose the size confirmed in-game. Mini and Jumbo marks can be awarded in Scarlet or Violet.").font(PixelFont.font(15)).foregroundStyle(theme.muted)
+            TerminalSelector(title: "Confirmed size", selection: Binding(get: { pokemon.sizeScale ?? -1 }, set: { value in undo = pokemon; pokemon.sizeScale = value == -1 ? nil : value }), values: [-1, 0, 128, 255], name: { value in
+                switch value { case 0: return "Mini"; case 255: return "Jumbo"; case 128: return "Standard"; default: return "Unknown" }
+            }, identifier: "ribbons.sizeChoice")
+            ForEach(["mini-mark", "jumbo-mark"], id: \.self) { id in
+                let owned = pokemon.ribbons.contains(id)
+                let games = rules.earningGames(for: id, pokemon: pokemon)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        AssetImage(key: "award-" + id).frame(width: 32, height: 36)
+                        Text(RibbonCatalog.shared.awardPickerName(id)).font(PixelFont.font(19))
+                        Spacer(); Text("OPTIONAL").font(PixelFont.font(11)).foregroundStyle(theme.accent)
+                    }
+                    Text(rules.awards[id]?.description ?? "").font(PixelFont.font(15))
+                    if owned {
+                        Text(pokemon.earningLocation(id)).font(PixelFont.font(13))
+                        Button("Remove") { remove(id) }.buttonStyle(RetroAction()).accessibilityIdentifier("ribbons.size.remove." + id)
+                    } else if games.isEmpty {
+                        Text(rules.unavailableReason(id, game: "scar", pokemon: pokemon) ?? "No compatible earning game").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                    } else {
+                        ForEach(games, id: \.self) { earningGame in
+                            Button("Add in " + RibbonCatalog.shared.compactGameName(earningGame)) { record(id, in: earningGame) }
+                                .buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.size.add." + id + "." + earningGame)
+                        }
+                    }
+                }.retroPanel()
+            }
+        }
     }
     private var gamePicker: some View {
         RibbonGamePicker(pokemon: pokemon, selected: game, award: pending) { chosen in
@@ -352,7 +388,7 @@ struct RibbonManager: View {
                 }.scrollIndicators(.visible)
                 HStack { Text(message).font(PixelFont.font(12)).frame(maxWidth: .infinity, alignment: .leading); Button("Undo") { restore() }.disabled(undo == nil).accessibilityIdentifier("ribbons.owned.undo") }.padding(14)
             }.background(theme.panel).foregroundStyle(theme.ink).navigationTitle("Owned ribbons · \(pokemon.displayedRibbonIDs.count)").navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Done") { panel = nil }.font(PixelFont.font(15)) }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { panel = nil }.font(PixelFont.font(15))  } }
         }.presentationDetents([.fraction(0.75), .large]).presentationDragIndicator(.visible)
     }
     private func ownedRow(_ id: String) -> some View {
@@ -374,7 +410,7 @@ struct RibbonManager: View {
                     }
                 } label: { Text("Set game").font(PixelFont.font(12)) }
             }
-            Button("Remove") { remove(id) }.font(PixelFont.font(12)).buttonStyle(.bordered)
+            Button("Remove") { remove(id) }.font(PixelFont.font(12)).buttonStyle(RetroAction())
         }.overlay(alignment: .bottom) { Rectangle().fill(theme.border).frame(height: 1) }
     }
     private func detailView(_ id: String) -> some View {
@@ -406,7 +442,7 @@ struct RibbonManager: View {
                         Button("Remove ribbon") { remove(id); detail = nil }.buttonStyle(RetroAction())
                     }
                 }.padding(16)
-            }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Award details").navigationBarTitleDisplayMode(.inline).toolbar { Button("Done") { detail = nil } }
+            }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Award details").navigationBarTitleDisplayMode(.inline).toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { detail = nil }  } }
         }
     }
     private func add(_ id: String) {
@@ -475,8 +511,8 @@ struct RibbonTransferDrawer: View {
             }.background(theme.panel).foregroundStyle(theme.ink)
                 .navigationTitle("Transfer check").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .principal) { Text("Transfer check").font(PixelFont.font(23)) }
-                    ToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(PixelFont.font(15)).accessibilityIdentifier("ribbons.transfer.done") }
+                    TerminalToolbarItem(placement: .principal) { Text("Transfer check").font(PixelFont.font(23)) }
+                    TerminalToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(PixelFont.font(15)).accessibilityIdentifier("ribbons.transfer.done") }
                 }
                 .sheet(item: $earning) { choice in
                     RibbonGamePicker(pokemon: pokemon, selected: game, award: choice.id, generationFilter: check.generation) { chosen in
@@ -571,7 +607,7 @@ struct RibbonTransferDrawer: View {
                 if count > 1 { pager(page: $laterPage, count: count) }
             }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(theme.panel).foregroundStyle(theme.ink)
                 .navigationTitle("Later opportunities").navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Done") { showingLater = false }.font(PixelFont.font(15)) }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { showingLater = false }.font(PixelFont.font(15))  } }
         }.presentationDetents([.medium, .large])
     }
     private func pager(page: Binding<Int>, count: Int) -> some View {
@@ -652,7 +688,7 @@ struct RibbonGamePicker: View {
                 Spacer(minLength: 0)
             }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(theme.paper).foregroundStyle(theme.ink)
                 .navigationTitle(award == nil ? "Choose game" : "Earned in which game?").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.font(PixelFont.font(15)) } }
+                .toolbar { TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.font(PixelFont.font(15)) } }
         }
     }
 }

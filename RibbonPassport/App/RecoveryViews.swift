@@ -52,8 +52,8 @@ struct RecoveryHistoryView: View {
             }
             Text("On this device · Up to \(RecoveryEntry.versionsPerItem) versions per Pokémon or team, \(RecoveryEntry.totalLimit) total. Oldest versions are removed when full.")
                 .font(PixelFont.font(12)).foregroundStyle(theme.muted).padding(12)
-        }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Recovery history").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .principal) { Text("RECOVERY HISTORY").font(PixelFont.font(21)) } }
+        }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Recovery history").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
+            .toolbar { TerminalToolbarItem(placement: .principal) { Text("RECOVERY HISTORY").font(PixelFont.font(21)) } }
             .tint(theme.accent)
     }
     private func currentName(_ entry: RecoveryEntry) -> String {
@@ -101,8 +101,8 @@ struct RecoveryItemHistoryView: View {
             } else {
                 Text("No saved versions yet. History starts with the next saved edit or deletion.").font(PixelFont.font(17)).listRowBackground(theme.panel)
             }
-        }.font(PixelFont.font(16)).scrollContentBackground(.hidden).background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Saved versions").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .principal) { Text("Saved versions").font(PixelFont.font(20)) } }
+        }.font(PixelFont.font(16)).scrollContentBackground(.hidden).background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Saved versions").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
+            .toolbar { TerminalToolbarItem(placement: .principal) { Text("Saved versions").font(PixelFont.font(20)) } }
     }
 }
 
@@ -170,8 +170,8 @@ struct RecoveryVersionView: View {
                      : "The details being replaced will stay in Recovery history.").font(PixelFont.font(13))
             }
         }.font(PixelFont.font(16)).scrollContentBackground(.hidden).background(theme.paper).foregroundStyle(theme.ink).tint(theme.accent)
-            .navigationTitle("Preview version").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .principal) { Text("Preview version").font(PixelFont.font(20)) } }
+            .navigationTitle("Preview version").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
+            .toolbar { TerminalToolbarItem(placement: .principal) { Text("Preview version").font(PixelFont.font(20)) } }
     }
     @ViewBuilder private func pokemonDetails(_ p: RibbonPokemon) -> some View {
         Section("Saved Pokémon") {
@@ -193,7 +193,7 @@ struct RecoveryVersionView: View {
             Section("Journey") { Text(p.recordedVisits.map { RibbonCatalog.shared.compactGameName($0.game) }.joined(separator: " · ")).font(PixelFont.font(15)).listRowBackground(theme.panel) }
         }
         Section {
-            DisclosureGroup("Ribbons and marks · \(p.ribbons.count)") {
+            TerminalDisclosureGroup("Ribbons and marks · \(p.ribbons.count)") {
                 ForEach(RibbonCatalog.shared.chronologicalAwards(p.ribbons), id: \.self) { id in
                     HStack(spacing: 8) {
                         AssetImage(key: "award-" + id).frame(width: 24, height: 28)

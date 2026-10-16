@@ -51,14 +51,12 @@ struct WidgetStudioView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Widget studio").font(PixelFont.font(30))
-                Picker("Widget", selection: Binding(get: { draft.content }, set: { content in
+                TerminalSelector(title: "Widget", selection: Binding(get: { draft.content }, set: { content in
                     draft = WidgetPreset(name: content.name, content: content, style: draft.style); savedMessage = ""
                     if content != .pokemon && size == .small { size = .medium }
-                })) { ForEach(section.widgetContents) { Text($0.name).tag($0) } }
+                }), values: section.widgetContents, name: { $0.name })
                 themePacks
-                Picker("Size", selection: $size) {
-                    ForEach(WidgetPreviewSize.allCases.filter { draft.content == .pokemon || $0 != .small }) { Text($0.name).tag($0) }
-                }.pickerStyle(.segmented)
+                TerminalSelector(title: "Size", selection: $size, values: WidgetPreviewSize.allCases.filter { draft.content == .pokemon || $0 != .small }, name: { $0.name }, inline: true)
                 HStack(spacing: 6) {
                     ForEach(Appearance.allCases, id: \.self) { appearance in
                         Button(appearance == .automatic ? "Auto" : appearance.rawValue.capitalized) { draft.style.appearance = appearance }
@@ -71,19 +69,19 @@ struct WidgetStudioView: View {
                 if isDemo { Text("Demo preview").font(PixelFont.font(13)).foregroundStyle(theme.muted) }
                 preview.frame(maxWidth: .infinity)
                 VStack(alignment: .leading, spacing: 13) {
-                    TextField("Design name", text: $draft.name).font(PixelFont.font(20)).textFieldStyle(.roundedBorder)
+                    TextField("Design name", text: $draft.name).font(PixelFont.font(20)).textFieldStyle(TerminalFieldStyle())
                     selectionPicker
-                    Picker("Palette", selection: $draft.style.palette) { ForEach(WidgetPalette.allCases) { Text($0.name).tag($0) } }
+                    TerminalSelector(title: "Palette", selection: $draft.style.palette, values: WidgetPalette.allCases, name: { $0.name })
                     Toggle("Wallpaper", isOn: Binding(get: { draft.style.wallpaper != nil }, set: { draft.style.wallpaper = $0 ? WallpaperSettings() : nil }))
                     if draft.style.wallpaper != nil {
                         WallpaperControls(settings: Binding(get: { draft.style.wallpaper ?? WallpaperSettings() }, set: { draft.style.wallpaper = $0 }))
                     }
-                    Picker("Font", selection: $draft.style.typeface) { ForEach(WidgetTypeface.allCases) { Text($0.name).tag($0) } }
+                    TerminalSelector(title: "Font", selection: $draft.style.typeface, values: WidgetTypeface.allCases, name: { $0.name })
                     HStack { Text("Text size"); Spacer(); Text("\(Int((draft.style.textScale * 100).rounded()))%") }
-                    Slider(value: $draft.style.textScale, in: 0.85...1.15, step: 0.05).accessibilityLabel("Widget text size")
-                    DisclosureGroup("Visible details") { detailToggles.padding(.top, 10) }
+                    TerminalSlider(value: $draft.style.textScale, in: 0.85...1.15, step: 0.05).accessibilityLabel("Widget text size")
+                    TerminalDisclosureGroup("Visible details") { detailToggles.padding(.top, 10) }
                     if draft.content != .showdownTeam {
-                        Picker("Ribbon order", selection: $draft.style.awardOrdering) { ForEach(AwardOrdering.allCases) { Text($0.name).tag($0) } }
+                        TerminalSelector(title: "Ribbon order", selection: $draft.style.awardOrdering, values: AwardOrdering.allCases, name: { $0.name })
                     }
                 }.font(PixelFont.font(16)).retroPanel()
                 HStack(spacing: 8) {
@@ -110,7 +108,7 @@ struct WidgetStudioView: View {
                 }
             }
             .sheet(isPresented: $showInstall) { WidgetInstallHelp(preset: draft, size: size) }
-            .confirmationDialog("Delete this design?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
+            .terminalConfirmationDialog("Delete this design?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
                 Button("Delete design", role: .destructive) {
                     if let deleting { store.deletePreset(deleting.id) }; deleting = nil
                 }
@@ -236,7 +234,7 @@ struct WidgetInstallHelp: View {
                     Link("Apple’s widget instructions", destination: URL(string: "https://support.apple.com/en-gb/118610")!)
                 }.padding(20)
             }.font(PixelFont.font(18)).navigationTitle("Add widget").navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Done") { dismiss() } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
         }
     }
     private func step(_ number: Int, _ text: String) -> some View {

@@ -14,7 +14,7 @@ struct RetroTeamsView: View {
                     HStack {
                         Text("Teams").font(PixelFont.font(31))
                         Spacer()
-                        Menu {
+                        TerminalMenu {
                             Button("Create team") { creating = true }
                             if kind == .showdown { Button("Import Showdown team") { showdown = true } }
                         } label: { Label("Add", systemImage: "plus") }.buttonStyle(RetroAction())
@@ -97,14 +97,14 @@ struct RetroTeamDetailView: View {
         }.background(theme.paper).navigationTitle("Team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar {
                 if let team {
-                    NavigationLink("Edit") { RetroTeamArrangeView(team: team, showdown: store.snapshot.kind(of: team) == .showdown) }
-                    Button("Export", systemImage: "square.and.arrow.up") {
+                    TerminalToolbarItem(placement: .topBarTrailing) { NavigationLink("Edit") { RetroTeamArrangeView(team: team, showdown: store.snapshot.kind(of: team) == .showdown) } }
+                    TerminalToolbarItem(placement: .topBarTrailing) { Button("Export", systemImage: "square.and.arrow.up") {
                         exporting = PokemonExportSelection(pokemon: members, target: store.snapshot.kind(of: team) == .showdown ? .showdown : .ribbonsGuide)
-                    }
+                    } }
                 }
             }
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
-            .confirmationDialog("Delete this team?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            .terminalConfirmationDialog("Delete this team?", isPresented: $confirmDelete, titleVisibility: .visible) {
                 Button("Delete team", role: .destructive) {
                     var next = store.snapshot; next.teams.removeAll { $0.id == teamID }
                     if next.selectedTeamID == teamID { next.selectedTeamID = next.teams.first?.id ?? "" }
@@ -164,10 +164,10 @@ struct CompetitiveBuildView: View {
                 }.padding(16)
             } else { ContentUnavailableView("Build unavailable", systemImage: "tray") }
         }.background(theme.paper).navigationTitle("Build").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
-            .toolbar {
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) {
                 Button("Edit") { editing = true }.disabled(p?.showdownSet == nil)
                 Button("Export", systemImage: "square.and.arrow.up") { if let p { exporting = PokemonExportSelection(pokemon: [p], target: .showdown) } }.disabled(p == nil)
-            }
+             } }
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
             .sheet(isPresented: $editing) { if let p { CompetitiveBuildEditor(pokemon: p) } }
     }
@@ -190,7 +190,7 @@ struct CompetitiveBuildEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Pokémon") { TextField("Nickname", text: $nickname); Stepper("Level \(level)", value: $level, in: 1...100) }
+                Section("Pokémon") { TextField("Nickname", text: $nickname); TerminalStepper("Level \(level)", value: $level, in: 1...100) }
                 Section("Build") {
                     TextField("Held item", text: $build.item)
                     TextField("Ability", text: $build.ability)
@@ -208,8 +208,8 @@ struct CompetitiveBuildEditor: View {
                 }
             }.font(PixelFont.font(17)).navigationTitle("Edit build")
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                    ToolbarItem(placement: .confirmationAction) { Button("Save") {
+                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .confirmationAction) { Button("Save") {
                         guard var next = store.snapshot.pokemon.first(where: { $0.id == pokemon.id }) else { dismiss(); return }
                         build.moves = build.moves.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
                         next.showdownSet = build; next.currentlevel = level; next.nickname = nickname; store.update(next)
@@ -234,7 +234,7 @@ struct RetroTeamArrangeView: View {
             VStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 7) {
                     Text("Team name").font(PixelFont.font(13)).foregroundStyle(theme.muted)
-                    TextField("Team name", text: $team.name).font(PixelFont.font(20)).textFieldStyle(.roundedBorder)
+                    TextField("Team name", text: $team.name).font(PixelFont.font(20)).textFieldStyle(TerminalFieldStyle())
                 }
                 RetroHeading(title: "Display order", value: "\(members.count) / 6")
                 ForEach(Array(members.enumerated()), id: \.element.id) { i, p in
@@ -248,13 +248,13 @@ struct RetroTeamArrangeView: View {
                         Button { move(i, -1) } label: { Image(systemName: "chevron.up").frame(width: 27, height: 44) }.disabled(i == 0).accessibilityLabel("Move \(p.displayName) up")
                         Button { move(i, 1) } label: { Image(systemName: "chevron.down").frame(width: 27, height: 44) }.disabled(i == members.count - 1).accessibilityLabel("Move \(p.displayName) down")
                     }.buttonStyle(.plain).retroPanel(padding: 8)
-                        .contextMenu { Button("Remove", role: .destructive) { team.memberIDs.removeAll { $0 == p.id } } }
+                        .overlay(alignment: .topTrailing) { Button("×") { team.memberIDs.removeAll { $0 == p.id } }.buttonStyle(RetroAction()).accessibilityLabel("Remove " + p.displayName) }
                 }
                 Button("Choose members") { adding = true }.buttonStyle(RetroAction())
                 Button("Save team") { save() }.buttonStyle(RetroAction(prominent: true)).disabled(!canSave)
             }.padding(16)
         }.background(theme.paper).navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
-            .toolbar { Button("Save") { save() }.disabled(!canSave) }
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Save") { save() }.disabled(!canSave)  } }
             .sheet(isPresented: $adding) {
                 NavigationStack {
                     List {
@@ -266,7 +266,7 @@ struct RetroTeamArrangeView: View {
                                 HStack { PokemonRow(pokemon: p); if let i = team.memberIDs.firstIndex(of: p.id) { Text("\(i + 1)") } }
                             }.disabled(!team.memberIDs.contains(p.id) && team.memberIDs.count >= 6)
                         }
-                    }.font(PixelFont.font(17)).navigationTitle("Members").toolbar { Button("Done") { adding = false } }
+                    }.font(PixelFont.font(17)).navigationTitle("Members").toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { adding = false }  } }
                 }
             }
     }
@@ -293,7 +293,7 @@ struct RetroShowdownImportView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Showdown import").font(PixelFont.font(29))
                     Text("Team name").font(PixelFont.font(14))
-                    TextField("Team name", text: $name).textFieldStyle(.roundedBorder)
+                    TextField("Team name", text: $name).textFieldStyle(TerminalFieldStyle())
                     Text("Showdown export").font(PixelFont.font(14))
                     TextEditor(text: $export).font(PixelFont.font(15)).frame(minHeight: 300).padding(7)
                         .scrollContentBackground(.hidden).background(theme.panel).overlay(Rectangle().stroke(theme.border, lineWidth: 1))
@@ -304,7 +304,7 @@ struct RetroShowdownImportView: View {
                         Button("Example") { export = ShowdownExporter.export(SharedStore.showdownPreview().pokemon) }
                         Text("1–6 Pokémon").font(PixelFont.font(12)).foregroundStyle(theme.muted)
                     }
-                    DisclosureGroup("Games") { GamePicker(title: "Origin", value: $origin); GamePicker(title: "Current", value: $current) }
+                    TerminalDisclosureGroup("Games") { GamePicker(title: "Origin", value: $origin); GamePicker(title: "Current", value: $current) }
                     if !error.isEmpty { Text(error).font(PixelFont.font(14)).foregroundStyle(.red).accessibilityAddTraits(.updatesFrequently) }
                     Button("Import team") {
                         do {
@@ -314,7 +314,7 @@ struct RetroShowdownImportView: View {
                     }.buttonStyle(RetroAction(prominent: true)).disabled(export.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.font(PixelFont.font(17)).padding(16)
             }.background(theme.paper).navigationTitle("Import team").navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button("Cancel") { dismiss() } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() }  } }
         }
     }
 }

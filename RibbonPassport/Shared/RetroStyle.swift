@@ -26,6 +26,7 @@ extension View {
     func retroPanel(padding: CGFloat = 12) -> some View { modifier(RetroPanel(padding: padding)) }
 }
 struct RetroAction: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
     var prominent = false
     @Environment(\.colorScheme) private var scheme
     func makeBody(configuration: Configuration) -> some View {
@@ -33,7 +34,7 @@ struct RetroAction: ButtonStyle {
         configuration.label.font(PixelFont.font(16)).padding(.horizontal, 12).padding(.vertical, 11)
             .frame(minHeight: 44).background(prominent ? t.ink : t.panel)
             .foregroundStyle(prominent ? t.paper : t.ink)
-            .overlay(Rectangle().stroke(t.border, lineWidth: 1)).opacity(configuration.isPressed ? 0.65 : 1)
+            .overlay(Rectangle().stroke(t.border, lineWidth: 1)).opacity(!enabled ? 0.4 : configuration.isPressed ? 0.65 : 1)
     }
 }
 struct RetroHeading: View {
@@ -188,4 +189,261 @@ struct TerminalBackControl: ViewModifier {
 }
 extension View {
     func terminalBackControl(_ title: String = "Back") -> some View { modifier(TerminalBackControl(title: title)) }
+}
+
+struct TerminalToggleStyle: ToggleStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        Button { configuration.isOn.toggle() } label: {
+            HStack(spacing: 8) {
+                configuration.label
+                Spacer(minLength: 4)
+                Text(configuration.isOn ? "ON" : "OFF").font(PixelFont.font(12))
+                    .frame(width: 44, height: 28).background(configuration.isOn ? Color(hex: "718F4E") : Color.secondary.opacity(0.15))
+                    .foregroundStyle(configuration.isOn ? Color.white : Color.primary)
+                    .overlay(Rectangle().stroke(Color.secondary, lineWidth: 1))
+            }.frame(minHeight: 36).contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityRepresentation {
+            Toggle(isOn: configuration.$isOn) { configuration.label }.toggleStyle(.switch)
+        }
+    }
+}
+
+struct TerminalSelector<Value: Hashable>: View {
+    var title: String
+    @Binding var selection: Value
+    var values: [Value]
+    var name: (Value) -> String
+    var inline = false
+    var identifier = ""
+    @State private var presented = false
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        let theme = PassportTheme(dark: scheme == .dark, game: "")
+        Group {
+            if inline {
+                HStack(spacing: 5) {
+                    ForEach(values, id: \.self) { value in
+                        Button { selection = value } label: {
+                            Text(name(value)).font(PixelFont.font(14)).lineLimit(1).minimumScaleFactor(0.7)
+                                .frame(maxWidth: .infinity, minHeight: 40)
+                                .foregroundStyle(selection == value ? theme.paper : theme.ink)
+                                .background(selection == value ? theme.accent : theme.panel)
+                                .overlay(Rectangle().stroke(theme.border))
+                        }.buttonStyle(.plain).accessibilityAddTraits(selection == value ? .isSelected : [])
+                            .accessibilityIdentifier(identifier + "." + String(describing: value))
+                    }
+                }
+            } else {
+                Button { presented = true } label: {
+                    HStack { Text(title); Spacer(minLength: 4); Text(name(selection)).foregroundStyle(theme.accent); Text("▾") }
+                        .font(PixelFont.font(15)).frame(minHeight: 40).padding(.horizontal, 8)
+                        .background(theme.panel).overlay(Rectangle().stroke(theme.border))
+                }.buttonStyle(.plain).accessibilityLabel(title + ": " + name(selection))
+            }
+        }.accessibilityElement(children: .contain).accessibilityIdentifier(identifier)
+        .sheet(isPresented: $presented) {
+            TerminalPanel(title: title, onClose: { presented = false }) {
+                ForEach(values, id: \.self) { value in
+                    Button { selection = value; presented = false } label: {
+                        HStack { Text(name(value)); Spacer(); if selection == value { Text("✓") } }.frame(maxWidth: .infinity, minHeight: 44)
+                    }.buttonStyle(RetroAction()).accessibilityAddTraits(selection == value ? .isSelected : [])
+                }
+            }
+        }
+    }
+}
+
+struct TerminalPanel<Content: View>: View {
+    var title: String
+    var onClose: () -> Void
+    @ViewBuilder var content: () -> Content
+    @Environment(\.colorScheme) private var scheme
+    var body: some View {
+        let theme = PassportTheme(dark: scheme == .dark, game: "")
+        VStack(spacing: 0) {
+            HStack { Text(title.uppercased()).font(PixelFont.font(20)); Spacer(); Button("Close", action: onClose).buttonStyle(RetroAction()) }.padding(12)
+            Rectangle().fill(theme.border).frame(height: 1)
+            ScrollView { VStack(alignment: .leading, spacing: 8, content: content).frame(maxWidth: .infinity).padding(12) }
+        }.background(theme.paper).foregroundStyle(theme.ink).font(PixelFont.font(16)).toggleStyle(TerminalToggleStyle())
+    }
+}
+
+private struct TerminalMenuRow: PrimitiveButtonStyle {
+    var close: () -> Void
+    func makeBody(configuration: Configuration) -> some View {
+        Button {
+            close()
+            // Wait for this action board to close before presenting another sheet.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { configuration.trigger() }
+        } label: { configuration.label.frame(maxWidth: .infinity, minHeight: 44, alignment: .leading) }
+            .buttonStyle(RetroAction())
+    }
+}
+struct TerminalMenu<Content: View, Label: View>: View {
+    @ViewBuilder var content: () -> Content
+    @ViewBuilder var label: () -> Label
+    @State private var presented = false
+    var body: some View {
+        Button { presented = true } label: { label() }.buttonStyle(RetroAction())
+            .sheet(isPresented: $presented) {
+                NavigationStack {
+                    TerminalPanel(title: "Options", onClose: { presented = false }) {
+                        content().buttonStyle(TerminalMenuRow(close: { presented = false }))
+                    }.toolbar(.hidden, for: .navigationBar)
+                }
+            }
+    }
+}
+
+struct TerminalToolbarItem<Content: View>: ToolbarContent {
+    var placement: ToolbarItemPlacement = .automatic
+    @ViewBuilder var content: () -> Content
+    var body: some ToolbarContent {
+        if #available(iOS 26.0, *) {
+            ToolbarItem(placement: placement) { content().buttonStyle(RetroAction()) }.sharedBackgroundVisibility(.hidden)
+        } else {
+            ToolbarItem(placement: placement) { content().buttonStyle(RetroAction()) }
+        }
+    }
+}
+
+struct TerminalSlider: View {
+    @Binding var value: Double
+    var bounds: ClosedRange<Double>
+    var step: Double
+    init(value: Binding<Double>, in bounds: ClosedRange<Double>, step: Double = 0.01) { _value = value; self.bounds = bounds; self.step = step }
+    private func set(_ raw: Double) { value = min(bounds.upperBound, max(bounds.lowerBound, bounds.lowerBound + ((raw - bounds.lowerBound) / step).rounded() * step)) }
+    var body: some View {
+        HStack(spacing: 8) {
+            Button("−") { set(value - step) }.accessibilityLabel("Decrease")
+            GeometryReader { g in
+                let fraction = (value - bounds.lowerBound) / (bounds.upperBound - bounds.lowerBound)
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(Color.secondary.opacity(0.25)).frame(height: 6)
+                    Rectangle().fill(Color(hex: "718F4E")).frame(width: max(0, g.size.width * fraction), height: 6)
+                    Rectangle().fill(Color.primary).frame(width: 12, height: 24).offset(x: max(0, (g.size.width - 12) * fraction))
+                }.frame(height: 40).contentShape(Rectangle())
+                    .gesture(DragGesture(minimumDistance: 0).onChanged { set(bounds.lowerBound + ($0.location.x / max(1, g.size.width)) * (bounds.upperBound - bounds.lowerBound)) })
+            }.frame(height: 40)
+            Button("+") { set(value + step) }.accessibilityLabel("Increase")
+        }.buttonStyle(RetroAction()).accessibilityElement(children: .ignore)
+            .accessibilityValue("\(Int((value * 100).rounded())) percent")
+            .accessibilityAdjustableAction { direction in set(value + (direction == .increment ? step : -step)) }
+    }
+}
+
+struct TerminalColorPicker: View {
+    var title: String
+    @Binding var selection: Color
+    var supportsOpacity = false
+    @State private var hex = ""
+    init(_ title: String, selection: Binding<Color>, supportsOpacity: Bool = false) { self.title = title; _selection = selection; self.supportsOpacity = supportsOpacity }
+    private var currentHex: String {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 1
+        UIColor(selection).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return String(format: "%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
+    }
+    private let colors = ["719957", "254C3B", "317A9A", "263959", "8065A8", "BC668B", "C94C46", "D6A142", "D5CDB8", "565D63", "171B22", "F4F1E6"]
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title).font(PixelFont.font(15)); Spacer()
+                TextField("Hex colour", text: $hex).font(PixelFont.font(14)).frame(width: 90)
+                    .textInputAutocapitalization(.characters).autocorrectionDisabled()
+                    .padding(8).overlay(Rectangle().stroke(Color.secondary))
+                    .onChange(of: hex) { _, value in
+                        let clean = value.replacingOccurrences(of: "#", with: "")
+                        if clean.count == 6, UInt32(clean, radix: 16) != nil { selection = Color(hex: clean) }
+                    }
+            }.onAppear { hex = currentHex }.onChange(of: selection) { _, _ in hex = currentHex }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6)) {
+                ForEach(colors, id: \.self) { hex in
+                    Button { selection = Color(hex: hex) } label: { Rectangle().fill(Color(hex: hex)).frame(height: 32).overlay(Rectangle().stroke(Color.primary, lineWidth: 1)) }.buttonStyle(.plain).accessibilityLabel("Tint " + hex)
+                }
+            }
+        }
+    }
+}
+
+struct TerminalDisclosureGroup<Content: View>: View {
+    var title: String
+    @ViewBuilder var content: () -> Content
+    @State private var expanded = false
+    init(_ title: String, @ViewBuilder content: @escaping () -> Content) { self.title = title; self.content = content }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button { expanded.toggle() } label: { HStack { Text(title); Spacer(); Text(expanded ? "−" : "+") }.frame(maxWidth: .infinity, minHeight: 40) }.buttonStyle(RetroAction()).accessibilityValue(expanded ? "Expanded" : "Collapsed")
+            if expanded { content() }
+        }
+    }
+}
+
+struct TerminalStepper: View {
+    var title: String
+    @Binding var value: Int
+    var bounds: ClosedRange<Int>
+    init(_ title: String, value: Binding<Int>, in bounds: ClosedRange<Int>) { self.title = title; _value = value; self.bounds = bounds }
+    var body: some View {
+        HStack { Text(title).font(PixelFont.font(15)); Spacer(); Button("−") { value -= 1 }.disabled(value <= bounds.lowerBound); Button("+") { value += 1 }.disabled(value >= bounds.upperBound) }.buttonStyle(RetroAction())
+            .accessibilityElement(children: .ignore).accessibilityLabel(title)
+            .accessibilityAdjustableAction { direction in value = min(bounds.upperBound, max(bounds.lowerBound, value + (direction == .increment ? 1 : -1))) }
+    }
+}
+struct TerminalMenuLink<Destination: View>: View {
+    var title: String
+    @ViewBuilder var destination: () -> Destination
+    init(_ title: String, @ViewBuilder destination: @escaping () -> Destination) { self.title = title; self.destination = destination }
+    var body: some View { NavigationLink(destination: destination) { HStack { Text(title); Spacer(); Text("›") }.frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(RetroAction()) }
+}
+
+struct TerminalFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration.font(PixelFont.font(16)).padding(10)
+            .background(Color.secondary.opacity(0.08)).overlay(Rectangle().stroke(Color.secondary.opacity(0.5)))
+    }
+}
+private struct TerminalSearch: ViewModifier {
+    @Binding var text: String
+    var prompt: String
+    func body(content: Content) -> some View {
+        content.safeAreaInset(edge: .top, spacing: 0) {
+            HStack(spacing: 8) {
+                Text("⌕").font(PixelFont.font(24))
+                TextField(prompt, text: $text).textFieldStyle(TerminalFieldStyle()).autocorrectionDisabled()
+                if !text.isEmpty { Button("×") { text = "" }.buttonStyle(RetroAction()).accessibilityLabel("Clear search") }
+            }.padding(10).background(.background)
+        }
+    }
+}
+private struct TerminalDialogAction: PrimitiveButtonStyle {
+    var close: () -> Void
+    func makeBody(configuration: Configuration) -> some View {
+        Button { configuration.trigger(); close() } label: { configuration.label.frame(maxWidth: .infinity, minHeight: 44) }.buttonStyle(RetroAction())
+    }
+}
+private struct TerminalDialog<Actions: View, Message: View>: ViewModifier {
+    var title: String
+    @Binding var presented: Bool
+    @ViewBuilder var actions: () -> Actions
+    @ViewBuilder var message: () -> Message
+    func body(content: Content) -> some View {
+        content.sheet(isPresented: $presented) {
+            TerminalPanel(title: title, onClose: { presented = false }) {
+                message()
+                actions().buttonStyle(TerminalDialogAction(close: { presented = false }))
+            }.presentationDetents([.medium, .large])
+        }
+    }
+}
+extension View {
+    func terminalSearchable(text: Binding<String>, prompt: String = "Search") -> some View { modifier(TerminalSearch(text: text, prompt: prompt)) }
+    func terminalAlert<A: View, M: View>(_ title: String, isPresented: Binding<Bool>, @ViewBuilder actions: @escaping () -> A, @ViewBuilder message: @escaping () -> M) -> some View {
+        modifier(TerminalDialog(title: title, presented: isPresented, actions: actions, message: message))
+    }
+    func terminalAlert<A: View>(_ title: String, isPresented: Binding<Bool>, @ViewBuilder actions: @escaping () -> A) -> some View {
+        terminalAlert(title, isPresented: isPresented, actions: actions, message: { EmptyView() })
+    }
+    func terminalConfirmationDialog<A: View>(_ title: String, isPresented: Binding<Bool>, titleVisibility: Visibility = .visible, @ViewBuilder actions: @escaping () -> A) -> some View {
+        terminalAlert(title, isPresented: isPresented, actions: actions)
+    }
 }
