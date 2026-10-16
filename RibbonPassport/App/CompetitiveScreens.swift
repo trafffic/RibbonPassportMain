@@ -43,7 +43,7 @@ struct RetroTeamsView: View {
                         }.buttonStyle(.plain)
                     }
                 }.padding(16)
-            }.background(theme.paper).navigationTitle(kind == .showdown ? "Competitive teams" : "Ribbon teams").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+            }.background(theme.paper).navigationTitle(kind == .showdown ? "Competitive teams" : "Ribbon teams").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
                 .sheet(isPresented: $showdown) { RetroShowdownImportView() }
                 .sheet(isPresented: $creating) { NavigationStack { RetroTeamArrangeView(team: RibbonTeam(name: kind == .ribbon ? "Ribbon team" : "Showdown team", memberIDs: []), showdown: kind == .showdown) } }
     }
@@ -94,7 +94,7 @@ struct RetroTeamDetailView: View {
                     Button("Delete team", role: .destructive) { confirmDelete = true }.font(PixelFont.font(14)).padding(.top, 9)
                 }.padding(16)
             } else { ContentUnavailableView("Team removed", systemImage: "person.3") }
-        }.background(theme.paper).navigationTitle("Team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        }.background(theme.paper).navigationTitle("Team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar {
                 if let team {
                     NavigationLink("Edit") { RetroTeamArrangeView(team: team, showdown: store.snapshot.kind(of: team) == .showdown) }
@@ -163,7 +163,7 @@ struct CompetitiveBuildView: View {
                     }.retroPanel(padding: 0)
                 }.padding(16)
             } else { ContentUnavailableView("Build unavailable", systemImage: "tray") }
-        }.background(theme.paper).navigationTitle("Build").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        }.background(theme.paper).navigationTitle("Build").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar {
                 Button("Edit") { editing = true }.disabled(p?.showdownSet == nil)
                 Button("Export", systemImage: "square.and.arrow.up") { if let p { exporting = PokemonExportSelection(pokemon: [p], target: .showdown) } }.disabled(p == nil)
@@ -253,7 +253,7 @@ struct RetroTeamArrangeView: View {
                 Button("Choose members") { adding = true }.buttonStyle(RetroAction())
                 Button("Save team") { save() }.buttonStyle(RetroAction(prominent: true)).disabled(!canSave)
             }.padding(16)
-        }.background(theme.paper).navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        }.background(theme.paper).navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar { Button("Save") { save() }.disabled(!canSave) }
             .sheet(isPresented: $adding) {
                 NavigationStack {

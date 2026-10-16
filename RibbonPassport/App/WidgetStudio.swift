@@ -98,7 +98,7 @@ struct WidgetStudioView: View {
                     draft = WidgetPreset(name: draft.content.name, content: draft.content, style: WidgetThemePack.defaultPack(for: draft.content).style); selectedPack = nil; savedMessage = ""
                 }.buttonStyle(RetroAction())
             }.padding(16)
-        }.background(theme.paper).navigationTitle("Widgets").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        }.background(theme.paper).navigationTitle("Widgets").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .onAppear {
                 guard !loadedDefault else { return }; loadedDefault = true
                 let selection = draft.selectionID

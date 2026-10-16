@@ -5,6 +5,34 @@ import UIKit
 
 final class RibbonManagerTests: XCTestCase {
     private let rules = RibbonRules.shared
+    func testPostCaptureMarksRespectGameSizeAndOwnedRecords() throws {
+        XCTAssertEqual(rules.managedAwardIDs.count, 111)
+        XCTAssertTrue(RibbonRules.postCaptureMarks.isSubset(of: Set(rules.managedAwardIDs)))
+        XCTAssertFalse(rules.managedAwardIDs.contains("rare-mark"))
+        var p = RibbonPokemon(species: "mew", currentgame: "scar", origingame: "emerald")
+        for mark in ["partner-mark", "gourmand-mark", "itemfinder-mark"] {
+            XCTAssertNil(rules.unavailableReason(mark, game: "scar", pokemon: p))
+            XCTAssertNotNil(rules.unavailableReason(mark, game: "sw", pokemon: p))
+            XCTAssertTrue(p.recordRibbon(mark, game: "scar"))
+            XCTAssertEqual(p.earnedGames?[mark], "scar")
+            XCTAssertTrue(p.displayedRibbonIDs.contains(mark))
+            XCTAssertTrue(rules.earningGames(for: mark, pokemon: p).isEmpty)
+        }
+        XCTAssertNotNil(rules.unavailableReason("jumbo-mark", game: "scar", pokemon: p))
+        p.sizeScale = 255
+        XCTAssertNil(rules.unavailableReason("jumbo-mark", game: "scar", pokemon: p))
+        XCTAssertNotNil(rules.unavailableReason("mini-mark", game: "scar", pokemon: p))
+        p.sizeScale = 0
+        XCTAssertTrue(p.recordRibbon("mini-mark", game: "vio"))
+        let decoded = try JSONDecoder().decode(RibbonPokemon.self, from: JSONEncoder().encode(p))
+        XCTAssertEqual(decoded.sizeScale, 0)
+        XCTAssertEqual(decoded.earnedGames?["mini-mark"], "vio")
+        p.removeAward("partner-mark")
+        XCTAssertFalse(p.displayedRibbonIDs.contains("partner-mark"))
+        XCTAssertNil(p.earnedGames?["partner-mark"])
+        let incompatible = RibbonPokemon(species: "unown", currentgame: "bd", origingame: "emerald")
+        XCTAssertTrue(rules.earningGames(for: "partner-mark", pokemon: incompatible).isEmpty)
+    }
     func testCatalogueAndPageSizeCycle() {
         XCTAssertEqual(rules.ribbonIDs.count, 106)
         XCTAssertFalse(rules.ribbonIDs.contains { $0.hasSuffix("-mark") })

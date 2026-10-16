@@ -113,6 +113,7 @@ struct RibbonPokemon: Codable, Identifiable, Equatable {
     var earnedGenerations: [String: Int]? = nil
     var earnedGames: [String: String]? = nil
     var metLevel: Int? = nil
+    var sizeScale: Int? = nil
     var language: String? = nil
     var ball: String? = nil
     var trainername: String? = nil

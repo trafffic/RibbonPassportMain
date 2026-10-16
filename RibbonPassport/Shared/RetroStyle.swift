@@ -139,3 +139,53 @@ struct BoxWallpaperView: View {
         }.clipped().allowsHitTesting(false).accessibilityHidden(true)
     }
 }
+
+/// Small, original bitmap glyphs for the app's navigation controls.
+struct TerminalGlyph: View {
+    enum Kind { case back, ribbons, competitive, settings }
+    var kind: Kind
+    private var pixels: [String] {
+        switch kind {
+        case .back: return ["00010000", "00110000", "01111111", "11111111", "01111111", "00110000", "00010000", "00000000"]
+        case .ribbons: return ["00111100", "01100110", "11011011", "11011011", "01100110", "00111100", "00100100", "01100110"]
+        case .competitive: return ["00011000", "00110000", "01100000", "11111110", "00011100", "00111000", "01110000", "01100000"]
+        case .settings: return ["00111100", "10111101", "11100111", "11000011", "11000011", "11100111", "10111101", "00111100"]
+        }
+    }
+    var body: some View {
+        Canvas { context, size in
+            let unit = floor(min(size.width, size.height) / 8)
+            let origin = CGPoint(x: (size.width - unit * 8) / 2, y: (size.height - unit * 8) / 2)
+            for (y, row) in pixels.enumerated() {
+                for (x, pixel) in row.enumerated() where pixel == "1" {
+                    context.fill(Path(CGRect(x: origin.x + CGFloat(x) * unit, y: origin.y + CGFloat(y) * unit, width: unit, height: unit)), with: .foreground)
+                }
+            }
+        }.accessibilityHidden(true)
+    }
+}
+
+struct TerminalBackControl: ViewModifier {
+    @Environment(\.dismiss) private var dismiss
+    var title = "Back"
+    private var button: some View {
+        Button { dismiss() } label: {
+            HStack(spacing: 6) {
+                TerminalGlyph(kind: .back).frame(width: 16, height: 16)
+                Text(title).font(PixelFont.font(14))
+            }
+        }.buttonStyle(RetroAction()).accessibilityLabel(title).accessibilityIdentifier("navigation.back")
+    }
+    func body(content: Content) -> some View {
+        content.navigationBarBackButtonHidden(true).toolbar {
+            if #available(iOS 26.0, *) {
+                ToolbarItem(placement: .topBarLeading) { button }.sharedBackgroundVisibility(.hidden)
+            } else {
+                ToolbarItem(placement: .topBarLeading) { button }
+            }
+        }
+    }
+}
+extension View {
+    func terminalBackControl(_ title: String = "Back") -> some View { modifier(TerminalBackControl(title: title)) }
+}

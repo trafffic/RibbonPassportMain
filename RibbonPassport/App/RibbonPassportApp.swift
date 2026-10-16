@@ -14,7 +14,7 @@ final class AppStore: ObservableObject {
     private let refreshWidgets: Bool
     static var interactionTesting: Bool {
         #if DEBUG
-        return ["1", "transfer", "recovery", "memory"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
+        return ["1", "transfer", "recovery", "memory", "marks"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
         #else
         return false
         #endif
@@ -40,6 +40,10 @@ final class AppStore: ObservableObject {
                 a.currentgame = "as"; a.origingame = "emerald"
                 a.ribbons = ["cool-ribbon-hoenn", "cool-ribbon-super-hoenn", "winning-ribbon", "ability-ribbon", "effort-ribbon"]
                 a.earnedGames = ["cool-ribbon-hoenn": "ruby", "cool-ribbon-super-hoenn": "ruby", "winning-ribbon": "ruby", "ability-ribbon": "platinum", "effort-ribbon": "as"]
+            }
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "marks" {
+                a.currentgame = "scar"; a.origingame = "emerald"; a.sizeScale = 255
+                preferences.set(24, forKey: "ribbons.pageSize")
             }
             let b = RibbonPokemon(id: "drag-b", species: "rayquaza", currentgame: "bd", origingame: "ruby")
             let c = RibbonPokemon(id: "drag-c", species: "pikachu", currentgame: "sw", origingame: "sw")
@@ -178,11 +182,14 @@ struct RibbonPassportApp: App {
 struct RootView: View {
     @EnvironmentObject private var store: AppStore
     var body: some View {
+        VStack(spacing: 0) {
         TabView(selection: $store.tab) {
-            PCStorageView(kind: .ribbon).tabItem { Label("Ribbons", systemImage: "rosette") }.tag(0)
-            PCStorageView(kind: .showdown).tabItem { Label("Competitive", systemImage: "bolt.fill") }.tag(1)
-            SettingsView().tabItem { Label("Settings", systemImage: "gearshape") }.tag(2)
+            PCStorageView(kind: .ribbon).tag(0).toolbar(.hidden, for: .tabBar)
+            PCStorageView(kind: .showdown).tag(1).toolbar(.hidden, for: .tabBar)
+            SettingsView().tag(2).toolbar(.hidden, for: .tabBar)
         }.font(PixelFont.font(17)).tint(Color(hex: "718F4E"))
+        TerminalDock(selection: $store.tab)
+        }
         .alert("Something needs attention", isPresented: Binding(get: { store.error != nil }, set: { if !$0 { store.error = nil } })) {
             Button("OK") { store.error = nil }
         } message: { Text(store.error ?? "") }
@@ -191,6 +198,32 @@ struct RootView: View {
         } message: { Text(store.notice ?? "") }
     }
 }
+struct TerminalDock: View {
+    @Binding var selection: Int
+    @Environment(\.colorScheme) private var scheme
+    private let labels = ["Ribbons", "Competitive", "Settings"]
+    private let glyphs: [TerminalGlyph.Kind] = [.ribbons, .competitive, .settings]
+    var body: some View {
+        let theme = PassportTheme(dark: scheme == .dark, game: "")
+        HStack(spacing: 6) {
+            ForEach(0..<3) { index in
+                Button { selection = index } label: {
+                    VStack(spacing: 5) {
+                        TerminalGlyph(kind: glyphs[index]).frame(width: 24, height: 24)
+                        Text(labels[index]).font(PixelFont.font(13)).lineLimit(1).minimumScaleFactor(0.8)
+                    }.frame(maxWidth: .infinity).frame(height: 56)
+                        .foregroundStyle(selection == index ? theme.paper : theme.muted)
+                        .background(selection == index ? theme.accent : theme.panel)
+                        .overlay(Rectangle().stroke(selection == index ? theme.accent : theme.border))
+                }.buttonStyle(.plain).accessibilityLabel(labels[index])
+                    .accessibilityAddTraits(selection == index ? .isSelected : [])
+                    .accessibilityIdentifier("navigation.tab.\(index)")
+            }
+        }.padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 4)
+            .background(theme.paper).overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
+    }
+}
+
 struct CollectionView: View {
     @EnvironmentObject private var store: AppStore
     @State private var importing = false
@@ -499,6 +532,6 @@ struct RarityGuide: View {
                     }
                 }
             }
-        }.navigationTitle("Estimated rarity")
+        }.navigationTitle("Estimated rarity").terminalBackControl()
     }
 }

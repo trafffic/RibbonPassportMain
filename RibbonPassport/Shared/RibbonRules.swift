@@ -60,6 +60,9 @@ struct RibbonRules: Decodable {
         }
         return rules
     }()
+    static let postCaptureMarks: Set<String> = ["partner-mark", "gourmand-mark", "itemfinder-mark", "jumbo-mark", "mini-mark"]
+    func isManagedAward(_ id: String) -> Bool { awards[id]?.mark == false || Self.postCaptureMarks.contains(id) }
+    var managedAwardIDs: [String] { RibbonCatalog.shared.chronologicalAwards(awards.keys.filter { isManagedAward($0) }) }
     var ribbonIDs: [String] { RibbonCatalog.shared.chronologicalAwards(awards.keys.filter { awards[$0]?.mark == false }) }
     func category(for pokemon: RibbonPokemon) -> String? {
         guard let info = species[pokemon.species] else { return nil }
@@ -97,6 +100,8 @@ struct RibbonRules: Decodable {
     }
     func unavailableReason(_ award: String, game: String, pokemon p: RibbonPokemon, historical: Bool = false, checkCompatibility: Bool = true) -> String? {
         guard let rule = awards[award], let info = species[p.species] else { return "Choose a Pokémon" }
+        if !historical, award == "jumbo-mark", p.sizeScale != 255 { return "Requires maximum size (255). Confirm size in Edit Pokémon." }
+        if !historical, award == "mini-mark", p.sizeScale != 0 { return "Requires minimum size (0). Confirm size in Edit Pokémon." }
         if rule.memory { return "Combined automatically from original ribbons" }
         if rule.games.isEmpty { return "Event distribution only" }
         guard rule.games.contains(game) else { return "Not awarded in this game" }
@@ -166,7 +171,7 @@ struct RibbonRules: Decodable {
             (games[$0]?.gen ?? 0) > generation && groups.contains(games[$0]?.group ?? "")
         }
         var check = RibbonTransferCheck(generation: generation, nextGeneration: later.compactMap { games[$0]?.gen }.min(), canAssess: true)
-        for award in ribbonIDs where !p.ribbons.contains(award) {
+        for award in managedAwardIDs where !p.ribbons.contains(award) {
             guard !generationEarningGames(for: award, from: game, pokemon: p).isEmpty else { continue }
             if laterGames(for: award, after: game, pokemon: p).isEmpty { check.lastChance.append(award) }
             else { check.canWait.append(award) }
@@ -201,11 +206,11 @@ enum RibbonPageSize {
 
 extension RibbonPokemon {
     /// Original records remain editable and retain their individual earning locations.
-    var ownedRibbonIDs: [String] { RibbonCatalog.shared.chronologicalAwards(ribbons.filter { RibbonRules.shared.awards[$0]?.mark == false }) }
+    var ownedRibbonIDs: [String] { RibbonCatalog.shared.chronologicalAwards(ribbons.filter { RibbonRules.shared.isManagedAward($0) }) }
     /// The current game's visible ribbons, including automatic Gen VI+ Memory consolidation.
     var displayedRibbonIDs: [String] {
         let catalog = RibbonCatalog.shared
-        return catalog.chronologicalAwards(catalog.awards(for: self).filter { RibbonRules.shared.awards[$0]?.mark == false })
+        return catalog.chronologicalAwards(catalog.awards(for: self).filter { RibbonRules.shared.isManagedAward($0) })
     }
     func originalRibbonIDs(representedBy memory: String) -> [String] {
         guard let group = ["contest", "battle"].first(where: { memory == "\($0)-memory-ribbon" || memory == "\($0)-memory-ribbon-gold" }) else { return [] }
@@ -218,7 +223,7 @@ extension RibbonPokemon {
         return "Game not set"
     }
     @discardableResult mutating func recordRibbon(_ award: String, game: String) -> Bool {
-        guard !ribbons.contains(award), RibbonRules.shared.awards[award]?.mark == false,
+        guard !ribbons.contains(award), RibbonRules.shared.isManagedAward(award),
               RibbonRules.shared.unavailableReason(award, game: game, pokemon: self) == nil else { return false }
         ribbons.append(award)
         assignAward(award, game: game)

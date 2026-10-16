@@ -287,7 +287,7 @@ struct PCStorageView: View {
             HStack(spacing: 12) {
                 ForEach(Array(p.displayedRibbonIDs.prefix(4)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 23, height: 27) }
                 Spacer(minLength: 0)
-                Text("\(p.displayedRibbonIDs.count) ribbons ›").font(PixelFont.font(14))
+                Text("\(p.displayedRibbonIDs.count) awards ›").font(PixelFont.font(14))
             }.padding(.vertical, 9).contentShape(Rectangle())
         }.buttonStyle(.plain).foregroundStyle(theme.muted).accessibilityIdentifier("ribbons.manage")
             .overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
@@ -630,7 +630,7 @@ struct StampAlbumView: View {
                 }
             }
         }
-        .background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar)
+        .background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar {
                 ToolbarItem(placement: .principal) { Text(section == .ribbons ? p?.displayName.uppercased() ?? "PASSPORT" : "PASSPORT").font(PixelFont.font(20)).lineLimit(1) }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -666,7 +666,7 @@ struct StampAlbumView: View {
             VStack(alignment: .leading, spacing: 6) {
                 PokemonName(pokemon: p, theme: theme, size: 25)
                 EquippedTitleLabel(pokemon: p, theme: theme).font(PixelFont.font(14))
-                Text("Lv. \(p.currentlevel) · \(p.displayedRibbonIDs.count) ribbons").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                Text("Lv. \(p.currentlevel) · \(p.displayedRibbonIDs.count) awards").font(PixelFont.font(13)).foregroundStyle(theme.muted)
             }
             Spacer(minLength: 0)
         }
@@ -679,7 +679,7 @@ struct StampAlbumView: View {
             }.padding(.vertical, 10)
             Divider()
             Button { section = .ribbons } label: {
-                HStack { Text("Owned ribbons").font(PixelFont.font(19)); Spacer(); Text("\(p.displayedRibbonIDs.count) ›").font(PixelFont.font(14)) }
+                HStack { Text("Owned awards").font(PixelFont.font(19)); Spacer(); Text("\(p.displayedRibbonIDs.count) ›").font(PixelFont.font(14)) }
             }.buttonStyle(.plain).accessibilityIdentifier("passport.owned")
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 6), spacing: 18) {
                 ForEach(Array(p.displayedRibbonIDs.suffix(12)), id: \.self) { id in

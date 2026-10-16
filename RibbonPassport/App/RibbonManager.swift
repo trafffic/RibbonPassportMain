@@ -18,6 +18,12 @@ struct RibbonMetLevelEditor: View {
     @Binding var pokemon: RibbonPokemon
     var body: some View {
         Toggle("Met level known", isOn: Binding(get: { pokemon.metLevel != nil }, set: { pokemon.metLevel = $0 ? pokemon.currentlevel : nil }))
+        Picker("Size", selection: Binding(get: { pokemon.sizeScale ?? -1 }, set: { pokemon.sizeScale = $0 == -1 ? nil : $0 })) {
+            Text("Unknown").tag(-1)
+            Text("Mini (0)").tag(0)
+            Text("Standard").tag(128)
+            Text("Jumbo (255)").tag(255)
+        }
         if pokemon.metLevel != nil {
             Stepper("Met at level \(pokemon.metLevel ?? 1)", value: Binding(get: { pokemon.metLevel ?? 1 }, set: { pokemon.metLevel = $0 }), in: 1...100)
         }
@@ -84,7 +90,7 @@ struct RibbonManager: View {
     private var transferCheck: RibbonTransferCheck { rules.transferCheck(from: game, pokemon: pokemon) }
     private var matching: [String] {
         let lastChance = Set(transferCheck.lastChance)
-        let candidates = rules.ribbonIDs.filter { id in
+        let candidates = rules.managedAwardIDs.filter { id in
             if !catalogue && !(rules.awards[id]?.games.contains(game) ?? false) { return false }
             let owned = pokemon.ribbons.contains(id) || pokemon.displayedRibbonIDs.contains(id)
             if earnable && (owned || (catalogue ? rules.earningGames(for: id, pokemon: pokemon).isEmpty : rules.unavailableReason(id, game: game, pokemon: pokemon) != nil)) { return false }
@@ -222,7 +228,7 @@ struct RibbonManager: View {
             }.buttonStyle(.plain).disabled(!check.canAssess).accessibilityIdentifier("ribbons.transfer.review")
             Button { panel = .owned } label: {
                 HStack {
-                    Text("Owned ribbons · \(pokemon.displayedRibbonIDs.count) ▴").font(PixelFont.font(16))
+                    Text("Owned awards · \(pokemon.displayedRibbonIDs.count) ▴").font(PixelFont.font(16))
                     Spacer(minLength: 2)
                     ForEach(Array(pokemon.displayedRibbonIDs.suffix(3)), id: \.self) { id in AssetImage(key: "award-" + id).frame(width: 22, height: 26) }
                 }.padding(.horizontal, 9).frame(minHeight: 43).background(theme.board).overlay(Rectangle().stroke(theme.border))
@@ -274,7 +280,7 @@ struct RibbonManager: View {
             Button { detail = RibbonDetails(id: id) } label: { Text("i").font(PixelFont.font(12)).frame(width: 20, height: 22).background(theme.panel.opacity(0.9)) }
                 .buttonStyle(.plain).accessibilityLabel("Details for \(name)")
             }
-        }.contextMenu { Button("Ribbon details") { detail = RibbonDetails(id: id) } }
+        }.contextMenu { Button("Award details") { detail = RibbonDetails(id: id) } }
     }
     private func laterLabel(_ id: String) -> String {
         let gens = Set(rules.laterGames(for: id, after: game, pokemon: pokemon).compactMap { rules.games[$0]?.gen }).sorted()
@@ -288,7 +294,7 @@ struct RibbonManager: View {
     }
     private var footer: some View {
         HStack(spacing: 8) {
-            Text(message.isEmpty ? "\(pokemon.displayedRibbonIDs.count) owned ribbons" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.updatesFrequently)
+            Text(message.isEmpty ? "\(pokemon.displayedRibbonIDs.count) owned awards" : message).font(PixelFont.font(12)).foregroundStyle(theme.muted).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).accessibilityAddTraits(.updatesFrequently)
             Button("Undo") { restore() }.disabled(undo == nil).font(PixelFont.font(14)).buttonStyle(.bordered)
             Button(embedded ? "Done" : "Save") { destinationPokemon = pokemon; onSave() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("ribbons.save")
         }.padding(.horizontal, 12).padding(.vertical, 7).background(theme.paper).overlay(alignment: .top) { Rectangle().fill(theme.border).frame(height: 1) }
@@ -310,7 +316,7 @@ struct RibbonManager: View {
             VStack(spacing: 0) {
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        if pokemon.displayedRibbonIDs.isEmpty { Text("No ribbons recorded").font(PixelFont.font(17)).padding(24) }
+                        if pokemon.displayedRibbonIDs.isEmpty { Text("No awards recorded").font(PixelFont.font(17)).padding(24) }
                         ForEach(pokemon.displayedRibbonIDs.reversed(), id: \.self) { id in
                             let originals = pokemon.originalRibbonIDs(representedBy: id)
                             if originals.isEmpty { ownedRow(id) }
@@ -400,7 +406,7 @@ struct RibbonManager: View {
                         Button("Remove ribbon") { remove(id); detail = nil }.buttonStyle(RetroAction())
                     }
                 }.padding(16)
-            }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Ribbon details").navigationBarTitleDisplayMode(.inline).toolbar { Button("Done") { detail = nil } }
+            }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Award details").navigationBarTitleDisplayMode(.inline).toolbar { Button("Done") { detail = nil } }
         }
     }
     private func add(_ id: String) {

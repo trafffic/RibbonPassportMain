@@ -86,7 +86,7 @@ final class RecoveryHistoryUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "recovery"; app.launch()
-        app.tabBars.buttons["Settings"].tap()
+        app.buttons["navigation.tab.2"].tap()
         let history = app.buttons["recovery.open"]
         XCTAssertTrue(history.waitForExistence(timeout: 5)); history.tap()
     }
@@ -108,7 +108,7 @@ final class RecoveryHistoryUITests: XCTestCase {
     }
     func testRecoverDeletedPokemonReturnsToPCBox() {
         preview("drag-b"); restore()
-        app.tabBars.buttons["Ribbons"].tap()
+        app.buttons["navigation.tab.0"].tap()
         let slot = app.buttons["pc.box.slot.1"]
         XCTAssertTrue(slot.waitForExistence(timeout: 5)); XCTAssertEqual(slot.value as? String, "drag-b")
     }
@@ -160,11 +160,11 @@ final class TerminalPassportUITests: XCTestCase {
         XCTAssertTrue(count.label.contains("All games"))
         XCTAssertTrue(app.buttons["All"].isSelected)
         app.switches["ribbons.earnable"].tap()
-        XCTAssertTrue(count.label.contains("106 shown"))
+        XCTAssertTrue(count.label.contains("111 shown"))
         all.tap()
         XCTAssertEqual(all.value as? String, "Off")
         XCTAssertTrue(count.label.contains("This game"))
-        XCTAssertFalse(count.label.contains("106 shown"))
+        XCTAssertFalse(count.label.contains("111 shown"))
     }
     func testPassportTabsSaveRibbonChangesAcrossNavigation() {
         capture("terminal-home")
@@ -296,5 +296,37 @@ final class MemoryRibbonUITests: XCTestCase {
         app.navigationBars.buttons["Done"].tap()
         app.buttons["passport.tab.overview"].tap()
         XCTAssertEqual(owned.label, count)
+    }
+}
+
+final class MarkAndNavigationUITests: XCTestCase {
+    func testEarnableMarksAndCustomNavigation() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "marks"; app.launch()
+        defer { app.terminate() }
+        XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 10))
+        app.buttons["Passport ▸"].tap()
+        app.buttons["passport.tab.ribbons"].tap()
+        let partner = app.buttons["ribbons.tile.partner-mark"]
+        XCTAssertTrue(partner.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["ribbons.tile.itemfinder-mark"].exists)
+        XCTAssertTrue(app.buttons["ribbons.tile.gourmand-mark"].exists)
+        XCTAssertTrue(app.buttons["ribbons.tile.jumbo-mark"].exists)
+        XCTAssertFalse(app.buttons["ribbons.tile.mini-mark"].exists)
+        partner.tap()
+        XCTAssertFalse(partner.exists)
+        app.buttons["ribbons.owned"].tap()
+        let remove = app.buttons["ribbons.owned.remove.partner-mark"]
+        XCTAssertTrue(remove.waitForExistence(timeout: 5))
+        remove.tap()
+        app.navigationBars.buttons["Done"].tap()
+        XCTAssertTrue(partner.waitForExistence(timeout: 5))
+        let shot = XCTAttachment(screenshot: app.screenshot()); shot.name = "pixel-navigation-and-earnable-marks"; shot.lifetime = .keepAlways; add(shot)
+        app.buttons["navigation.back"].tap()
+        XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 5))
+        app.buttons["navigation.tab.2"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        app.buttons["navigation.tab.0"].tap()
+        XCTAssertTrue(app.buttons["Passport ▸"].waitForExistence(timeout: 5))
     }
 }
