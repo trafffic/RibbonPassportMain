@@ -66,9 +66,9 @@ struct AddPokemonView: View {
                 }
             }.font(PixelFont.font(17)).navigationTitle("Add Pokémon").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
                     TerminalToolbarItem(placement: .confirmationAction) {
-                        Button("Add") {
+                        TerminalCornerButton("Add") {
                             var entry = pokemon
                             if kind == .showdown {
                                 var details = build
@@ -117,7 +117,7 @@ struct SpeciesPicker: View {
             }.terminalSearchable(text: $search, prompt: "Name, form or Pokédex number")
                 .overlay { if matches.isEmpty { ContentUnavailableView.search(text: search) } }
                 .navigationTitle("Species & forms").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Cancel") { dismiss() }  } }
         }
     }
 }
@@ -189,9 +189,9 @@ struct BoxWallpaperEditor: View {
                 }
             }.font(PixelFont.font(17)).navigationTitle(box.name + " wallpaper").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
                     TerminalToolbarItem(placement: .confirmationAction) {
-                        Button("Save") {
+                        TerminalCornerButton("Save") {
                             store.editStorage(kind: kind) { layout in
                                 if let i = layout.boxes.firstIndex(where: { $0.id == box.id }) { layout.boxes[i].wallpaper = settings }
                             }
@@ -246,7 +246,7 @@ struct SearchableChoiceList: View {
                 .terminalSearchable(text: $search, prompt: "Search " + title.lowercased())
                 .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Cancel") { dismiss() }  } }
         }
     }
     private func choice(_ id: String, name: String) -> some View {
@@ -345,7 +345,7 @@ struct PokemonExportView: View {
                     }
                 }
             }.font(PixelFont.font(17)).navigationTitle("Export Pokémon").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { dismiss() }  } }
                 .onAppear { prepare() }
                 .onChange(of: target) { _, _ in prepare() }
                 .onChange(of: fallbackBall) { _, _ in prepare() }

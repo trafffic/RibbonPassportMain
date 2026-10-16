@@ -234,7 +234,7 @@ struct WidgetInstallHelp: View {
                     Link("Apple’s widget instructions", destination: URL(string: "https://support.apple.com/en-gb/118610")!)
                 }.padding(20)
             }.font(PixelFont.font(18)).navigationTitle("Add widget").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { dismiss() }  } }
         }
     }
     private func step(_ number: Int, _ text: String) -> some View {

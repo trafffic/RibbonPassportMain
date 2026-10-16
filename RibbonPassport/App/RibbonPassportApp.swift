@@ -254,11 +254,11 @@ struct CollectionView: View {
             .navigationTitle("Ribbon Passport")
             .terminalSearchable(text: $search, prompt: "Find a Pokémon")
             .toolbar { TerminalToolbarItem(placement: .topBarTrailing) {
-                TerminalMenu {
+                TerminalMenu(compact: true) {
                     Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
                     Button("Paste Showdown team", systemImage: "doc.on.clipboard") { showdown = true }
                     Button("Add / refresh demo team", systemImage: "sparkles") { store.demo() }
-                } label: { Text("Add").font(PixelFont.font(14)) }
+                } label: { TerminalCornerLabel(title: "Add") }.accessibilityLabel("Add")
              } }
             .fileImporter(isPresented: $importing, allowedContentTypes: [.json], allowsMultipleSelection: false) { result in
                 switch result { case .success(let urls): if let url = urls.first { store.importBackup(url) }; case .failure(let error): store.error = error.localizedDescription }
@@ -354,7 +354,7 @@ struct PokemonEditor: View {
                 Button("Use for single-Pokémon widgets") { store.choose(pokemon.id) }
             }
         }.navigationTitle(pokemon.displayName).navigationBarTitleDisplayMode(.inline)
-            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Save") { store.update(pokemon); dismiss() }.fontWeight(.semibold)  } }
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Save") { store.update(pokemon); dismiss() }.fontWeight(.semibold)  } }
             .sheet(isPresented: $awards) { RibbonManager(pokemon: $pokemon) { awards = false } }
             .sheet(isPresented: $marks) { AwardPicker(selection: $pokemon.ribbons) }
     }
@@ -389,7 +389,7 @@ struct AwardPicker: View {
                     }
                 }
             }.navigationTitle("Marks").terminalSearchable(text: $search)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { dismiss() }  } }
         }
     }
 }
@@ -411,7 +411,7 @@ struct TeamsView: View {
                     }
                 }
             }.navigationTitle("Your teams")
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalMenu { Button("Create team") { create = true }; Button("Paste Showdown team") { showdown = true } } label: { Text("Add").font(PixelFont.font(14)) }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalMenu(compact: true) { Button("Create team") { create = true }; Button("Paste Showdown team") { showdown = true } } label: { TerminalCornerLabel(title: "Add") }.accessibilityLabel("Add")  } }
                 .sheet(isPresented: $create) { NavigationStack { TeamEditor(team: RibbonTeam(name: "My Ribbon Team", memberIDs: [])) } }
                 .sheet(isPresented: $showdown) { ShowdownImportView() }
         }
@@ -448,7 +448,7 @@ struct TeamEditor: View {
             }
             Section { Text("Medium widgets show the first three members. Large widgets show up to six. Saving makes this your default widget team.").font(.caption).foregroundStyle(.secondary) }
         }.navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline)
-            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Save") { store.saveTeam(team); dismiss() }.disabled(team.memberIDs.isEmpty || team.name.trimmingCharacters(in: .whitespaces).isEmpty)  } }
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Save") { store.saveTeam(team); dismiss() }.disabled(team.memberIDs.isEmpty || team.name.trimmingCharacters(in: .whitespaces).isEmpty)  } }
     }
 }
 struct ShowdownImportView: View {
@@ -476,9 +476,9 @@ struct ShowdownImportView: View {
                 if let error { Section { Text(error).foregroundStyle(.red) } }
             }.navigationTitle("Import Showdown team").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
                     TerminalToolbarItem(placement: .confirmationAction) {
-                        Button("Import") {
+                        TerminalCornerButton("Import") {
                             do { try store.addShowdown(export, name: name, current: current, origin: origin); if store.error == nil { dismiss() } }
                             catch { self.error = error.localizedDescription }
                         }.disabled(export.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

@@ -300,6 +300,39 @@ final class MemoryRibbonUITests: XCTestCase {
 }
 
 final class MarkAndNavigationUITests: XCTestCase {
+    func testCornerControlsFitAndEarnableStaysSeparateFromAll() {
+        continueAfterFailure = false
+        let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "marks"; app.launch()
+        defer { app.terminate() }
+        func checkCorner(_ button: XCUIElement) {
+            XCTAssertTrue(button.waitForExistence(timeout: 5))
+            XCTAssertTrue(button.isHittable)
+            XCTAssertGreaterThanOrEqual(button.frame.width, 44)
+            XCTAssertGreaterThanOrEqual(button.frame.height, 44)
+            XCTAssertGreaterThanOrEqual(button.frame.minX, app.frame.minX)
+            XCTAssertLessThanOrEqual(button.frame.maxX, app.frame.maxX)
+        }
+        checkCorner(app.buttons["Collection options"])
+        app.buttons["Passport ▸"].tap()
+        checkCorner(app.buttons["Passport options"])
+        checkCorner(app.buttons["navigation.back"])
+        app.buttons["passport.tab.ribbons"].tap()
+        let earnable = app.switches["ribbons.earnable"]
+        XCTAssertTrue(earnable.waitForExistence(timeout: 5))
+        let all = app.buttons["ribbons.allGames"]
+        XCTAssertLessThan(earnable.frame.maxX + 4, all.frame.minX)
+        earnable.tap()
+        XCTAssertTrue(app.buttons["ribbons.tile.mini-mark"].exists)
+        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "corner-icons-and-earnable-spacing"; screenshot.lifetime = .keepAlways; add(screenshot)
+        app.buttons["ribbons.owned"].tap()
+        checkCorner(app.navigationBars.buttons["Done"])
+        app.navigationBars.buttons["Done"].tap()
+        app.buttons["Passport options"].tap()
+        checkCorner(app.buttons["Close"])
+        app.buttons["Edit Pokémon"].tap()
+        checkCorner(app.navigationBars.buttons["Save"])
+        app.navigationBars.buttons["Save"].tap()
+    }
     func testOptionalSizeMarksAndCustomOptionBoards() {
         continueAfterFailure = false
         let app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "marks"; app.launch()

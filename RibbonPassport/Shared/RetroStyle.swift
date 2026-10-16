@@ -143,10 +143,18 @@ struct BoxWallpaperView: View {
 
 /// Small, original bitmap glyphs for the app's navigation controls.
 struct TerminalGlyph: View {
-    enum Kind { case back, ribbons, competitive, settings }
+    enum Kind { case back, ribbons, competitive, settings, options, done, cancel, save, add, edit, export, download }
     var kind: Kind
     private var pixels: [String] {
         switch kind {
+        case .options: return ["01000000", "11111111", "01000000", "00000100", "11111111", "00000100", "00100000", "11111111"]
+        case .done: return ["00000001", "00000011", "00000110", "10001100", "11011000", "01110000", "00100000", "00000000"]
+        case .cancel: return ["11000011", "01100110", "00111100", "00011000", "00111100", "01100110", "11000011", "00000000"]
+        case .save: return ["11111110", "11000111", "11000111", "11111111", "10000001", "10111101", "10111101", "11111111"]
+        case .add: return ["00011000", "00011000", "00011000", "11111111", "11111111", "00011000", "00011000", "00011000"]
+        case .edit: return ["00000110", "00001111", "00011110", "00111100", "01111000", "11110000", "11100000", "11000000"]
+        case .export: return ["00011000", "00111100", "01111110", "00011000", "00011000", "10011001", "10000001", "11111111"]
+        case .download: return ["00011000", "00011000", "00011000", "01111110", "00111100", "10011001", "10000001", "11111111"]
         case .back: return ["00010000", "00110000", "01111111", "11111111", "01111111", "00110000", "00010000", "00000000"]
         case .ribbons: return ["00111100", "01100110", "11011011", "11011011", "01100110", "00111100", "00100100", "01100110"]
         case .competitive: return ["00011000", "00110000", "01100000", "11111110", "00011100", "00111000", "01110000", "01100000"]
@@ -170,12 +178,7 @@ struct TerminalBackControl: ViewModifier {
     @Environment(\.dismiss) private var dismiss
     var title = "Back"
     private var button: some View {
-        Button { dismiss() } label: {
-            HStack(spacing: 6) {
-                TerminalGlyph(kind: .back).frame(width: 16, height: 16)
-                Text(title).font(PixelFont.font(14))
-            }
-        }.buttonStyle(RetroAction()).accessibilityLabel(title).accessibilityIdentifier("navigation.back")
+        TerminalCornerButton(title, kind: .back) { dismiss() }.accessibilityIdentifier("navigation.back")
     }
     func body(content: Content) -> some View {
         content.navigationBarBackButtonHidden(true).toolbar {
@@ -192,15 +195,16 @@ extension View {
 }
 
 struct TerminalToggleStyle: ToggleStyle {
+    var indicatorFirst = false
     func makeBody(configuration: Configuration) -> some View {
-        Button { configuration.isOn.toggle() } label: {
+        let indicator = Text(configuration.isOn ? "ON" : "OFF").font(PixelFont.font(12))
+            .frame(width: 44, height: 28).background(configuration.isOn ? Color(hex: "718F4E") : Color.secondary.opacity(0.15))
+            .foregroundStyle(configuration.isOn ? Color.white : Color.primary)
+            .overlay(Rectangle().stroke(Color.secondary, lineWidth: 1))
+        return Button { configuration.isOn.toggle() } label: {
             HStack(spacing: 8) {
-                configuration.label
-                Spacer(minLength: 4)
-                Text(configuration.isOn ? "ON" : "OFF").font(PixelFont.font(12))
-                    .frame(width: 44, height: 28).background(configuration.isOn ? Color(hex: "718F4E") : Color.secondary.opacity(0.15))
-                    .foregroundStyle(configuration.isOn ? Color.white : Color.primary)
-                    .overlay(Rectangle().stroke(Color.secondary, lineWidth: 1))
+                if indicatorFirst { indicator; configuration.label.font(PixelFont.font(14)) }
+                else { configuration.label; Spacer(minLength: 4); indicator }
             }.frame(minHeight: 36).contentShape(Rectangle())
         }.buttonStyle(.plain).accessibilityRepresentation {
             Toggle(isOn: configuration.$isOn) { configuration.label }.toggleStyle(.switch)
@@ -261,7 +265,7 @@ struct TerminalPanel<Content: View>: View {
     var body: some View {
         let theme = PassportTheme(dark: scheme == .dark, game: "")
         VStack(spacing: 0) {
-            HStack { Text(title.uppercased()).font(PixelFont.font(20)); Spacer(); Button("Close", action: onClose).buttonStyle(RetroAction()) }.padding(12)
+            HStack(spacing: 12) { Text(title.uppercased()).font(PixelFont.font(20)).lineLimit(2).frame(maxWidth: .infinity, alignment: .leading); TerminalCornerButton("Close", action: onClose) }.padding(12)
             Rectangle().fill(theme.border).frame(height: 1)
             ScrollView { VStack(alignment: .leading, spacing: 8, content: content).frame(maxWidth: .infinity).padding(12) }
         }.background(theme.paper).foregroundStyle(theme.ink).font(PixelFont.font(16)).toggleStyle(TerminalToggleStyle())
@@ -280,11 +284,12 @@ private struct TerminalMenuRow: PrimitiveButtonStyle {
     }
 }
 struct TerminalMenu<Content: View, Label: View>: View {
+    var compact = false
     @ViewBuilder var content: () -> Content
     @ViewBuilder var label: () -> Label
     @State private var presented = false
     var body: some View {
-        Button { presented = true } label: { label() }.buttonStyle(RetroAction())
+        Button { presented = true } label: { label() }.buttonStyle(TerminalMenuButtonStyle(compact: compact))
             .sheet(isPresented: $presented) {
                 NavigationStack {
                     TerminalPanel(title: "Options", onClose: { presented = false }) {
@@ -300,9 +305,9 @@ struct TerminalToolbarItem<Content: View>: ToolbarContent {
     @ViewBuilder var content: () -> Content
     var body: some ToolbarContent {
         if #available(iOS 26.0, *) {
-            ToolbarItem(placement: placement) { content().buttonStyle(RetroAction()) }.sharedBackgroundVisibility(.hidden)
+            ToolbarItem(placement: placement) { content() }.sharedBackgroundVisibility(.hidden)
         } else {
-            ToolbarItem(placement: placement) { content().buttonStyle(RetroAction()) }
+            ToolbarItem(placement: placement) { content() }
         }
     }
 }
@@ -445,5 +450,59 @@ extension View {
     }
     func terminalConfirmationDialog<A: View>(_ title: String, isPresented: Binding<Bool>, titleVisibility: Visibility = .visible, @ViewBuilder actions: @escaping () -> A) -> some View {
         terminalAlert(title, isPresented: isPresented, actions: actions)
+    }
+}
+
+/// Fixed-size corner controls keep their full hit area under navigation-bar compression.
+struct TerminalCornerLabel: View {
+    var title: String
+    var kind: TerminalGlyph.Kind? = nil
+    @Environment(\.colorScheme) private var scheme
+    private var glyph: TerminalGlyph.Kind {
+        if let kind { return kind }
+        switch title.lowercased() {
+        case "done", "confirm": return .done
+        case "cancel", "close": return .cancel
+        case "save": return .save
+        case "add", "new": return .add
+        case "edit": return .edit
+        case "export": return .export
+        case "import": return .download
+        default: return .options
+        }
+    }
+    var body: some View {
+        let theme = PassportTheme(dark: scheme == .dark, game: "")
+        TerminalGlyph(kind: glyph).frame(width: 20, height: 20)
+            .frame(width: 40, height: 40).foregroundStyle(theme.ink)
+            .background(theme.panel).overlay(Rectangle().stroke(theme.border))
+            .frame(width: 48, height: 48).contentShape(Rectangle()).fixedSize()
+    }
+}
+struct TerminalCornerButton: View {
+    var title: String
+    var kind: TerminalGlyph.Kind? = nil
+    var action: () -> Void
+    @Environment(\.isEnabled) private var enabled
+    init(_ title: String, kind: TerminalGlyph.Kind? = nil, action: @escaping () -> Void) { self.title = title; self.kind = kind; self.action = action }
+    init(_ title: String, systemImage: String, action: @escaping () -> Void) { self.title = title; self.action = action }
+    var body: some View {
+        Button(action: action) { TerminalCornerLabel(title: title, kind: kind) }
+            .buttonStyle(.plain).opacity(enabled ? 1 : 0.4).fixedSize()
+            .accessibilityLabel(title).help(title)
+    }
+}
+private struct TerminalMenuButtonStyle: ButtonStyle {
+    var compact: Bool
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var enabled
+    func makeBody(configuration: Configuration) -> some View {
+        let theme = PassportTheme(dark: scheme == .dark, game: "")
+        if compact { configuration.label.fixedSize().opacity(!enabled ? 0.4 : configuration.isPressed ? 0.6 : 1) }
+        else {
+            configuration.label.font(PixelFont.font(16)).padding(.horizontal, 12).padding(.vertical, 11)
+                .frame(minHeight: 44).background(theme.panel).foregroundStyle(theme.ink)
+                .overlay(Rectangle().stroke(theme.border)).opacity(!enabled ? 0.4 : configuration.isPressed ? 0.65 : 1)
+        }
     }
 }

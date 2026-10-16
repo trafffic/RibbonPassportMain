@@ -123,7 +123,7 @@ struct RibbonManager: View {
                 .toolbar {
                     if !embedded {
                     TerminalToolbarItem(placement: .principal) { Text("RIBBONS").font(PixelFont.font(21)) }
-                    TerminalToolbarItem(placement: .cancellationAction) { Button { dismiss() } label: { TerminalGlyph(kind: .back).frame(width: 16, height: 16) }.accessibilityLabel("Back to " + entryTitle) }
+                    TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Back to " + entryTitle, kind: .back) { dismiss() } }
                     }
                 }
                 .onAppear {
@@ -171,9 +171,8 @@ struct RibbonManager: View {
                 Button("Change") { pending = nil; panel = .games }.font(PixelFont.font(13)).buttonStyle(RetroAction()).disabled(availableGames.isEmpty)
             }.frame(minHeight: 38)
             HStack {
-                Toggle("Earnable only", isOn: $earnable).toggleStyle(TerminalToggleStyle()).labelsHidden().frame(width: 48)
+                Toggle("Earnable only", isOn: $earnable).toggleStyle(TerminalToggleStyle(indicatorFirst: true)).fixedSize(horizontal: true, vertical: false)
                     .accessibilityLabel("Earnable only").accessibilityIdentifier("ribbons.earnable")
-                Text("Earnable only").font(PixelFont.font(14))
                 Spacer()
                 Button {
                     withAnimation(.easeInOut(duration: 0.15)) {
@@ -192,7 +191,7 @@ struct RibbonManager: View {
                     .accessibilityAddTraits(catalogue ? .isSelected : [])
                     .accessibilityHint("Show ribbons across all games. Earnable only still applies.")
                     .accessibilityIdentifier("ribbons.allGames")
-            }.frame(height: 34)
+            }.frame(minHeight: 40)
             HStack(spacing: 5) {
                 ForEach(RibbonCategory.allCases, id: \.self) { value in
                     Button { category = value; page = 0 } label: {
@@ -388,7 +387,7 @@ struct RibbonManager: View {
                 }.scrollIndicators(.visible)
                 HStack { Text(message).font(PixelFont.font(12)).frame(maxWidth: .infinity, alignment: .leading); Button("Undo") { restore() }.disabled(undo == nil).accessibilityIdentifier("ribbons.owned.undo") }.padding(14)
             }.background(theme.panel).foregroundStyle(theme.ink).navigationTitle("Owned ribbons · \(pokemon.displayedRibbonIDs.count)").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { panel = nil }.font(PixelFont.font(15))  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { panel = nil }.font(PixelFont.font(15))  } }
         }.presentationDetents([.fraction(0.75), .large]).presentationDragIndicator(.visible)
     }
     private func ownedRow(_ id: String) -> some View {
@@ -442,7 +441,7 @@ struct RibbonManager: View {
                         Button("Remove ribbon") { remove(id); detail = nil }.buttonStyle(RetroAction())
                     }
                 }.padding(16)
-            }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Award details").navigationBarTitleDisplayMode(.inline).toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { detail = nil }  } }
+            }.background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Award details").navigationBarTitleDisplayMode(.inline).toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { detail = nil }  } }
         }
     }
     private func add(_ id: String) {
@@ -512,7 +511,7 @@ struct RibbonTransferDrawer: View {
                 .navigationTitle("Transfer check").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     TerminalToolbarItem(placement: .principal) { Text("Transfer check").font(PixelFont.font(23)) }
-                    TerminalToolbarItem(placement: .confirmationAction) { Button("Done", action: onDone).font(PixelFont.font(15)).accessibilityIdentifier("ribbons.transfer.done") }
+                    TerminalToolbarItem(placement: .confirmationAction) { TerminalCornerButton("Done", action: onDone).font(PixelFont.font(15)).accessibilityIdentifier("ribbons.transfer.done") }
                 }
                 .sheet(item: $earning) { choice in
                     RibbonGamePicker(pokemon: pokemon, selected: game, award: choice.id, generationFilter: check.generation) { chosen in
@@ -607,7 +606,7 @@ struct RibbonTransferDrawer: View {
                 if count > 1 { pager(page: $laterPage, count: count) }
             }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(theme.panel).foregroundStyle(theme.ink)
                 .navigationTitle("Later opportunities").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { showingLater = false }.font(PixelFont.font(15))  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { showingLater = false }.font(PixelFont.font(15))  } }
         }.presentationDetents([.medium, .large])
     }
     private func pager(page: Binding<Int>, count: Int) -> some View {
@@ -688,7 +687,7 @@ struct RibbonGamePicker: View {
                 Spacer(minLength: 0)
             }.padding(14).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).background(theme.paper).foregroundStyle(theme.ink)
                 .navigationTitle(award == nil ? "Choose game" : "Earned in which game?").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.font(PixelFont.font(15)) } }
+                .toolbar { TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() }.font(PixelFont.font(15)) } }
         }
     }
 }

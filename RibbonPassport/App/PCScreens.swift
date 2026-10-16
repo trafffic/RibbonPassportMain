@@ -106,7 +106,7 @@ struct PCStorageView: View {
                     HStack {
                         Text(kind.title.uppercased()).font(PixelFont.font(25))
                         Spacer(minLength: 4)
-                        TerminalMenu {
+                        TerminalMenu(compact: true) {
                             TerminalMenuLink("Teams") { RetroTeamsView(kind: kind) }
                             TerminalMenuLink("Widgets") { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) }
                             Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
@@ -121,7 +121,7 @@ struct PCStorageView: View {
                                 store.editStorage(kind: kind) { $0.boxes.append(PCBox(name: String(format: "Box %02d", $0.boxes.count + 1))) }
                                 boxIndex = layout.boxes.count - 1
                             }
-                        } label: { Text("Options").font(PixelFont.font(13)) }.buttonStyle(.plain).accessibilityLabel("Collection options")
+                        } label: { TerminalCornerLabel(title: "Options") }.buttonStyle(.plain).accessibilityLabel("Collection options")
                     }
                     if store.snapshot.pokemon(for: kind).isEmpty { emptyCollection }
                     HStack {
@@ -279,7 +279,7 @@ struct PCStorageView: View {
                     }
                 }.padding(16)
             }.background(theme.paper).navigationTitle("All boxes").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { choosingBox = false }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { choosingBox = false }  } }
         }
     }
     private func ribbonStrip(_ p: RibbonPokemon) -> some View {
@@ -367,7 +367,7 @@ struct PCStorageView: View {
                 }
             }
             Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { passportSection = .overview; store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
-            TerminalMenu { pokemonMenu(p) } label: { Text("Edit").font(PixelFont.font(12)) }.accessibilityLabel("Pokémon actions")
+            TerminalMenu(compact: true) { pokemonMenu(p) } label: { TerminalCornerLabel(title: "Edit") }.accessibilityLabel("Pokémon actions")
         }.padding(9).background(theme.panel, in: RoundedRectangle(cornerRadius: 4))
     }
     @ViewBuilder private var dragSprites: some View {
@@ -634,14 +634,14 @@ struct StampAlbumView: View {
             .toolbar {
                 TerminalToolbarItem(placement: .principal) { Text(section == .ribbons ? p?.displayName.uppercased() ?? "PASSPORT" : "PASSPORT").font(PixelFont.font(20)).lineLimit(1) }
                 TerminalToolbarItem(placement: .topBarTrailing) {
-                    TerminalMenu {
+                    TerminalMenu(compact: true) {
                         Button("Edit Pokémon") { editing = true }
                         Button("Edit visits") { editingVisits = true }
                         Button("Export", systemImage: "square.and.arrow.up") {
                             if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
                         }
                         TerminalMenuLink("Saved versions") { RecoveryItemHistoryView(kind: .pokemon, objectID: pokemonID) }
-                    } label: { Text("Options").font(PixelFont.font(13)) }.accessibilityLabel("Passport options")
+                    } label: { TerminalCornerLabel(title: "Options") }.accessibilityLabel("Passport options")
                 }
             }
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
@@ -938,7 +938,7 @@ struct JourneyEditorView: View {
                         }.disabled(game.isEmpty || p.recordedVisits.contains { $0.game == game })
                     }
                 }
-            }.navigationTitle("Visits").font(PixelFont.font(17)).toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }  } }
+            }.navigationTitle("Visits").font(PixelFont.font(17)).toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { dismiss() }  } }
         }
     }
 }

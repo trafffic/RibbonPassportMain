@@ -97,8 +97,8 @@ struct RetroTeamDetailView: View {
         }.background(theme.paper).navigationTitle("Team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar {
                 if let team {
-                    TerminalToolbarItem(placement: .topBarTrailing) { NavigationLink("Edit") { RetroTeamArrangeView(team: team, showdown: store.snapshot.kind(of: team) == .showdown) } }
-                    TerminalToolbarItem(placement: .topBarTrailing) { Button("Export", systemImage: "square.and.arrow.up") {
+                    TerminalToolbarItem(placement: .topBarTrailing) { NavigationLink { RetroTeamArrangeView(team: team, showdown: store.snapshot.kind(of: team) == .showdown) } label: { TerminalCornerLabel(title: "Edit") }.buttonStyle(.plain).accessibilityLabel("Edit") }
+                    TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Export", systemImage: "square.and.arrow.up") {
                         exporting = PokemonExportSelection(pokemon: members, target: store.snapshot.kind(of: team) == .showdown ? .showdown : .ribbonsGuide)
                     } }
                 }
@@ -165,8 +165,9 @@ struct CompetitiveBuildView: View {
             } else { ContentUnavailableView("Build unavailable", systemImage: "tray") }
         }.background(theme.paper).navigationTitle("Build").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .toolbar { TerminalToolbarItem(placement: .topBarTrailing) {
-                Button("Edit") { editing = true }.disabled(p?.showdownSet == nil)
-                Button("Export", systemImage: "square.and.arrow.up") { if let p { exporting = PokemonExportSelection(pokemon: [p], target: .showdown) } }.disabled(p == nil)
+                TerminalCornerButton("Edit") { editing = true }.disabled(p?.showdownSet == nil)
+             }
+             TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Export", systemImage: "square.and.arrow.up") { if let p { exporting = PokemonExportSelection(pokemon: [p], target: .showdown) } }.disabled(p == nil)
              } }
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
             .sheet(isPresented: $editing) { if let p { CompetitiveBuildEditor(pokemon: p) } }
@@ -208,8 +209,8 @@ struct CompetitiveBuildEditor: View {
                 }
             }.font(PixelFont.font(17)).navigationTitle("Edit build")
                 .toolbar {
-                    TerminalToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
-                    TerminalToolbarItem(placement: .confirmationAction) { Button("Save") {
+                    TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
+                    TerminalToolbarItem(placement: .confirmationAction) { TerminalCornerButton("Save") {
                         guard var next = store.snapshot.pokemon.first(where: { $0.id == pokemon.id }) else { dismiss(); return }
                         build.moves = build.moves.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
                         next.showdownSet = build; next.currentlevel = level; next.nickname = nickname; store.update(next)
@@ -254,7 +255,7 @@ struct RetroTeamArrangeView: View {
                 Button("Save team") { save() }.buttonStyle(RetroAction(prominent: true)).disabled(!canSave)
             }.padding(16)
         }.background(theme.paper).navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
-            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Save") { save() }.disabled(!canSave)  } }
+            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Save") { save() }.disabled(!canSave)  } }
             .sheet(isPresented: $adding) {
                 NavigationStack {
                     List {
@@ -266,7 +267,7 @@ struct RetroTeamArrangeView: View {
                                 HStack { PokemonRow(pokemon: p); if let i = team.memberIDs.firstIndex(of: p.id) { Text("\(i + 1)") } }
                             }.disabled(!team.memberIDs.contains(p.id) && team.memberIDs.count >= 6)
                         }
-                    }.font(PixelFont.font(17)).navigationTitle("Members").toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Done") { adding = false }  } }
+                    }.font(PixelFont.font(17)).navigationTitle("Members").toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { adding = false }  } }
                 }
             }
     }
@@ -314,7 +315,7 @@ struct RetroShowdownImportView: View {
                     }.buttonStyle(RetroAction(prominent: true)).disabled(export.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.font(PixelFont.font(17)).padding(16)
             }.background(theme.paper).navigationTitle("Import team").navigationBarTitleDisplayMode(.inline)
-                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() }  } }
+                .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Cancel") { dismiss() }  } }
         }
     }
 }
