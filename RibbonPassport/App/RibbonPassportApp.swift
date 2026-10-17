@@ -548,7 +548,7 @@ struct SettingsView: View {
                 }
                 Section("About") {
                     Link("Open ribbons.guide", destination: URL(string: "https://ribbons.guide/")!)
-                    Text("Unofficial fan app. Pokémon artwork © its respective owners. Code and source credits are included in the project. Version 0.3 test build.").font(.caption).foregroundStyle(.secondary)
+                    Text("Unofficial fan app. Pokémon artwork © its respective owners. Code and source credits are included in the project. Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.93") (PR).").font(.caption).foregroundStyle(.secondary)
                 }
             }.navigationTitle("Settings")
         }
