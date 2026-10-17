@@ -17,6 +17,7 @@ struct WidgetStudioView: View {
     @State private var showInstall = false
     @State private var savedMessage = ""
     @State private var loadedDefault = false
+    @State private var customising = false
     @State private var selectedPack: WidgetThemePack?
     @State private var deleting: WidgetPreset?
     var section: TeamKind
@@ -55,48 +56,62 @@ struct WidgetStudioView: View {
                     draft = WidgetPreset(name: content.name, content: content, style: draft.style); savedMessage = ""
                     if content != .pokemon && size == .small { size = .medium }
                 }), values: section.widgetContents, name: { $0.name })
+                selectionPicker
                 themePacks
                 TerminalSelector(title: "Size", selection: $size, values: WidgetPreviewSize.allCases.filter { draft.content == .pokemon || $0 != .small }, name: { $0.name }, inline: true)
-                HStack(spacing: 6) {
-                    ForEach(Appearance.allCases, id: \.self) { appearance in
-                        Button(appearance == .automatic ? "Auto" : appearance.rawValue.capitalized) { draft.style.appearance = appearance }
-                            .font(PixelFont.font(15)).padding(9).frame(maxWidth: .infinity)
-                            .background(draft.style.appearance == appearance ? theme.ink : theme.panel)
-                            .foregroundStyle(draft.style.appearance == appearance ? theme.paper : theme.ink)
-                            .overlay(Rectangle().stroke(theme.border, lineWidth: 1))
-                    }
-                }.buttonStyle(.plain)
                 if isDemo { Text("Demo preview").font(PixelFont.font(13)).foregroundStyle(theme.muted) }
                 preview.frame(maxWidth: .infinity)
-                VStack(alignment: .leading, spacing: 13) {
-                    TextField("Design name", text: $draft.name).font(PixelFont.font(20)).textFieldStyle(TerminalFieldStyle())
-                    selectionPicker
-                    TerminalSelector(title: "Palette", selection: $draft.style.palette, values: WidgetPalette.allCases, name: { $0.name })
-                    Toggle("Wallpaper", isOn: Binding(get: { draft.style.wallpaper != nil }, set: { draft.style.wallpaper = $0 ? WallpaperSettings() : nil }))
-                    if draft.style.wallpaper != nil {
-                        WallpaperControls(settings: Binding(get: { draft.style.wallpaper ?? WallpaperSettings() }, set: { draft.style.wallpaper = $0 }))
+                TextField("Design name", text: $draft.name).font(PixelFont.font(18)).textFieldStyle(TerminalFieldStyle()).accessibilityIdentifier("widgets.name")
+                Button { customising.toggle() } label: {
+                    HStack { Text("Customise"); Spacer(); Text(customising ? "−" : "+") }.frame(minHeight: 44)
+                }.buttonStyle(RetroAction()).accessibilityIdentifier("widgets.customise").accessibilityValue(customising ? "Expanded" : "Collapsed")
+                if customising {
+                    VStack(alignment: .leading, spacing: 13) {
+                        HStack(spacing: 6) {
+                            ForEach(Appearance.allCases, id: \.self) { appearance in
+                                Button(appearance == .automatic ? "Auto" : appearance.rawValue.capitalized) { draft.style.appearance = appearance }
+                                    .font(PixelFont.font(15)).padding(9).frame(maxWidth: .infinity)
+                                    .background(draft.style.appearance == appearance ? theme.ink : theme.panel)
+                                    .foregroundStyle(draft.style.appearance == appearance ? theme.paper : theme.ink)
+                                    .overlay(Rectangle().stroke(theme.border, lineWidth: 1))
+                            }
+                        }.buttonStyle(.plain)
+                        TerminalSelector(title: "Palette", selection: $draft.style.palette, values: WidgetPalette.allCases, name: { $0.name })
+                        Toggle("Wallpaper", isOn: Binding(get: { draft.style.wallpaper != nil }, set: { draft.style.wallpaper = $0 ? WallpaperSettings() : nil }))
+                        if draft.style.wallpaper != nil {
+                            WallpaperControls(settings: Binding(get: { draft.style.wallpaper ?? WallpaperSettings() }, set: { draft.style.wallpaper = $0 }))
+                        }
+                        TerminalSelector(title: "Font", selection: $draft.style.typeface, values: WidgetTypeface.allCases, name: { $0.name })
+                        HStack { Text("Text size"); Spacer(); Text("\(Int((draft.style.textScale * 100).rounded()))%") }
+                        TerminalSlider(value: $draft.style.textScale, in: 0.85...1.15, step: 0.05).accessibilityLabel("Widget text size")
+                        TerminalDisclosureGroup("Visible details") { detailToggles.padding(.top, 10) }
+                        if draft.content != .showdownTeam {
+                            TerminalSelector(title: "Ribbon order", selection: $draft.style.awardOrdering, values: AwardOrdering.allCases, name: { $0.name })
+                        }
+                    }.font(PixelFont.font(16)).retroPanel().accessibilityIdentifier("widgets.customisation")
+                }
+                TerminalDisclosureGroup("Default designs") {
+                    Text("Use this design when a \(draft.content.name) widget has no saved design selected.").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                    Button("Use this design by default") { save(true) }.buttonStyle(RetroAction())
+                    if let selectedPack {
+                        Text("Apply \(selectedPack.name) to the default designs for \(section.title.lowercased()). Individually selected designs stay independent.").font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                        Button("Use theme for this section") {
+                            store.useThemePack(selectedPack, section: section)
+                            if store.error == nil { savedMessage = "\(selectedPack.name) set for \(section.title.lowercased())" }
+                        }.buttonStyle(RetroAction())
                     }
-                    TerminalSelector(title: "Font", selection: $draft.style.typeface, values: WidgetTypeface.allCases, name: { $0.name })
-                    HStack { Text("Text size"); Spacer(); Text("\(Int((draft.style.textScale * 100).rounded()))%") }
-                    TerminalSlider(value: $draft.style.textScale, in: 0.85...1.15, step: 0.05).accessibilityLabel("Widget text size")
-                    TerminalDisclosureGroup("Visible details") { detailToggles.padding(.top, 10) }
-                    if draft.content != .showdownTeam {
-                        TerminalSelector(title: "Ribbon order", selection: $draft.style.awardOrdering, values: AwardOrdering.allCases, name: { $0.name })
-                    }
-                }.font(PixelFont.font(16)).retroPanel()
-                HStack(spacing: 8) {
-                    Button("Save design") { save(false) }.frame(maxWidth: .infinity)
-                    Button("Set default") { save(true) }.frame(maxWidth: .infinity)
-                }.buttonStyle(RetroAction())
-                Button("Add to Home Screen") { if save(false) { showInstall = true } }
-                    .buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("widgets.addToHomeScreen")
+                }
                 if !savedMessage.isEmpty { Text(savedMessage).font(PixelFont.font(14)).foregroundStyle(theme.accent).accessibilityAddTraits(.updatesFrequently) }
                 if !sectionPresets.isEmpty { savedDesigns }
                 Button("New design") {
                     draft = WidgetPreset(name: draft.content.name, content: draft.content, style: WidgetThemePack.defaultPack(for: draft.content).style); selectedPack = nil; savedMessage = ""
                 }.buttonStyle(RetroAction())
             }.padding(16)
-        }.background(theme.paper).navigationTitle("Widgets").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
+        }.safeAreaInset(edge: .bottom) {
+            Button("Save & set up widget") { if save(false) { showInstall = true } }
+                .buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("widgets.addToHomeScreen")
+                .frame(maxWidth: .infinity).padding(12).background(theme.paper)
+        }.terminalKeyboardDismissal().background(theme.paper).navigationTitle("Widgets").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
             .onAppear {
                 guard !loadedDefault else { return }; loadedDefault = true
                 let selection = draft.selectionID
@@ -122,7 +137,7 @@ struct WidgetStudioView: View {
                     ForEach(WidgetThemePack.allCases) { pack in
                         Button {
                             selectedPack = pack
-                            draft = WidgetPreset(name: pack.name, content: draft.content, selectionID: draft.selectionID, style: pack.style)
+                            draft.name = pack.name; draft.style = pack.style
                             savedMessage = ""
                         } label: {
                             let packTheme = PassportTheme(dark: pack.style.appearance == .dark || (pack.style.appearance == .automatic && scheme == .dark), game: "", style: pack.style)
@@ -138,12 +153,6 @@ struct WidgetStudioView: View {
                         }.buttonStyle(.plain).accessibilityLabel("\(pack.name) theme pack")
                     }
                 }.padding(3)
-            }
-            if let selectedPack {
-                Button("Set \(selectedPack.name) as section default") {
-                    store.useThemePack(selectedPack, section: section)
-                    if store.error == nil { savedMessage = "\(selectedPack.name) set for \(section.title.lowercased())" }
-                }.buttonStyle(RetroAction()).font(PixelFont.font(15))
             }
         }
     }

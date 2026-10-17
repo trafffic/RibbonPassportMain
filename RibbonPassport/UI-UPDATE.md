@@ -1,12 +1,30 @@
+# Usability update — 17 October 2026
+
+Implements the first three passes from the new-user walkthrough while keeping the pixel styling and separate Ribbons/Competitive collections.
+
+- **Getting started:** empty Ribbons offers Add Pokémon, Import ribbons.guide backup and Try demo; empty Competitive offers manual addition, Showdown import and community teams. The collection Options control has a visible label. Demo wording changes to Refresh demo only when demo records exist.
+- **Pokémon actions:** the selected Pokémon uses a more-actions icon and includes Edit Pokémon. Ribbon Pokémon open their passport editor; competitive Pokémon open their build editor.
+- **Ribbon tracking:** All games and Browse game state their purpose. Match counts and page labels are separate. Tap artwork/name for details; use the separate + Record/− Remove action for ownership. Compact cards use separate artwork and +/− controls. Small screens can scroll the grid when needed. Recording and Undo retain the existing ribbon rules and earning-game records.
+- **Journey:** Milestones, Memories, Move Dex and Field guides have direct contextual entry points. Stamp/award pages identify what is being paged; earning-game edits say assigned instead of implying that unassigned ribbons are unowned.
+- **Transfer checks:** unresolved eligibility no longer appears under Generation complete. Set met level opens a small editor directly from the warning and participates in the existing save/Undo flow.
+- **Recovery:** previews show What will change and Restore first. Saved details are expandable below; the history and restoration limits are unchanged.
+- **Widgets:** choose the Pokémon/team before the theme and size. Save & set up widget stays visible at the bottom. Appearance, palette, wallpaper, font and visibility controls are in Customise. Default designs are separate, with descriptions of their scope. Existing saved designs and explicit widget selections are preserved.
+- **Forms:** level/met-level fields accept a number directly and keep +/- adjustments. Optional journal/milestone dates use Date known and a date picker without changing their stored format. Editors have labelled confirmation/cancellation controls, labelled note fields and Done typing above the keyboard. Destructive pixel buttons use the warning colour treatment.
+- **Community teams:** cards display their supported games, and Save personal copy is above the roster and available from every chapter.
+
+Validation for this update is recorded in TESTING.md. The original walkthrough and its limitations are in Research/UI-Audit-2026-10-17/REPORT.md.
+
+---
+
 # Community guides, notebooks and credits — 17 October 2026
 
 Implemented storyboard screens 2–8 using the app’s pixel controls and existing Ribbons/Competitive separation.
 
-- **Field guides:** open an award’s details → Field guide, or Passport → Journey → Guides. The bundled catalogue has 25 short guide groups, game-specific locations/requirements, notes, relevant teams and source cards. Official ribbon descriptions remain separate. Event/catch-only awards do not get invented earning tasks.
+- **Field guides:** open an award’s details → Field guide, or Passport → Journey → Field guides. The bundled catalogue has 25 short guide groups, game-specific locations/requirements, notes, relevant teams and source cards. Official ribbon descriptions remain separate. Event/catch-only awards do not get invented earning tasks.
 - **Community teams:** Competitive → Options → Team library (also available from Teams). Ten sourced teams/lead methods include exact published builds, author names, original links, results and separate Ribbon Master slot notes. Save a personal copy before editing. Published streaks are not promises for arbitrary replacement Pokémon, and rental codes are not represented as live-checked.
 - **Build notebook:** open a competitive Pokémon or team → Build notebook. Save named versions and notes, inspect differences, apply saved builds and export a version through Showdown. Personal changes retain original credits. Applying a build preserves passport/journal details; missing competitive team members can be recreated from the saved version.
-- **Honors:** Passport → Journey → Honors, or Passport Options → Honorary achievements. Nine starter definitions and custom milestones support game, optional historic date, earned state, note and local screenshot. Trainer/save accomplishments carry an explicit manual-milestone label. Honors never affect ribbon/mark totals or transfer readiness.
-- **Journey notes:** Passport → Journey → Notes. Add/edit/remove memories and screenshots; Move Dex records are manual move/game notes with a separately checked HOME status. They do not infer registration or move legality.
+- **Honors:** Passport → Journey → Milestones, or Passport Options → Milestones. Nine starter definitions and custom milestones support game, optional historic date, earned state, note and local screenshot. Trainer/save accomplishments carry an explicit manual-milestone label. Honors never affect ribbon/mark totals or transfer readiness.
+- **Journey notes:** Passport → Journey → Memories or Move Dex. Add/edit/remove memories and screenshots; Move Dex records are manual move/game notes with a separately checked HOME status. They do not infer registration or move legality.
 - **Credits:** Settings → Credits → Sources & credits. Search 57 references/credits by author or website, open original source links, read bundled licence notices and save a local correction note. Guides and teams also link directly to their own credits. Nothing is posted or sent to an author.
 - **Local backup:** Settings → Collection → App backup saves/restores complete app records, including screenshots, notebooks and recovery history. The restore preview asks before replacing the collection and retains recovery versions. Matched ribbons.guide imports preserve the new local passport metadata; website and Showdown exports omit unsupported app fields.
 

@@ -119,6 +119,7 @@ struct RecoveryVersionView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.colorScheme) private var scheme
     @State private var restored = false
+    @State private var showingSavedDetails = false
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: entry.pokemon?.currentgame ?? "") }
     private var changes: [String] { RecoveryComparison.changes(for: entry, in: store.snapshot) }
     private var alreadyCurrent: Bool { store.snapshot.matchesRecoveryVersion(entry) }
@@ -134,23 +135,6 @@ struct RecoveryVersionView: View {
                     }
                 }.padding(.vertical, 6)
             }.listRowBackground(theme.panel)
-            if let p = entry.pokemon {
-                pokemonDetails(p)
-            } else if let team = entry.team {
-                Section("Saved team") {
-                    ForEach(Array(team.memberIDs.enumerated()), id: \.offset) { _, id in
-                        let member = entry.members.first { $0.id == id } ?? store.snapshot.pokemon.first { $0.id == id }
-                        HStack(spacing: 9) {
-                            if let member { PokemonSprite(pokemon: member).frame(width: 32, height: 34) }
-                            Text(member?.displayName ?? "Unavailable Pokémon").font(PixelFont.font(17))
-                            Spacer(minLength: 4)
-                            if store.snapshot.section(forPokemon: id) != entry.section.teamKind { Text("Missing").font(PixelFont.font(12)).foregroundStyle(theme.warningInk) }
-                        }.listRowBackground(theme.panel)
-                    }
-                    Text("Only members still in your collection and in this section will be included. Recover missing Pokémon first to restore the full team.")
-                        .font(PixelFont.font(13)).foregroundStyle(theme.muted).listRowBackground(theme.panel)
-                }
-            }
             if !changes.isEmpty {
                 Section("What will change") {
                     ForEach(changes, id: \.self) { Text($0).font(PixelFont.font(15)).listRowBackground(theme.panel) }
@@ -168,6 +152,30 @@ struct RecoveryVersionView: View {
                 Text(entry.kind == .pokemon && !store.snapshot.containsRecoveryItem(entry)
                      ? "The original position and team memberships are used where space is available. Occupied slots stay in place."
                      : "The details being replaced will stay in Recovery history.").font(PixelFont.font(13))
+            }
+            Section {
+                Button { showingSavedDetails.toggle() } label: {
+                    HStack { Text("Saved details"); Spacer(); Text(showingSavedDetails ? "−" : "+") }.frame(minHeight: 44)
+                }.accessibilityIdentifier("recovery.details").accessibilityValue(showingSavedDetails ? "Expanded" : "Collapsed").listRowBackground(theme.panel)
+            }
+            if showingSavedDetails {
+                if let p = entry.pokemon {
+                    pokemonDetails(p)
+                } else if let team = entry.team {
+                    Section("Saved team") {
+                        ForEach(Array(team.memberIDs.enumerated()), id: \.offset) { _, id in
+                            let member = entry.members.first { $0.id == id } ?? store.snapshot.pokemon.first { $0.id == id }
+                            HStack(spacing: 9) {
+                                if let member { PokemonSprite(pokemon: member).frame(width: 32, height: 34) }
+                                Text(member?.displayName ?? "Unavailable Pokémon").font(PixelFont.font(17))
+                                Spacer(minLength: 4)
+                                if store.snapshot.section(forPokemon: id) != entry.section.teamKind { Text("Missing").font(PixelFont.font(12)).foregroundStyle(theme.warningInk) }
+                            }.listRowBackground(theme.panel)
+                        }
+                        Text("Only members still in your collection and in this section will be included. Recover missing Pokémon first to restore the full team.")
+                            .font(PixelFont.font(13)).foregroundStyle(theme.muted).listRowBackground(theme.panel)
+                    }
+                }
             }
         }.font(PixelFont.font(16)).scrollContentBackground(.hidden).background(theme.paper).foregroundStyle(theme.ink).tint(theme.accent)
             .navigationTitle("Preview version").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()

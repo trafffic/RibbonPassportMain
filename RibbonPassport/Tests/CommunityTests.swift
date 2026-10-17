@@ -148,4 +148,35 @@ final class CommunityTests: XCTestCase {
             }
         }
     }
+    @MainActor func testStreamlinedScreensRenderAtCompactWidths() throws {
+        var collection = SharedStore.demo(); collection.organizeSections()
+        let p = try XCTUnwrap(collection.pokemon.first)
+        var previous = p; previous.nickname = "Earlier name"
+        let entry = RecoveryEntry(action: .edited, kind: .pokemon, objectID: p.id, section: .ribbon, pokemon: previous)
+        collection.recoveryHistory = [entry]
+        let store = AppStore(snapshot: collection, save: { _ in })
+        for width: CGFloat in [320, 390] {
+            for dark in [false, true] {
+                let screens: [(String, AnyView)] = [
+                    ("empty", AnyView(PCStorageView(kind: .showdown))),
+                    ("journey", AnyView(StampAlbumView(pokemonID: p.id, section: .journey))),
+                    ("ribbons", AnyView(RibbonManager(pokemon: .constant(p), embedded: true, onSave: {}))),
+                    ("widgets", AnyView(WidgetStudioView())),
+                    ("recovery", AnyView(RecoveryVersionView(entry: entry))),
+                    ("memory", AnyView(JourneyRecordEditor(pokemonID: p.id, entry: PassportJournalEntry(title: "First adventure")))),
+                    ("dated-milestone", AnyView(HonorRecordEditor(pokemonID: p.id, record: PassportHonor(catalogID: "custom", title: "First win", game: p.currentgame, date: "2024-02-29"))))]
+                for (name, view) in screens {
+                    let size = CGSize(width: width, height: 640)
+                    let window = UIWindow(frame: CGRect(origin: .zero, size: size))
+                    let host = UIHostingController(rootView: NavigationStack { view }.environmentObject(store).environment(\.colorScheme, dark ? .dark : .light).textFieldStyle(TerminalFieldStyle()).buttonStyle(RetroAction()).toggleStyle(TerminalToggleStyle()))
+                    window.rootViewController = host; window.makeKeyAndVisible(); host.view.frame = window.bounds; host.view.layoutIfNeeded()
+                    RunLoop.main.run(until: Date().addingTimeInterval(0.1))
+                    let image = UIGraphicsImageRenderer(size: size).image { _ in host.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+                    let shot = XCTAttachment(image: image); shot.name = "streamlined-\(name)-\(Int(width))-\(dark ? "dark" : "light")"; shot.lifetime = .keepAlways; add(shot)
+                    XCTAssertEqual(image.size, size); window.isHidden = true
+                }
+            }
+        }
+    }
+
 }

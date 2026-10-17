@@ -1,3 +1,26 @@
+# Usability passes 1–3 — 17 October 2026
+
+The implementation covers empty collection entry points, explicit import/demo/edit actions, separate ribbon details and recording controls, Journey shortcuts and pagination labels, unresolved transfer status and a direct met-level editor, comparison-first recovery previews, simplified widget setup, direct numeric levels, optional date pickers, labelled editor controls and community-card game names. Optional/Last chance markers and the existing ribbon rules remain available.
+
+Before the request to stop simulator work, the run completed **93 unit/render tests and 16 interaction tests with zero failures** (`TEST SUCCEEDED`). Interaction coverage included empty collections, direct Pokémon editing, Move Dex access, optional memory dates and reopening, recovery restore placement, optional widget customisation/setup, ribbon details versus recording, and existing gallery/community/recovery/transfer flows. Tests use isolated in-memory collections and a separate Debug preferences suite.
+
+Subsequent refinements include toolbar touch targets, consistent Milestones/Cancel wording, ribbon status/accessibility markers and the met-level interaction fixture. The additional met-level Save/Undo interaction test has **not been executed**. Its fixture uses a level-85 Pokémon with an unknown met level so that the unresolved Footprint warning is present. The earlier 16-test result does not cover that added test or every final refinement.
+
+After simulator work was stopped, review continued through source inspection and iPhone SDK compilation only. No simulator was launched and no screenshots or simulator streams were captured during that continuation. Final visual review, physical-device interaction, VoiceOver and larger text sizes remain unverified for this update.
+
+The final unsigned **Release iPhone app and widget build passed** (`BUILD SUCCEEDED`). A separate Debug **build-for-testing for a generic iPhone passed** (`TEST BUILD SUCCEEDED`), compiling the unit/UI test targets and the added met-level test without executing them. `git diff --check` also passed. Device signing, App Groups and persisted collection formats were not changed.
+
+On an iPhone, confirm these remaining interactions:
+
+1. In a Gen VI-or-later Footprint warning for a Pokémon above level 70, open **Set met level**, enter a valid value, save and Undo; check both the passport and standalone ribbon editor paths.
+2. Try numeric entry, optional dates, keyboard dismissal and Save/Cancel with a small screen and larger text.
+3. Save a widget design, follow the Home Screen setup steps and check an existing widget's saved design remains independent.
+4. Check menu/dialog dismissal with touch and VoiceOver, and select/cancel Photos and Files operations.
+
+See [UI-UPDATE.md](UI-UPDATE.md) for the implemented changes. Older validation records below describe their respective revisions.
+
+---
+
 # Community screens — 17 October 2026
 
 The new feature checks and relevant existing regressions passed **28 unit/render tests** with zero failures. All **four simulator interaction flows** passed: honor add/reopen/remove; journal and manual Move Dex saving; guide/source navigation and author search in Settings; and attributed team copying followed by named team-version saving. The app and widget extension pass an unsigned Release iPhone build. Native screenshots were inspected at 320- and 390-point widths in light/dark, including the compact guide, credits, source card and notebooks.

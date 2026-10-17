@@ -65,6 +65,7 @@ struct PCStorageView: View {
     @State private var boxIndex = 0
     @State private var choosingBox = false
     @State private var adding = false
+    @State private var editingPokemon: RibbonPokemon?
     @State private var editingWallpaper = false
     @State private var importing = false
     @State private var showdown = false
@@ -104,7 +105,7 @@ struct PCStorageView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     HStack {
-                        Text(kind.title.uppercased()).font(PixelFont.font(25))
+                        Text(kind.title.uppercased()).font(PixelFont.font(25)).lineLimit(1).minimumScaleFactor(0.75)
                         Spacer(minLength: 4)
                         TerminalMenu(compact: true) {
                             TerminalMenuLink("Teams") { RetroTeamsView(kind: kind) }
@@ -112,17 +113,17 @@ struct PCStorageView: View {
                             TerminalMenuLink("Widgets") { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) }
                             Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
                             if kind == .ribbon {
-                                Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
+                                Button("Import ribbons.guide backup", systemImage: "square.and.arrow.down") { importing = true }
                                 Button("Export Ribbon Masters", systemImage: "square.and.arrow.up") {
                                     exporting = PokemonExportSelection(pokemon: store.snapshot.pokemon(for: .ribbon), target: .ribbonsGuide)
                                 }.disabled(store.snapshot.pokemon(for: .ribbon).isEmpty)
-                                Button("Refresh demo", systemImage: "sparkles") { store.demo() }
+                                Button(store.snapshot.pokemon.contains { $0.source == "demo" } ? "Refresh demo" : "Try demo", systemImage: "sparkles") { store.demo() }
                             } else { Button("Import Showdown team", systemImage: "doc.on.clipboard") { showdown = true } }
                             Button("New box", systemImage: "plus.square") {
                                 store.editStorage(kind: kind) { $0.boxes.append(PCBox(name: String(format: "Box %02d", $0.boxes.count + 1))) }
                                 boxIndex = layout.boxes.count - 1
                             }
-                        } label: { TerminalCornerLabel(title: "Options") }.buttonStyle(.plain).accessibilityLabel("Collection options")
+                        } label: { Label("Options", systemImage: "ellipsis").font(PixelFont.font(14)).frame(minHeight: 44) }.buttonStyle(.plain).accessibilityLabel("Collection options")
                     }
                     if store.snapshot.pokemon(for: kind).isEmpty { emptyCollection }
                     HStack {
@@ -184,6 +185,10 @@ struct PCStorageView: View {
                 .sheet(isPresented: $adding) { AddPokemonView(boxID: box.id, kind: kind) { id in
                     if let index = layout.boxes.firstIndex(where: { $0.slots.contains(id) }) { boxIndex = index }
                 } }
+                .sheet(item: $editingPokemon) { pokemon in
+                    if kind == .showdown { CompetitiveBuildEditor(pokemon: pokemon) }
+                    else { NavigationStack { PokemonEditor(pokemon: pokemon) } }
+                }
                 .sheet(isPresented: $choosingBox) { boxPicker }
                 .sheet(isPresented: $editingWallpaper) { BoxWallpaperEditor(box: box, settings: layout.wallpaper(for: box), kind: kind) }
                 .sheet(item: $exporting) { PokemonExportView(selection: $0) }
@@ -209,8 +214,16 @@ struct PCStorageView: View {
     }
     private var emptyCollection: some View {
         VStack(spacing: 10) {
-            Text("No Pokémon").font(PixelFont.font(22))
-            Button("Add Pokémon") { adding = true }
+            Text(kind == .ribbon ? "Start your ribbon journey" : "Build your first team").font(PixelFont.font(22))
+            if kind == .ribbon {
+                Button("Import ribbons.guide backup") { importing = true }.accessibilityIdentifier("pc.empty.import")
+                Button("Try demo") { store.demo() }.accessibilityIdentifier("pc.empty.demo")
+            } else {
+                Button("Import Showdown team") { showdown = true }.accessibilityIdentifier("pc.empty.showdown")
+                NavigationLink { CommunityTeamLibraryView() } label: { Text("Browse community teams").frame(maxWidth: .infinity) }
+                    .accessibilityIdentifier("pc.empty.library")
+            }
+            Button("Add Pokémon") { adding = true }.accessibilityIdentifier("pc.empty.add")
         }.buttonStyle(RetroAction()).frame(maxWidth: .infinity).retroPanel()
     }
     private var boxHeader: some View {
@@ -347,6 +360,7 @@ struct PCStorageView: View {
     }
     @ViewBuilder private func pokemonMenu(_ p: RibbonPokemon) -> some View {
         Button(kind == .ribbon ? "Open passport" : "Open build") { passportSection = .overview; store.openPokemonID = p.id }
+        Button("Edit Pokémon") { editingPokemon = p }.accessibilityIdentifier("pc.pokemon.edit")
         Button(moving ? "Cancel move" : "Move") { moving.toggle() }
         if layout.partyIDs.contains(p.id) { Button("Return to box") { store.editStorage(kind: kind) { $0.returnToBox(p.id) } } }
         Button("Add to party") { store.editStorage(kind: kind) { _ = $0.moveToParty(p.id) }; partyVisible = true }
@@ -368,7 +382,7 @@ struct PCStorageView: View {
                 }
             }
             Button(kind == .ribbon ? "Passport ▸" : "Build ▸") { passportSection = .overview; store.openPokemonID = p.id }.font(PixelFont.font(13)).buttonStyle(.plain)
-            TerminalMenu(compact: true) { pokemonMenu(p) } label: { TerminalCornerLabel(title: "Edit") }.accessibilityLabel("Pokémon actions")
+            TerminalMenu(compact: true) { pokemonMenu(p) } label: { Image(systemName: "ellipsis").frame(width: 44, height: 44).retroPanel(padding: 0) }.accessibilityLabel("Pokémon actions")
         }.padding(9).background(theme.panel, in: RoundedRectangle(cornerRadius: 4))
     }
     @ViewBuilder private var dragSprites: some View {
@@ -596,11 +610,12 @@ struct StampAlbumView: View {
                         RibbonManager(pokemon: pokemonBinding, entryTitle: "Passport", embedded: true) { section = .overview }
                     } else if section == .journey {
                         VStack(spacing: 0) {
-                            HStack(spacing: 8) {
-                                NavigationLink { HonorAlbumView(pokemonID: pokemonID) } label: { Text("Honors").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.honors")
-                                NavigationLink { JourneyNotesView(pokemonID: pokemonID) } label: { Text("Notes").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.notes")
-                                NavigationLink { FieldGuideLibraryView(pokemonID: pokemonID, initialGame: p.currentgame) } label: { Text("Guides").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.guides")
-                            }.font(PixelFont.font(15)).buttonStyle(.plain).padding(.horizontal, 16)
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
+                                NavigationLink { HonorAlbumView(pokemonID: pokemonID) } label: { Text("Milestones").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.honors")
+                                NavigationLink { JourneyNotesView(pokemonID: pokemonID) } label: { Text("Memories").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.notes")
+                                NavigationLink { JourneyNotesView(pokemonID: pokemonID, initialTab: "Move Dex") } label: { Text("Move Dex").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.moves")
+                                NavigationLink { FieldGuideLibraryView(pokemonID: pokemonID, initialGame: p.currentgame) } label: { Text("Field guides").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.guides")
+                            }.font(PixelFont.font(15)).buttonStyle(RetroAction()).padding(.horizontal, 16).padding(.top, 8)
                             journey(p).padding(16)
                         }
                     } else {
@@ -646,8 +661,9 @@ struct StampAlbumView: View {
                     TerminalMenu(compact: true) {
                         Button("Edit Pokémon") { editing = true }
                         Button("Edit visits") { editingVisits = true }.accessibilityIdentifier("passport.editVisits")
-                        TerminalMenuLink("Honorary achievements") { HonorAlbumView(pokemonID: pokemonID) }
-                        TerminalMenuLink("Journey notes") { JourneyNotesView(pokemonID: pokemonID) }
+                        TerminalMenuLink("Milestones") { HonorAlbumView(pokemonID: pokemonID) }
+                        TerminalMenuLink("Memories") { JourneyNotesView(pokemonID: pokemonID) }
+                        TerminalMenuLink("Move Dex notes") { JourneyNotesView(pokemonID: pokemonID, initialTab: "Move Dex") }
                         TerminalMenuLink("Ribbon field guides") { FieldGuideLibraryView(pokemonID: pokemonID, initialGame: p?.currentgame ?? "") }
                         Button("Export", systemImage: "square.and.arrow.up") {
                             if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
@@ -669,7 +685,11 @@ struct StampAlbumView: View {
                         if updated.recordRibbon(id, game: game) { store.update(updated); if store.error == nil { transferUndo = previous } }
                     }, onUndo: {
                         if let previous = transferUndo { store.update(previous); if store.error == nil { transferUndo = nil } }
-                    }, onDone: { reviewingTransfer = false })
+                    }, onDone: { reviewingTransfer = false }, onMetLevelChange: { level in
+                        guard var updated = self.p else { return }
+                        let previous = updated; updated.metLevel = level; store.update(updated)
+                        if store.error == nil { transferUndo = previous }
+                    })
                 }
             }
     }
@@ -812,7 +832,7 @@ struct StampAlbumView: View {
     private func albumPager(page: Int, count: Int, identifier: String, select: @escaping (Int) -> Void) -> some View {
         HStack {
             Button("‹ Previous") { select(page - 1) }.disabled(page == 0).accessibilityIdentifier(identifier + ".previous")
-            Spacer(); Text("\(page + 1) / \(count)").foregroundStyle(theme.muted); Spacer()
+            Spacer(); Text("\(identifier == "album.stamps" ? "Stamps" : "Awards") \(page + 1)/\(count)").foregroundStyle(theme.muted); Spacer()
             Button("Next ›") { select(page + 1) }.disabled(page + 1 >= count).accessibilityIdentifier(identifier + ".next")
         }.font(PixelFont.font(12)).frame(minHeight: 28)
     }
@@ -1084,7 +1104,7 @@ struct JourneyEditorView: View {
                         GameMascot(game: game, size: 30)
                         GameTitle(game: game, size: 15).lineLimit(2).minimumScaleFactor(0.8).frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    Text(visited ? "\(count) \(count == 1 ? "award" : "awards") · Assign ›" : "+ Add visit").font(PixelFont.font(12)).foregroundStyle(visited ? theme.ink : colour)
+                    Text(visited ? "\(count) assigned · Edit ›" : "+ Add visit").font(PixelFont.font(12)).foregroundStyle(visited ? theme.ink : colour)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityLabel((visited ? "Assign ribbons in " : "Add visit to ") + RibbonCatalog.shared.compactGameName(game)).accessibilityIdentifier("visits.game.\(game)")
@@ -1121,7 +1141,7 @@ struct GameAwardAssignmentView: View {
             if let p {
                 assignmentGrid(p)
                 HStack {
-                    Text("\(p.awards(earnedInGame: game).count) recorded here").font(PixelFont.font(13)).foregroundStyle(theme.muted).accessibilityIdentifier("visits.awards.count")
+                    Text("\(p.awards(earnedInGame: game).count) assigned here").font(PixelFont.font(13)).foregroundStyle(theme.muted).accessibilityIdentifier("visits.awards.count")
                     Spacer()
                     Button("Undo") { if let undo { store.update(undo); self.undo = nil } }.buttonStyle(RetroAction()).disabled(undo == nil).accessibilityIdentifier("visits.awards.undo")
                 }

@@ -64,7 +64,7 @@ struct AddPokemonView: View {
                         ForEach(0..<4, id: \.self) { i in TextField("Move \(i + 1)", text: $moves[i]) }
                     }
                 }
-            }.font(PixelFont.font(17)).navigationTitle("Add Pokémon").navigationBarTitleDisplayMode(.inline)
+            }.font(PixelFont.font(17)).terminalKeyboardDismissal().navigationTitle("Add Pokémon").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
                     TerminalToolbarItem(placement: .confirmationAction) {
@@ -187,7 +187,7 @@ struct BoxWallpaperEditor: View {
                         TerminalSlider(value: $settings.strength, in: 0...1, step: 0.05).accessibilityLabel("Tint strength")
                     }
                 }
-            }.font(PixelFont.font(17)).navigationTitle(box.name + " wallpaper").navigationBarTitleDisplayMode(.inline)
+            }.font(PixelFont.font(17)).terminalKeyboardDismissal().navigationTitle(box.name + " wallpaper").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
                     TerminalToolbarItem(placement: .confirmationAction) {
@@ -344,7 +344,7 @@ struct PokemonExportView: View {
                         }
                     }
                 }
-            }.font(PixelFont.font(17)).navigationTitle("Export Pokémon").navigationBarTitleDisplayMode(.inline)
+            }.font(PixelFont.font(17)).terminalKeyboardDismissal().navigationTitle("Export Pokémon").navigationBarTitleDisplayMode(.inline)
                 .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { dismiss() }  } }
                 .onAppear { prepare() }
                 .onChange(of: target) { _, _ in prepare() }

@@ -14,7 +14,7 @@ final class AppStore: ObservableObject {
     private let refreshWidgets: Bool
     static var interactionTesting: Bool {
         #if DEBUG
-        return ["1", "transfer", "recovery", "memory", "marks", "journey", "community"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
+        return ["1", "transfer", "recovery", "memory", "marks", "journey", "community", "empty", "metlevel"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
         #else
         return false
         #endif
@@ -28,6 +28,7 @@ final class AppStore: ObservableObject {
         if Self.interactionTesting {
             preferences.removePersistentDomain(forName: "RibbonPassport.InteractionTests")
             preferences.set(true, forKey: "pc.ribbon.partyVisible")
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "empty" { snapshot.organizeSections(); return }
             var a = RibbonPokemon(id: "drag-a", species: "metagross", currentgame: "bd", origingame: "diamond")
             if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "transfer" {
                 a.currentgame = "platinum"; a.origingame = "emerald"; a.metLevel = 5
@@ -35,6 +36,9 @@ final class AppStore: ObservableObject {
                     (RibbonRules.shared.awards[$0]?.gen ?? 99) <= 4 &&
                     !["footprint-ribbon", "pair-ability-ribbon", "legend-ribbon"].contains($0)
                 }
+            }
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "metlevel" {
+                a.currentgame = "as"; a.origingame = "emerald"; a.currentlevel = 85; a.metLevel = nil
             }
             if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "memory" {
                 a.currentgame = "as"; a.origingame = "emerald"
@@ -280,7 +284,7 @@ struct CollectionView: View {
             .terminalSearchable(text: $search, prompt: "Find a Pokémon")
             .toolbar { TerminalToolbarItem(placement: .topBarTrailing) {
                 TerminalMenu(compact: true) {
-                    Button("Import backup", systemImage: "square.and.arrow.down") { importing = true }
+                    Button("Import ribbons.guide backup", systemImage: "square.and.arrow.down") { importing = true }
                     Button("Paste Showdown team", systemImage: "doc.on.clipboard") { showdown = true }
                     Button("Add / refresh demo team", systemImage: "sparkles") { store.demo() }
                 } label: { TerminalCornerLabel(title: "Add") }.accessibilityLabel("Add")
@@ -378,8 +382,11 @@ struct PokemonEditor: View {
             Section {
                 Button("Use for single-Pokémon widgets") { store.choose(pokemon.id) }
             }
-        }.navigationTitle(pokemon.displayName).navigationBarTitleDisplayMode(.inline)
-            .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Save") { store.update(pokemon); dismiss() }.fontWeight(.semibold)  } }
+        }.font(PixelFont.font(17)).terminalKeyboardDismissal().navigationTitle(pokemon.displayName).navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
+                TerminalToolbarItem(placement: .confirmationAction) { TerminalCornerButton("Save") { store.update(pokemon); if store.error == nil { dismiss() } } }
+            }
             .sheet(isPresented: $awards) { RibbonManager(pokemon: $pokemon) { awards = false } }
             .sheet(isPresented: $marks) { AwardPicker(selection: $pokemon.ribbons) }
     }

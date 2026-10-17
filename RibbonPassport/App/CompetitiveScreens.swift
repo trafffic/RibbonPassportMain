@@ -213,7 +213,7 @@ struct CompetitiveBuildEditor: View {
                         }))
                     }
                 }
-            }.font(PixelFont.font(17)).navigationTitle("Edit build")
+            }.font(PixelFont.font(17)).terminalKeyboardDismissal().navigationTitle("Edit build")
                 .toolbar {
                     TerminalToolbarItem(placement: .cancellationAction) { TerminalCornerButton("Cancel") { dismiss() } }
                     TerminalToolbarItem(placement: .confirmationAction) { TerminalCornerButton("Save") {
@@ -260,7 +260,7 @@ struct RetroTeamArrangeView: View {
                 Button("Choose members") { adding = true }.buttonStyle(RetroAction())
                 Button("Save team") { save() }.buttonStyle(RetroAction(prominent: true)).disabled(!canSave)
             }.padding(16)
-        }.background(theme.paper).navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
+        }.terminalKeyboardDismissal().background(theme.paper).navigationTitle("Edit team").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl("Cancel")
             .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Save") { save() }.disabled(!canSave)  } }
             .sheet(isPresented: $adding) {
                 NavigationStack {
@@ -273,7 +273,7 @@ struct RetroTeamArrangeView: View {
                                 HStack { PokemonRow(pokemon: p); if let i = team.memberIDs.firstIndex(of: p.id) { Text("\(i + 1)") } }
                             }.disabled(!team.memberIDs.contains(p.id) && team.memberIDs.count >= 6)
                         }
-                    }.font(PixelFont.font(17)).navigationTitle("Members").toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { adding = false }  } }
+                    }.font(PixelFont.font(17)).terminalKeyboardDismissal().navigationTitle("Members").toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Done") { adding = false }  } }
                 }
             }
     }
@@ -320,7 +320,7 @@ struct RetroShowdownImportView: View {
                         } catch { self.error = error.localizedDescription }
                     }.buttonStyle(RetroAction(prominent: true)).disabled(export.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }.font(PixelFont.font(17)).padding(16)
-            }.background(theme.paper).navigationTitle("Import team").navigationBarTitleDisplayMode(.inline)
+            }.terminalKeyboardDismissal().background(theme.paper).navigationTitle("Import team").navigationBarTitleDisplayMode(.inline)
                 .toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Cancel") { dismiss() }  } }
         }
     }

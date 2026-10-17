@@ -594,3 +594,101 @@ final class AwardGalleryFeedbackUITests: XCTestCase {
         XCTAssertTrue(app.buttons["passport.owned"].label.contains("1"))
     }
 }
+
+final class StreamlinedUIUITests: XCTestCase {
+    private var app: XCUIApplication!
+    override func setUpWithError() throws { continueAfterFailure = false }
+    override func tearDownWithError() throws { app?.terminate(); app = nil }
+    private func launch(_ fixture: String) {
+        app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = fixture; app.launch()
+        XCTAssertTrue(app.buttons["Collection options"].waitForExistence(timeout: 10))
+    }
+    private func tap(_ element: XCUIElement) {
+        XCTAssertTrue(element.waitForExistence(timeout: 5))
+        for _ in 0..<8 { if element.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(element.isHittable); element.tap()
+    }
+    private func enter(_ text: String, into field: XCUIElement) {
+        tap(field)
+        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + text)
+        if app.buttons["keyboard.done"].exists { tap(app.buttons["keyboard.done"]) }
+    }
+    func testEmptyCollectionsExposeTheirStartingActions() {
+        launch("empty")
+        XCTAssertTrue(app.buttons["pc.empty.import"].isHittable)
+        XCTAssertTrue(app.buttons["pc.empty.demo"].isHittable)
+        tap(app.buttons["Competitive"])
+        XCTAssertTrue(app.buttons["pc.empty.showdown"].isHittable)
+        tap(app.buttons["pc.empty.library"])
+        XCTAssertTrue(app.textFields["library.search"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["library.games.iv-peterko"].exists)
+    }
+    func testCollectionActionsCanEditLevelDirectly() {
+        launch("community")
+        tap(app.buttons["Pokémon actions"]); tap(app.buttons["pc.pokemon.edit"])
+        let level = app.textFields["pokemon.level"]; enter("100", into: level)
+        tap(app.navigationBars.buttons["Save"])
+        XCTAssertTrue(app.staticTexts["Lv. 100 · Brilliant Diamond"].waitForExistence(timeout: 5))
+    }
+    func testJourneyHasDirectMoveNotesAndOptionalMemoryDate() {
+        launch("community")
+        tap(app.buttons["Passport ▸"]); tap(app.buttons["passport.tab.journey"])
+        tap(app.buttons["passport.moves"])
+        XCTAssertTrue(app.buttons["moves.add"].waitForExistence(timeout: 5))
+        tap(app.buttons["navigation.back"].firstMatch); tap(app.buttons["passport.notes"])
+        tap(app.buttons["journal.add"])
+        enter("First visit", into: app.textFields["journal.title"])
+        let known = app.switches["journal.date.known"]; XCTAssertEqual(known.value as? String, "0")
+        tap(known); XCTAssertTrue(app.datePickers["journal.date"].exists)
+        tap(app.navigationBars.buttons["Save"])
+        tap(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "journal.entry.")).firstMatch)
+        XCTAssertEqual(app.textFields["journal.title"].value as? String, "First visit")
+        XCTAssertEqual(app.switches["journal.date.known"].value as? String, "1")
+    }
+    func testRecoveryStartsWithChangesAndRestore() {
+        launch("recovery")
+        tap(app.buttons["Settings"]); tap(app.buttons["recovery.open"])
+        tap(app.buttons["recovery.item.pokemon.drag-a"])
+        tap(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "recovery.version.")).firstMatch)
+        XCTAssertTrue(app.buttons["recovery.restore"].isHittable)
+        XCTAssertFalse(app.staticTexts["Species"].exists)
+        tap(app.buttons["recovery.restore"])
+        XCTAssertTrue(app.staticTexts["recovery.restored"].waitForExistence(timeout: 5))
+    }
+    func testWidgetSetupKeepsAdvancedControlsOptional() {
+        launch("community")
+        tap(app.buttons["Settings"]); tap(app.buttons["Ribbon widgets"])
+        XCTAssertTrue(app.buttons["widgets.addToHomeScreen"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["widgets.addToHomeScreen"].isHittable)
+        XCTAssertFalse(app.buttons["Palette: Sage"].exists)
+        tap(app.buttons["widgets.customise"])
+        XCTAssertTrue(app.buttons["Palette: Sage"].exists)
+        tap(app.buttons["widgets.addToHomeScreen"])
+        XCTAssertTrue(app.staticTexts["Hold an empty area on the Home Screen."].waitForExistence(timeout: 5))
+    }
+    func testTransferMetLevelCanBeSetAndUndone() {
+        launch("metlevel")
+        tap(app.buttons["ribbons.manage"]); tap(app.buttons["ribbons.transfer.review"])
+        let fix = app.buttons["ribbons.transfer.metLevel"]; XCTAssertTrue(fix.waitForExistence(timeout: 5)); tap(fix)
+        tap(app.switches["Met level known"])
+        enter("20", into: app.textFields["pokemon.metLevel"])
+        tap(app.navigationBars.buttons["Save"])
+        XCTAssertTrue(app.buttons["ribbons.transfer.undo"].waitForExistence(timeout: 5))
+        XCTAssertFalse(fix.exists)
+        tap(app.buttons["ribbons.transfer.undo"])
+        XCTAssertTrue(fix.waitForExistence(timeout: 5))
+    }
+    func testRibbonDetailsAndRecordingAreSeparate() {
+        launch("transfer")
+        tap(app.buttons["ribbons.manage"])
+        tap(app.buttons["ribbons.details.footprint-ribbon"])
+        XCTAssertTrue(app.staticTexts["Footprint Ribbon"].waitForExistence(timeout: 5))
+        tap(app.navigationBars.buttons["Done"])
+        let record = app.buttons["ribbons.tile.footprint-ribbon"]
+        XCTAssertTrue(record.waitForExistence(timeout: 5)); tap(record)
+        XCTAssertTrue(app.staticTexts["ribbons.feedback.title"].waitForExistence(timeout: 5))
+        XCTAssertFalse(record.exists)
+        tap(app.buttons["ribbons.feedback.undo"])
+        XCTAssertTrue(record.waitForExistence(timeout: 5))
+    }
+}

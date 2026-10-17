@@ -32,8 +32,8 @@ struct RetroAction: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         let t = PassportTheme(dark: scheme == .dark, game: "")
         configuration.label.font(PixelFont.font(16)).padding(.horizontal, 12).padding(.vertical, 11)
-            .frame(minHeight: 44).background(prominent ? t.ink : t.panel)
-            .foregroundStyle(prominent ? t.paper : t.ink)
+            .frame(minHeight: 44).background(configuration.role == .destructive ? t.warningSurface : prominent ? t.ink : t.panel)
+            .foregroundStyle(configuration.role == .destructive ? t.warningInk : prominent ? t.paper : t.ink)
             .overlay(Rectangle().stroke(t.border, lineWidth: 1)).opacity(!enabled ? 0.4 : configuration.isPressed ? 0.65 : 1)
     }
 }
@@ -383,17 +383,27 @@ struct TerminalDisclosureGroup<Content: View>: View {
     }
 }
 
+/// Number entry is the primary control; +/- remain useful for small adjustments.
 struct TerminalStepper: View {
     var title: String
     @Binding var value: Int
     var bounds: ClosedRange<Int>
     init(_ title: String, value: Binding<Int>, in bounds: ClosedRange<Int>) { self.title = title; _value = value; self.bounds = bounds }
+    private var label: String {
+        title.hasSuffix(" \(value)") ? String(title.dropLast(String(value).count + 1)) : title
+    }
     var body: some View {
-        HStack { Text(title).font(PixelFont.font(15)); Spacer(); Button("−") { value -= 1 }.disabled(value <= bounds.lowerBound); Button("+") { value += 1 }.disabled(value >= bounds.upperBound) }.buttonStyle(RetroAction())
-            .accessibilityElement(children: .ignore).accessibilityLabel(title)
-            .accessibilityAdjustableAction { direction in value = min(bounds.upperBound, max(bounds.lowerBound, value + (direction == .increment ? 1 : -1))) }
+        HStack(spacing: 8) {
+            Text(label).font(PixelFont.font(15)).frame(maxWidth: .infinity, alignment: .leading)
+            Button("−") { value = max(bounds.lowerBound, value - 1) }.disabled(value <= bounds.lowerBound).accessibilityLabel("Decrease " + label)
+            TextField(label, value: Binding(get: { value }, set: { value = min(bounds.upperBound, max(bounds.lowerBound, $0)) }), format: .number.grouping(.never))
+                .keyboardType(.numberPad).multilineTextAlignment(.center).frame(width: 56)
+                .accessibilityLabel(label).accessibilityIdentifier(label == "Level" ? "pokemon.level" : "pokemon.metLevel")
+            Button("+") { value = min(bounds.upperBound, value + 1) }.disabled(value >= bounds.upperBound).accessibilityLabel("Increase " + label)
+        }.buttonStyle(RetroAction())
     }
 }
+
 struct TerminalMenuLink<Destination: View>: View {
     var title: String
     @ViewBuilder var destination: () -> Destination
@@ -473,10 +483,14 @@ struct TerminalCornerLabel: View {
     }
     var body: some View {
         let theme = PassportTheme(dark: scheme == .dark, game: "")
-        TerminalGlyph(kind: glyph).frame(width: 20, height: 20)
-            .frame(width: 40, height: 40).foregroundStyle(theme.ink)
+        let labelled = ["save", "cancel", "done", "add"].contains(title.lowercased())
+        HStack(spacing: 5) {
+            TerminalGlyph(kind: glyph).frame(width: labelled ? 15 : 20, height: labelled ? 15 : 20)
+            if labelled { Text(title).font(PixelFont.font(14)) }
+        }.padding(.horizontal, labelled ? 8 : 0)
+            .frame(minWidth: 40, minHeight: 40).foregroundStyle(theme.ink)
             .background(theme.panel).overlay(Rectangle().stroke(theme.border))
-            .frame(width: 48, height: 48).contentShape(Rectangle()).fixedSize()
+            .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle()).fixedSize()
     }
 }
 struct TerminalCornerButton: View {

@@ -1,7 +1,25 @@
 import SwiftUI
+import UIKit
+
+struct TerminalKeyboardDismissal: ViewModifier {
+    func body(content: Content) -> some View {
+        content.scrollDismissesKeyboard(.interactively).toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Done typing") { UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil) }
+                    .font(PixelFont.font(15)).accessibilityIdentifier("keyboard.done")
+            }
+        }
+    }
+}
+extension View {
+    func terminalKeyboardDismissal() -> some View { modifier(TerminalKeyboardDismissal()) }
+}
 
 struct CommunityPage<Content: View>: View {
     var title: String
+    var editing = false
+    @Environment(\.dismiss) private var dismiss
     @ViewBuilder var content: () -> Content
     @Environment(\.colorScheme) private var scheme
     var body: some View {
@@ -11,7 +29,12 @@ struct CommunityPage<Content: View>: View {
                 .padding(16).frame(maxWidth: 700, alignment: .leading).frame(maxWidth: .infinity)
         }.scrollDismissesKeyboard(.interactively).background(theme.paper).foregroundStyle(theme.ink).font(PixelFont.font(16))
             .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
-            .toolbar(.visible, for: .navigationBar).terminalBackControl()
+            .toolbar(.visible, for: .navigationBar).navigationBarBackButtonHidden(true)
+            .toolbar { TerminalToolbarItem(placement: .cancellationAction) {
+                if editing { TerminalCornerButton("Cancel") { dismiss() }.accessibilityIdentifier("navigation.back") }
+                else { TerminalCornerButton("Back", kind: .back) { dismiss() }.accessibilityIdentifier("navigation.back") }
+            } }
+            .terminalKeyboardDismissal()
             .toolbar { TerminalToolbarItem(placement: .principal) { Text(title).font(PixelFont.font(19)).lineLimit(1).minimumScaleFactor(0.75) } }
     }
 }
@@ -165,6 +188,7 @@ struct CommunityTeamLibraryView: View {
                             }
                         }.accessibilityHidden(true)
                         Text("\(team.facility) · \(team.format)").font(PixelFont.font(13))
+                        Text(team.gameIDs.map { RibbonCatalog.shared.compactGameName($0) }.joined(separator: " / ")).font(PixelFont.font(13)).accessibilityIdentifier("library.games." + team.id)
                         Text("By \(team.author)").font(PixelFont.font(13)).foregroundStyle(.secondary)
                     }.frame(maxWidth: .infinity, alignment: .leading).retroPanel()
                 }.buttonStyle(.plain).accessibilityIdentifier("library.team." + team.id)
@@ -187,20 +211,20 @@ struct CommunityTeamDetailView: View {
             Text("By \(team.author)").font(PixelFont.font(17)).accessibilityIdentifier("team.author")
             Text("\(team.facility) · \(team.format)").font(PixelFont.font(14)).foregroundStyle(.secondary)
             TerminalSelector(title: "Game", selection: Binding(get: { selectedGame }, set: { game = $0 }), values: RibbonCatalog.shared.orderedGames(team.gameIDs), name: { RibbonCatalog.shared.gameName($0) })
+            if let savedID {
+                Text("Personal copy saved").foregroundStyle(Color(hex: "718F4E")).accessibilityIdentifier("library.saved")
+                NavigationLink { RetroTeamDetailView(teamID: savedID) } label: { CommunityRow(title: "Open my copy", subtitle: "Edit builds and save versions") }.buttonStyle(.plain)
+            } else {
+                Button("Save personal copy") {
+                    var next = store.snapshot
+                    let id = next.copyCommunityTeam(team, game: selectedGame)
+                    store.commit(next); if store.error == nil { savedID = id }
+                }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("library.copy")
+            }
             TerminalSelector(title: "View", selection: $chapter, values: ["Team", "Strategy", "Sources"], name: { $0 }, inline: true)
             if chapter == "Team" {
                 ForEach(Array(team.members.enumerated()), id: \.offset) { _, member in CommunityMemberPanel(member: member, game: selectedGame) }
                 if let note = team.sourceVariantNote { Text(note).font(PixelFont.font(14)).foregroundStyle(.secondary) }
-                if let savedID {
-                    Text("Personal copy saved").foregroundStyle(Color(hex: "718F4E")).accessibilityIdentifier("library.saved")
-                    NavigationLink { RetroTeamDetailView(teamID: savedID) } label: { CommunityRow(title: "Open my copy", subtitle: "Edit builds and save versions") }.buttonStyle(.plain)
-                } else {
-                    Button("Save personal copy") {
-                        var next = store.snapshot
-                        let id = next.copyCommunityTeam(team, game: selectedGame)
-                        store.commit(next); if store.error == nil { savedID = id }
-                    }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("library.copy")
-                }
             } else if chapter == "Strategy" {
                 Text(team.strategySummary).retroPanel()
                 RetroHeading(title: "Ribbon Master slot")
@@ -252,6 +276,7 @@ struct SourceReviewView: View {
             Text(source.kind == "official" ? "Official source" : source.kind == "app-assets" ? "Artwork, data or font credit" : "Community source · credit belongs to the original author").font(PixelFont.font(14))
             if let link = source.link { Link("Open original source ›", destination: link).buttonStyle(RetroAction()).accessibilityIdentifier("source.link") }
             RetroHeading(title: "My notes / correction")
+            Text("Private note").font(PixelFont.font(14)).foregroundStyle(.secondary)
             TextEditor(text: $note).scrollContentBackground(.hidden).font(PixelFont.font(16)).frame(minHeight: 140).retroPanel(padding: 8).accessibilityIdentifier("source.note")
             Text("Saved on this device. Nothing is sent to the author.").font(PixelFont.font(12)).foregroundStyle(.secondary)
             Button(saved ? "Saved" : "Save note") {

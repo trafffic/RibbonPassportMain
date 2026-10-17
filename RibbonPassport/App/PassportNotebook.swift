@@ -16,6 +16,27 @@ enum PassportNotes {
         return value.count == 10 && formatter.date(from: value).map { formatter.string(from: $0) == value } == true
     }
 }
+struct OptionalNotebookDate: View {
+    @Binding var value: String
+    var identifier: String
+    private var formatter: DateFormatter {
+        let result = DateFormatter(); result.locale = Locale(identifier: "en_US_POSIX")
+        result.dateFormat = "yyyy-MM-dd"; result.isLenient = false
+        return result
+    }
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Toggle("Date known", isOn: Binding(get: { !value.isEmpty }, set: { known in
+                value = known ? formatter.string(from: Date()) : ""
+            })).accessibilityIdentifier(identifier + ".known")
+            if !value.isEmpty {
+                DatePicker("Date", selection: Binding(get: { formatter.date(from: value) ?? Date() }, set: { value = formatter.string(from: $0) }), displayedComponents: .date)
+                    .datePickerStyle(.compact).accessibilityIdentifier(identifier)
+            }
+        }
+    }
+}
+
 struct NotebookPhotoField: View {
     @Binding var data: Data?
     @State private var selection: PhotosPickerItem?
@@ -64,7 +85,7 @@ struct HonorAlbumView: View {
         }.sorted { (CatalogOrder.gameIndex($0.games.first ?? ""), $0.id) < (CatalogOrder.gameIndex($1.games.first ?? ""), $1.id) }
     }
     var body: some View {
-        CommunityPage(title: "Honors album") {
+        CommunityPage(title: "Milestones") {
             if let p {
                 Text(p.displayName).font(PixelFont.font(25))
                 Text("Optional milestones · separate from ribbons and Ribbon Master completion").font(PixelFont.font(13)).foregroundStyle(.secondary)
@@ -98,9 +119,9 @@ struct HonorAlbumView: View {
                 }
                 Button("Add custom milestone") { editing = PassportHonor(catalogID: "custom", title: "", game: p.currentgame) }
                     .buttonStyle(RetroAction()).accessibilityIdentifier("honors.custom")
-                if definitions.isEmpty { Text("No standard honors for these games. You can add a custom milestone.").font(PixelFont.font(13)).foregroundStyle(.secondary) }
+                if definitions.isEmpty { Text("No preset milestones for these games. You can add your own.").font(PixelFont.font(13)).foregroundStyle(.secondary) }
                 if !(p.honors ?? []).isEmpty {
-                    RetroHeading(title: "Recorded honors")
+                    RetroHeading(title: "Recorded milestones")
                     ForEach(p.honors ?? []) { honor in
                         Button { editing = honor } label: {
                             CommunityRow(title: honor.title, subtitle: RibbonCatalog.shared.gameName(honor.game) + (honor.date.isEmpty ? "" : " · " + honor.date), symbol: honor.earned ? "★" : "☆")
@@ -126,7 +147,7 @@ struct HonorRecordEditor: View {
         return RibbonCatalog.shared.orderedGames(Array(Set(selected + (record.game.isEmpty ? [] : [record.game]))))
     }
     var body: some View {
-        CommunityPage(title: "Honor record") {
+        CommunityPage(title: "Milestone", editing: true) {
             if let definition {
                 Text(definition.title).font(PixelFont.font(26))
                 Text(definition.summary).retroPanel()
@@ -134,22 +155,23 @@ struct HonorRecordEditor: View {
             Text(record.trainerMilestone ? "Manual milestone for this Pokémon · the game records this for the trainer/save" : "Manual Pokémon achievement · not a ribbon")
                 .font(PixelFont.font(13)).foregroundStyle(.secondary)
             TerminalSelector(title: "Game", selection: $record.game, values: games, name: { RibbonCatalog.shared.gameName($0) })
-            TextField("Date · YYYY-MM-DD (optional)", text: $record.date).keyboardType(.numbersAndPunctuation).accessibilityIdentifier("honor.date")
+            OptionalNotebookDate(value: $record.date, identifier: "honor.date")
             Toggle("Earned", isOn: $record.earned).toggleStyle(TerminalToggleStyle())
             if definition == nil { Toggle("Trainer / save milestone", isOn: $record.trainerMilestone).toggleStyle(TerminalToggleStyle()) }
+            Text("Milestone notes").font(PixelFont.font(14)).foregroundStyle(.secondary)
             TextEditor(text: $record.note).scrollContentBackground(.hidden).font(PixelFont.font(16)).frame(minHeight: 120).retroPanel(padding: 8).accessibilityIdentifier("honor.note")
             NotebookPhotoField(data: $record.photo)
-            Button("Save honor") { save() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("honor.save")
+            Button("Save milestone") { save() }.buttonStyle(RetroAction(prominent: true)).accessibilityIdentifier("honor.save")
                 .disabled(record.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || record.game.isEmpty)
             if p?.honors?.contains(where: { $0.id == record.id }) == true {
-                Button("Remove honor", role: .destructive) {
+                Button("Remove milestone", role: .destructive) {
                     guard var p else { return }; p.honors?.removeAll { $0.id == record.id }; store.update(p)
                     if store.error == nil { dismiss() }
                 }.buttonStyle(RetroAction()).accessibilityIdentifier("honor.remove")
             }
             if !failure.isEmpty { Text(failure).foregroundStyle(.red) }
             if let definition { CommunitySources(ids: definition.sourceIDs) }
-        }.toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Save") { save() }.disabled(record.title.isEmpty || record.game.isEmpty) } }
+        }.toolbar { TerminalToolbarItem(placement: .topBarTrailing) { TerminalCornerButton("Save") { save() }.disabled(record.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || record.game.isEmpty) } }
     }
     private func save() {
         guard PassportNotes.validDate(record.date) else { failure = "Use YYYY-MM-DD, or leave the date empty."; return }
@@ -161,12 +183,16 @@ struct HonorRecordEditor: View {
 struct JourneyNotesView: View {
     var pokemonID: String
     @EnvironmentObject private var store: AppStore
-    @State private var tab = "Memories"
+    @State private var tab: String
+    init(pokemonID: String, initialTab: String = "Memories") {
+        self.pokemonID = pokemonID
+        _tab = State(initialValue: initialTab == "Move Dex" ? "Move Dex" : "Memories")
+    }
     @State private var journal: PassportJournalEntry?
     @State private var move: PassportMoveNote?
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     var body: some View {
-        CommunityPage(title: "Journey notes") {
+        CommunityPage(title: "Memories & Move Dex") {
             if let p {
                 Text(p.displayName).font(PixelFont.font(26))
                 TerminalSelector(title: "Notes", selection: $tab, values: ["Memories", "Move Dex"], name: { $0 }, inline: true)
@@ -203,10 +229,11 @@ struct JourneyRecordEditor: View {
     @State private var failure = ""
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     var body: some View {
-        CommunityPage(title: "Memory") {
+        CommunityPage(title: "Memory", editing: true) {
             TextField("Title", text: $entry.title).accessibilityIdentifier("journal.title")
             TerminalSelector(title: "Game", selection: $entry.game, values: [""] + (p.map { PassportNotes.games(for: $0) } ?? []), name: { $0.isEmpty ? "Not set" : RibbonCatalog.shared.gameName($0) })
-            TextField("Date · YYYY-MM-DD (optional)", text: $entry.date).keyboardType(.numbersAndPunctuation)
+            OptionalNotebookDate(value: $entry.date, identifier: "journal.date")
+            Text("Your memory").font(PixelFont.font(14)).foregroundStyle(.secondary)
             TextEditor(text: $entry.text).scrollContentBackground(.hidden).font(PixelFont.font(16)).frame(minHeight: 180).retroPanel(padding: 8).accessibilityIdentifier("journal.text")
             NotebookPhotoField(data: $entry.photo)
             Button("Save memory") { save() }.buttonStyle(RetroAction(prominent: true)).disabled(entry.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty).accessibilityIdentifier("journal.save")
@@ -216,7 +243,9 @@ struct JourneyRecordEditor: View {
                 }.buttonStyle(RetroAction()).accessibilityIdentifier("journal.remove")
             }
             if !failure.isEmpty { Text(failure).foregroundStyle(.red) }
-        }
+        }.toolbar { TerminalToolbarItem(placement: .confirmationAction) {
+            TerminalCornerButton("Save") { save() }.disabled(entry.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } }
     }
     private func save() {
         guard PassportNotes.validDate(entry.date) else { failure = "Use YYYY-MM-DD, or leave the date empty."; return }
@@ -232,22 +261,27 @@ struct MoveNoteEditor: View {
     @Environment(\.dismiss) private var dismiss
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     var body: some View {
-        CommunityPage(title: "Move note") {
+        CommunityPage(title: "Move note", editing: true) {
             TextField("Move", text: $entry.move).accessibilityIdentifier("move.name")
             TerminalSelector(title: "Game", selection: $entry.game, values: p.map { PassportNotes.games(for: $0) } ?? [], name: { RibbonCatalog.shared.gameName($0) })
             Toggle("Checked in HOME", isOn: $entry.homeChecked).toggleStyle(TerminalToggleStyle())
+            Text("Move notes").font(PixelFont.font(14)).foregroundStyle(.secondary)
             TextEditor(text: $entry.note).scrollContentBackground(.hidden).font(PixelFont.font(16)).frame(minHeight: 150).retroPanel(padding: 8)
             Text("A move noted here does not confirm that it can be used in another game.").font(PixelFont.font(13)).foregroundStyle(.secondary)
-            Button("Save move note") {
-                guard var p else { return }; var notes = p.moveNotes ?? []; notes.removeAll { $0.id == entry.id }; notes.append(entry); p.moveNotes = notes
-                store.update(p); if store.error == nil { dismiss() }
-            }.buttonStyle(RetroAction(prominent: true)).disabled(entry.move.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || entry.game.isEmpty).accessibilityIdentifier("move.save")
+            Button("Save move note") { save() }.buttonStyle(RetroAction(prominent: true)).disabled(entry.move.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || entry.game.isEmpty).accessibilityIdentifier("move.save")
             if p?.moveNotes?.contains(where: { $0.id == entry.id }) == true {
                 Button("Remove move note", role: .destructive) {
                     guard var p else { return }; p.moveNotes?.removeAll { $0.id == entry.id }; store.update(p); if store.error == nil { dismiss() }
                 }.buttonStyle(RetroAction())
             }
-        }
+        }.toolbar { TerminalToolbarItem(placement: .confirmationAction) {
+            TerminalCornerButton("Save") { save() }.disabled(entry.move.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || entry.game.isEmpty)
+        } }
+    }
+    private func save() {
+        guard var p, !entry.move.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !entry.game.isEmpty else { return }
+        var notes = p.moveNotes ?? []; notes.removeAll { $0.id == entry.id }; notes.append(entry); p.moveNotes = notes
+        store.update(p); if store.error == nil { dismiss() }
     }
 }
 
@@ -340,7 +374,7 @@ struct PersonalBuildEditor: View {
     @State private var failure = ""
     private var p: RibbonPokemon? { store.snapshot.pokemon.first { $0.id == pokemonID } }
     var body: some View {
-        CommunityPage(title: "Saved build") {
+        CommunityPage(title: "Saved build", editing: true) {
             TextField("Version name", text: $version.name)
             if let current = p?.showdownSet {
                 Text(current == version.build ? "Matches current build" : "Differs from current build").font(PixelFont.font(13)).foregroundStyle(.secondary)
@@ -353,6 +387,7 @@ struct PersonalBuildEditor: View {
                     while version.build.moves.count < 4 { version.build.moves.append("") }; version.build.moves[index] = value
                 }))
             }
+            Text("Version notes").font(PixelFont.font(14)).foregroundStyle(.secondary)
             TextEditor(text: $version.note).scrollContentBackground(.hidden).frame(minHeight: 120).retroPanel(padding: 8)
             Button("Save version") { save(apply: false) }.buttonStyle(RetroAction(prominent: true)).disabled(version.name.isEmpty)
             Button("Apply to Pokémon") { save(apply: true) }.buttonStyle(RetroAction()).accessibilityIdentifier("build.apply")
@@ -362,7 +397,9 @@ struct PersonalBuildEditor: View {
             }.buttonStyle(RetroAction())
             if !failure.isEmpty { Text(failure).foregroundStyle(.red) }
             CommunitySources(ids: version.sourceIDs)
-        }.sheet(item: $exporting) { PokemonExportView(selection: $0) }
+        }.toolbar { TerminalToolbarItem(placement: .confirmationAction) {
+            TerminalCornerButton("Save") { save(apply: false) }.disabled(version.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } }.sheet(item: $exporting) { PokemonExportView(selection: $0) }
     }
     private func save(apply: Bool) {
         guard var p, !version.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
@@ -380,15 +417,20 @@ struct TeamVersionNotesEditor: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        CommunityPage(title: "Version notes") {
+        CommunityPage(title: "Version notes", editing: true) {
             TextField("Version name", text: $version.name)
+            Text("Version notes").font(PixelFont.font(14)).foregroundStyle(.secondary)
             TextEditor(text: $version.note).scrollContentBackground(.hidden).frame(minHeight: 180).retroPanel(padding: 8)
-            Button("Save notes") {
-                guard var team = store.snapshot.teams.first(where: { $0.id == teamID }),
-                      let index = team.savedBuilds?.firstIndex(where: { $0.id == version.id }) else { return }
-                team.savedBuilds?[index] = version; store.saveTeam(team); if store.error == nil { dismiss() }
-            }.buttonStyle(RetroAction(prominent: true)).disabled(version.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        }
+            Button("Save notes") { save() }.buttonStyle(RetroAction(prominent: true)).disabled(version.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }.toolbar { TerminalToolbarItem(placement: .confirmationAction) {
+            TerminalCornerButton("Save") { save() }.disabled(version.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } }
+    }
+    private func save() {
+        guard !version.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              var team = store.snapshot.teams.first(where: { $0.id == teamID }),
+              let index = team.savedBuilds?.firstIndex(where: { $0.id == version.id }) else { return }
+        team.savedBuilds?[index] = version; store.saveTeam(team); if store.error == nil { dismiss() }
     }
 }
 struct LocalAppBackupView: View {
