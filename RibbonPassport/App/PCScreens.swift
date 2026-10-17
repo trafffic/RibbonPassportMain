@@ -108,6 +108,7 @@ struct PCStorageView: View {
                         Spacer(minLength: 4)
                         TerminalMenu(compact: true) {
                             TerminalMenuLink("Teams") { RetroTeamsView(kind: kind) }
+                            if kind == .showdown { TerminalMenuLink("Team library") { CommunityTeamLibraryView() }.accessibilityIdentifier("community.library.open") }
                             TerminalMenuLink("Widgets") { WidgetStudioView(initialContent: kind == .showdown ? .showdownTeam : .pokemon, section: kind) }
                             Button("Add Pokémon", systemImage: "plus.circle") { adding = true }
                             if kind == .ribbon {
@@ -594,7 +595,14 @@ struct StampAlbumView: View {
                     if section == .ribbons {
                         RibbonManager(pokemon: pokemonBinding, entryTitle: "Passport", embedded: true) { section = .overview }
                     } else if section == .journey {
-                        journey(p).padding(16)
+                        VStack(spacing: 0) {
+                            HStack(spacing: 8) {
+                                NavigationLink { HonorAlbumView(pokemonID: pokemonID) } label: { Text("Honors").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.honors")
+                                NavigationLink { JourneyNotesView(pokemonID: pokemonID) } label: { Text("Notes").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.notes")
+                                NavigationLink { FieldGuideLibraryView(pokemonID: pokemonID, initialGame: p.currentgame) } label: { Text("Guides").frame(maxWidth: .infinity, minHeight: 44) }.accessibilityIdentifier("passport.guides")
+                            }.font(PixelFont.font(15)).buttonStyle(.plain).padding(.horizontal, 16)
+                            journey(p).padding(16)
+                        }
                     } else {
                         ScrollView { overview(p).padding(16) }
                     }
@@ -638,6 +646,9 @@ struct StampAlbumView: View {
                     TerminalMenu(compact: true) {
                         Button("Edit Pokémon") { editing = true }
                         Button("Edit visits") { editingVisits = true }.accessibilityIdentifier("passport.editVisits")
+                        TerminalMenuLink("Honorary achievements") { HonorAlbumView(pokemonID: pokemonID) }
+                        TerminalMenuLink("Journey notes") { JourneyNotesView(pokemonID: pokemonID) }
+                        TerminalMenuLink("Ribbon field guides") { FieldGuideLibraryView(pokemonID: pokemonID, initialGame: p?.currentgame ?? "") }
                         Button("Export", systemImage: "square.and.arrow.up") {
                             if let p { exporting = PokemonExportSelection(pokemon: [p], target: .ribbonsGuide) }
                         }
@@ -646,7 +657,7 @@ struct StampAlbumView: View {
                 }
             }
             .sheet(item: $exporting) { PokemonExportView(selection: $0) }
-            .sheet(isPresented: $showingOwnedAwards) { if let p { OwnedAwardGallery(pokemon: p) } }
+            .sheet(isPresented: $showingOwnedAwards) { if let p { NavigationStack { OwnedAwardGallery(pokemon: p) } } }
             .sheet(isPresented: $editing) { if let p { NavigationStack { PokemonEditor(pokemon: p) }.font(PixelFont.font(16)) } }
             .sheet(isPresented: $editingVisits) { JourneyEditorView(pokemonID: pokemonID) }
             .sheet(item: $selectedAward) { choice in AwardLocationEditor(pokemonID: pokemonID, initialAward: choice.id) }
@@ -892,6 +903,11 @@ struct RibbonDescriptionBubble: View {
                 .font(PixelFont.font(16)).fixedSize(horizontal: false, vertical: true).padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading).background(theme.panel)
                 .accessibilityIdentifier("ribbon.description.text")
+            if !CommunityContent.shared.guides(award: awardID).isEmpty {
+                NavigationLink { FieldGuideLibraryView(awardID: awardID) } label: {
+                    Text("Field guide ›").font(PixelFont.font(14)).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading).padding(.horizontal, 12)
+                }.buttonStyle(.plain).accessibilityIdentifier("ribbon.description.guide")
+            }
         }.background {
             GeometryReader { geometry in Color.clear.preference(key: RibbonDescriptionHeight.self, value: geometry.size.height) }
         }

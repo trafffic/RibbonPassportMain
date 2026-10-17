@@ -1,5 +1,76 @@
 import XCTest
 
+final class CommunityScreensUITests: XCTestCase {
+    private var app: XCUIApplication!
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "community"; app.launch()
+        XCTAssertTrue(app.buttons["pc.box.slot.0"].waitForExistence(timeout: 10))
+    }
+    override func tearDownWithError() throws { app.terminate(); app = nil }
+    private func tap(_ element: XCUIElement) {
+        _ = element.waitForExistence(timeout: 2)
+        for _ in 0..<6 { if element.exists && element.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(element.exists)
+        element.tap()
+    }
+    private func capture(_ name: String) {
+        let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+    }
+    private func passportJourney() {
+        tap(app.buttons["Passport ▸"]); tap(app.buttons["passport.tab.journey"])
+    }
+    func testHonorRecordCanBeAddedEditedAndRemoved() {
+        passportJourney(); tap(app.buttons["passport.honors"]); tap(app.buttons["honors.custom"])
+        let title = app.textFields["honor.title"]; XCTAssertTrue(title.waitForExistence(timeout: 5)); title.tap(); title.typeText("First tournament")
+        tap(app.buttons["honor.save"])
+        let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "honors.record.")).firstMatch
+        tap(record); XCTAssertEqual(app.textFields["honor.title"].value as? String, "First tournament")
+        capture("community-honor-record")
+        tap(app.buttons["honor.remove"])
+        XCTAssertTrue(app.buttons["honors.custom"].waitForExistence(timeout: 5)); XCTAssertFalse(record.exists)
+    }
+    func testJourneyMemoryAndManualMoveNotesSave() {
+        passportJourney(); tap(app.buttons["passport.notes"]); tap(app.buttons["journal.add"])
+        let title = app.textFields["journal.title"]; XCTAssertTrue(title.waitForExistence(timeout: 5)); title.tap(); title.typeText("First visit")
+        tap(app.buttons["journal.save"])
+        let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "journal.entry.")).firstMatch
+        tap(record); XCTAssertEqual(app.textFields["journal.title"].value as? String, "First visit")
+        tap(app.buttons["navigation.back"].firstMatch)
+        tap(app.buttons["Move Dex"]); tap(app.buttons["moves.add"])
+        let move = app.textFields["move.name"]; XCTAssertTrue(move.waitForExistence(timeout: 5)); move.tap(); move.typeText("Meteor Mash")
+        tap(app.buttons["move.save"])
+        XCTAssertTrue(app.staticTexts["Meteor Mash"].waitForExistence(timeout: 5)); capture("community-move-notes")
+    }
+    func testGuidesAndSettingsCreditsShowOriginalAuthors() {
+        passportJourney(); tap(app.buttons["passport.guides"])
+        let guide = app.buttons["guide.bdsp-tower"]; tap(guide)
+        XCTAssertTrue(app.staticTexts["guide.title"].waitForExistence(timeout: 5)); capture("community-field-guide")
+        tap(app.buttons["Sources"])
+        XCTAssertTrue(app.staticTexts[".athis"].waitForExistence(timeout: 5))
+        tap(app.buttons["Settings"])
+        tap(app.buttons["settings.credits"])
+        let search = app.textFields["credits.search"]; XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("Peterko")
+        tap(app.buttons["credits.source.peterko-paste"])
+        XCTAssertTrue(app.staticTexts["source.author"].waitForExistence(timeout: 5)); XCTAssertEqual(app.staticTexts["source.author"].label, "Peterko")
+        capture("community-author-credit")
+    }
+    func testCommunityTeamCopyAndBuildNotebook() {
+        tap(app.buttons["Competitive"]); tap(app.buttons["Collection options"])
+        tap(app.buttons["community.library.open"])
+        let search = app.textFields["library.search"]; XCTAssertTrue(search.waitForExistence(timeout: 5)); search.tap(); search.typeText("Peterko")
+        tap(app.buttons["library.team.iv-peterko"])
+        XCTAssertEqual(app.staticTexts["team.author"].label, "By Peterko")
+        tap(app.buttons["library.copy"])
+        XCTAssertTrue(app.staticTexts["library.saved"].waitForExistence(timeout: 5))
+        tap(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "Open my copy")).firstMatch)
+        tap(app.buttons["team.notebook"])
+        let name = app.textFields["notebook.name"]; XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("First version")
+        tap(app.buttons["notebook.save"])
+        XCTAssertTrue(app.staticTexts["First version"].waitForExistence(timeout: 5)); capture("community-team-notebook")
+    }
+}
+
 final class PCInteractionUITests: XCTestCase {
     private var app: XCUIApplication!
     override func setUpWithError() throws {

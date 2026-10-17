@@ -460,6 +460,9 @@ struct RibbonManager: View {
                 VStack(alignment: .leading, spacing: 17) {
                     HStack { AssetImage(key: "award-" + id).frame(width: 43, height: 50); Text(RibbonCatalog.shared.awardPickerName(id)).font(PixelFont.font(23)) }
                     Text(rules.awards[id]?.description ?? "").font(PixelFont.font(17))
+                    if !CommunityContent.shared.guides(award: id).isEmpty {
+                        NavigationLink { FieldGuideLibraryView(awardID: id, initialGame: game) } label: { CommunityRow(title: "Field guide", subtitle: "Steps, teams and sources") }.buttonStyle(.plain).accessibilityIdentifier("ribbons.guide")
+                    }
                     Text(status(id)).font(PixelFont.font(15)).padding(12).frame(maxWidth: .infinity, alignment: .leading)
                         .background(transferCheck.lastChance.contains(id) ? theme.warningSurface : theme.board)
                         .foregroundStyle(transferCheck.lastChance.contains(id) ? theme.warningInk : theme.ink)

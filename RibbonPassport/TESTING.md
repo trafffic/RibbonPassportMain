@@ -1,3 +1,15 @@
+# Community screens — 17 October 2026
+
+The new feature checks and relevant existing regressions passed **28 unit/render tests** with zero failures. All **four simulator interaction flows** passed: honor add/reopen/remove; journal and manual Move Dex saving; guide/source navigation and author search in Settings; and attributed team copying followed by named team-version saving. The app and widget extension pass an unsigned Release iPhone build. Native screenshots were inspected at 320- and 390-point widths in light/dark, including the compact guide, credits, source card and notebooks.
+
+Coverage includes all 423 existing award/game guide mappings, source references, exportable independent team copies, legacy collection decoding, full app-backup round trips with attachments, unsupported backup versions, optional honors excluded from award/transfer logic, recovery of removed notes/photos, matched website reimport preservation, external export field exclusion, team-version restoration without changing existing passport details, missing-member reconstruction, origin-aware honor game choices and optional historic-date validation. Existing recovery, Memory Ribbon, description-bubble and compact passport render regressions also passed.
+
+Tests inject collections and save closures; interaction tests use the isolated Debug fixture and defaults suite. They do not use the user's collection. Screenshots/notes/builds are encoded in app backups and recoverable Pokémon/team records. Source correction notes are local app-backup fields. Source author links are tested for valid bundled references, not live code/rental availability or independent in-game success.
+
+On a physical iPhone, check screenshot selection from Photos (including cancellation or a failed iCloud download), keyboard dismissal, VoiceOver, larger text sizes, and saving/restoring an app backup through Files. Live photo-library selection and physical-device behavior were not automated. Published team results remain attributed source claims; exact mechanics still marked pending in Research are omitted or qualified in the bundled summaries.
+
+---
+
 # Current UI update validation
 
 ## Memory Ribbon display regression

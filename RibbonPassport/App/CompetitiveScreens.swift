@@ -19,6 +19,7 @@ struct RetroTeamsView: View {
                             if kind == .showdown { Button("Import Showdown team") { showdown = true } }
                         } label: { Label("Add", systemImage: "plus") }.buttonStyle(RetroAction())
                     }
+                    NavigationLink { CommunityTeamLibraryView() } label: { CommunityRow(title: "Community team library", subtitle: "Guides, builds and original authors") }.buttonStyle(.plain).accessibilityIdentifier("teams.library")
                     if store.snapshot.teams(for: kind).isEmpty {
                         VStack(spacing: 12) {
                             Text("No teams").font(PixelFont.font(22))
@@ -65,6 +66,10 @@ struct RetroTeamDetailView: View {
                 let showdown = store.snapshot.kind(of: team) == .showdown
                 VStack(alignment: .leading, spacing: 16) {
                     Text(team.name).font(PixelFont.font(31))
+                    if showdown {
+                        NavigationLink { BuildNotebookView(teamID: team.id) } label: { CommunityRow(title: "Build notebook", subtitle: "Named team versions") }.buttonStyle(.plain).accessibilityIdentifier("team.notebook")
+                        CommunitySources(ids: team.communitySourceIDs ?? [])
+                    }
                     HStack {
                         Text("\(members.count) Pokémon").font(PixelFont.font(14)).foregroundStyle(theme.muted)
                         Spacer()
@@ -126,6 +131,7 @@ struct CompetitiveBuildView: View {
         ScrollView {
             if let p, let b = p.showdownSet {
                 VStack(alignment: .leading, spacing: 16) {
+                    NavigationLink { BuildNotebookView(pokemonID: p.id) } label: { CommunityRow(title: "Build notebook", subtitle: "Save and compare builds") }.buttonStyle(.plain).accessibilityIdentifier("build.notebook")
                     HStack(spacing: 12) {
                         PokemonSprite(pokemon: p, download: true).frame(width: 104, height: 100)
                         VStack(alignment: .leading, spacing: 8) {

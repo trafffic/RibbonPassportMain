@@ -14,7 +14,7 @@ final class AppStore: ObservableObject {
     private let refreshWidgets: Bool
     static var interactionTesting: Bool {
         #if DEBUG
-        return ["1", "transfer", "recovery", "memory", "marks", "journey"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
+        return ["1", "transfer", "recovery", "memory", "marks", "journey", "community"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
         #else
         return false
         #endif
@@ -56,6 +56,13 @@ final class AppStore: ObservableObject {
             var first = PCBox(id: "drag-box-a", name: "Box 01"); first.slots[0] = a.id; first.slots[1] = b.id
             snapshot = CollectionSnapshot(pokemon: [a, b, c], selectedID: a.id, storage: StorageLayout(boxes: [first, PCBox(id: "drag-box-b", name: "Box 02")], partyIDs: [c.id]), selectedRibbonID: a.id)
             snapshot.organizeSections()
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "community" {
+                var competitive = RibbonPokemon(id: "build-a", species: "garchomp", currentgame: "scar", source: "showdown", showdownSet: ShowdownSet(item: "Life Orb", nature: "Jolly", moves: ["Earthquake"]))
+                competitive.nickname = "Notebook test"
+                snapshot.pokemon.append(competitive)
+                snapshot.teams.append(RibbonTeam(id: "build-team", name: "Notebook team", memberIDs: [competitive.id]))
+                snapshot.organizeSections()
+            }
             if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "recovery" {
                 var edited = snapshot
                 edited.pokemon[0].nickname = "Edited Metagross"
@@ -74,11 +81,19 @@ final class AppStore: ObservableObject {
         do { var loaded = try SharedStore.load(); loaded.organizeSections(); snapshot = loaded; error = nil }
         catch { self.error = error.localizedDescription }
     }
-    func commit(_ value: CollectionSnapshot, recoveryAction: RecoveryAction = .edited) {
+    func commit(_ value: CollectionSnapshot, recoveryAction: RecoveryAction = .edited, additionalHistory: [RecoveryEntry] = []) {
         do {
             var next = value; next.updatedAt = Date()
             next.organizeSections()
             next.captureRecovery(from: snapshot, action: recoveryAction)
+            if !additionalHistory.isEmpty {
+                var seen = Set<String>(); var counts: [String: Int] = [:]
+                next.recoveryHistory = Array(((next.recoveryHistory ?? []) + additionalHistory).filter {
+                    guard seen.insert($0.id).inserted else { return false }
+                    counts[$0.key, default: 0] += 1
+                    return counts[$0.key, default: 0] <= RecoveryEntry.versionsPerItem
+                }.prefix(RecoveryEntry.totalLimit))
+            }
             if Self.interactionTesting { snapshot = next; error = nil; return }
             try saveSnapshot(next); snapshot = next; error = nil
             if refreshWidgets { WidgetCenter.shared.reloadAllTimelines() }
@@ -114,6 +129,9 @@ final class AppStore: ObservableObject {
         clean.earnedGames = clean.earnedGames?.filter { clean.ribbons.contains($0.key) }
         next.pokemon[index] = clean; commit(next)
     }
+    func restoreAppBackup(_ value: CollectionSnapshot) {
+        commit(value, recoveryAction: .imported, additionalHistory: value.recoveryHistory ?? [])
+    }
     func importBackup(_ url: URL) {
         let access = url.startAccessingSecurityScopedResource()
         defer { if access { url.stopAccessingSecurityScopedResource() } }
@@ -125,6 +143,7 @@ final class AppStore: ObservableObject {
                 let p = incoming[index]
                 if let prior = existing.first(where: { !used.contains($0.id) && $0.species == p.species && $0.nickname == p.nickname && $0.origingame == p.origingame }) {
                     incoming[index].id = prior.id
+                    incoming[index].preservePassportExtras(from: prior)
                     incoming[index].visits = prior.visits
                     incoming[index].earnedGenerations = prior.earnedGenerations?.filter { incoming[index].ribbons.contains($0.key) }
                     incoming[index].earnedGames = prior.earnedGames?.filter { incoming[index].ribbons.contains($0.key) }
@@ -507,6 +526,7 @@ struct SettingsView: View {
                     Button("Refresh widgets") { WidgetCenter.shared.reloadAllTimelines() }
                 }
                 Section("Collection") {
+                    NavigationLink("App backup") { LocalAppBackupView() }
                     NavigationLink { RecoveryHistoryView() } label: { Text("Recovery history").font(PixelFont.font(17)) }
                         .accessibilityIdentifier("recovery.open")
                     Button("Reload saved collection") { store.reload() }
@@ -515,6 +535,9 @@ struct SettingsView: View {
                 Section("Rarity") {
                     NavigationLink("Estimated rarity guide") { RarityGuide() }
                     Text("Rankings are editorial estimates of availability and acquisition challenge, not measured ownership percentages. Top-three displays show ribbons; full boards and totals include marks.").font(.caption).foregroundStyle(.secondary)
+                }
+                Section("Credits") {
+                    NavigationLink("Sources & credits") { SourcesCreditsView() }.accessibilityIdentifier("settings.credits")
                 }
                 Section("About") {
                     Link("Open ribbons.guide", destination: URL(string: "https://ribbons.guide/")!)

@@ -1,0 +1,5921 @@
+{
+  "schemaVersion": 1,
+  "checkedOn": "2026-10-16",
+  "status": "research-draft-not-bundled-in-app",
+  "rulesSnapshot": "2026-10-15",
+  "decisions": {
+    "scope": "All ribbon games, including Switch",
+    "teamLibrary": "A few well-documented options per facility",
+    "offline": "Original short offline summaries with source links",
+    "honors": "Manual Pokémon milestones allowed even for trainer/save-wide feats; label their scope",
+    "screenScope": "Storyboard scenes 2–8; preserve main PC and existing passport organization"
+  },
+  "sources": [
+    {
+      "id": "athis-orre",
+      "title": "Athis Ribbon Handbook — orre",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/orre",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-rse",
+      "title": "Athis Ribbon Handbook — rse",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/hoenn",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-dppt",
+      "title": "Athis Ribbon Handbook — dppt",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/sinnoh",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-hgss",
+      "title": "Athis Ribbon Handbook — hgss",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/johto-remake",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-xy",
+      "title": "Athis Ribbon Handbook — xy",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/kalos",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-oras",
+      "title": "Athis Ribbon Handbook — oras",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/hoenn-remake",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-alola",
+      "title": "Athis Ribbon Handbook — alola",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/alola",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-galar",
+      "title": "Athis Ribbon Handbook — galar",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/galar",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-bdsp",
+      "title": "Athis Ribbon Handbook — bdsp",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/sinnoh-remake",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-hisui",
+      "title": "Athis Ribbon Handbook — hisui",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/hisui",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-paldea",
+      "title": "Athis Ribbon Handbook — paldea",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/paldea",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "athis-starter",
+      "title": "Athis Ribbon Handbook — starter",
+      "url": "https://sites.google.com/view/athis-ribbon-handbook/home/starting-tips",
+      "author": ".athis",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "bulba-ribbons",
+      "title": "List of Ribbons in the games",
+      "url": "https://bulbapedia.bulbagarden.net/wiki/List_of_Ribbons_in_the_games",
+      "author": "Bulbapedia contributors",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "serebii-rse",
+      "title": "Serebii — rse ribbons",
+      "url": "https://www.serebii.net/rubysapphire/ribbons.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "serebii-xy",
+      "title": "Serebii — xy ribbons",
+      "url": "https://www.serebii.net/xy/ribbons.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "serebii-oras",
+      "title": "Serebii — oras ribbons",
+      "url": "https://www.serebii.net/omegarubyalphasapphire/ribbons.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "serebii-sm",
+      "title": "Serebii — sm ribbons",
+      "url": "https://www.serebii.net/sunmoon/ribbons.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "serebii-swsh",
+      "title": "Serebii — swsh ribbons",
+      "url": "https://www.serebii.net/swordshield/ribbons.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "serebii-bdsp",
+      "title": "Serebii — bdsp ribbons",
+      "url": "https://www.serebii.net/brilliantdiamondshiningpearl/ribbons.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "serebii-sv",
+      "title": "Serebii — sv ribbons",
+      "url": "https://www.serebii.net/scarletviolet/ribbons.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "sv-marks",
+      "title": "Scarlet/Violet marks",
+      "url": "https://www.serebii.net/scarletviolet/marks.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "sv-season41",
+      "title": "Scarlet/Violet Ranked Battles Season 41",
+      "url": "https://sv-news.pokemon.co.jp/en/page/389.html",
+      "author": "The Pokémon Company",
+      "kind": "official",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "swsh-series14",
+      "title": "Sword/Shield Ranked Series 14",
+      "url": "https://www.serebii.net/swordshield/rankedbattle/series14.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "home-moves",
+      "title": "Why did my Pokémon’s moves change?",
+      "url": "https://support.pokemon.com/hc/en-us/articles/6372731346452-Why-did-my-Pok%C3%A9mon-s-moves-change",
+      "author": "Pokémon Support",
+      "kind": "official",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "home-travel",
+      "title": "Move Pokémon to Pokémon HOME",
+      "url": "https://home.pokemon.com/en-us/move/",
+      "author": "The Pokémon Company",
+      "kind": "official",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "iv-index",
+      "title": "Gen IV Battle Facilities records",
+      "url": "https://www.smogon.com/forums/threads/4th-generation-battle-facilities-discussion-and-records.3663294/",
+      "author": "Tsitso / thread contributors",
+      "kind": "record-index",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "peterko-paste",
+      "title": "Latias / Registeel / Garchomp",
+      "url": "https://pokepast.es/8a8009bc65c7dda5",
+      "author": "Peterko",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "iv-multi",
+      "title": "Gen IV NPC Multi team and guide, post 227",
+      "url": "https://www.smogon.com/forums/threads/4th-generation-battle-facilities-discussion-and-records.3663294/page-10#post-9781591",
+      "author": "QuentinQuonce",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "maison-records",
+      "title": "Battle Maison records overview",
+      "url": "https://www.smogon.com/articles/maison-leaderboard",
+      "author": "Smogon; original team by GG Unit",
+      "kind": "record-overview",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "maison-guide",
+      "title": "Battle Maison guide part 1",
+      "url": "https://www.smogon.com/ingame/bc/maison_part1",
+      "author": "NoCheese / Lumari",
+      "kind": "community-guide",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "tree-index",
+      "title": "Battle Tree discussion and records",
+      "url": "https://www.smogon.com/forums/threads/battle-tree-discussion-and-records.3587215/",
+      "author": "Smogon thread contributors",
+      "kind": "record-index",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "tree-paste",
+      "title": "Garchomp / Mega Scizor / Tapu Fini",
+      "url": "https://pokepast.es/2b517015d0cc1f27",
+      "author": "SilverstarStream",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "tree-report",
+      "title": "Battle Tree 1064-win report",
+      "url": "https://www.smogon.com/forums/posts/9292567",
+      "author": "SilverstarStream",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "royal-muk",
+      "title": "Alolan Muk Battle Royal method",
+      "url": "https://www.reddit.com/r/pokemon/comments/5lu7et/alolan_muk_is_a_real_mvp_in_battle_royal/",
+      "author": "Original Reddit author [deleted]",
+      "kind": "first-person-strategy",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "swsh-bobdat",
+      "title": "Sword/Shield Tower original team, post 113",
+      "url": "https://www.smogon.com/forums/threads/swsh-battle-facilities-discussion-records.3656190/page-5#post-8362857",
+      "author": "bobdat",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "bdsp-index",
+      "title": "BDSP Tower discussion and records",
+      "url": "https://www.smogon.com/forums/threads/bdsp-battle-tower-discussion-records.3693739/",
+      "author": "Smogon thread contributors",
+      "kind": "record-index",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "bdsp-singles",
+      "title": "Rotom-Wash / Scizor / Garchomp",
+      "url": "https://pokepast.es/e9454c49f6e5edf4",
+      "author": "CeroRift",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "bdsp-rain",
+      "title": "Pelipper / Kingdra / Raikou / Scizor",
+      "url": "https://pokepast.es/bf0032eb959ac699",
+      "author": "Eisenherz",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "bdsp-rain-report",
+      "title": "BDSP rain original report",
+      "url": "https://www.smogon.com/forums/posts/9051821",
+      "author": "Eisenherz",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "sv-worlds-report",
+      "title": "Giovanni Cischke World Champion team report",
+      "url": "https://victoryroad.pro/2026/08/27/giovanni-cischke-worlds/",
+      "author": "Giovanni Cischke",
+      "kind": "first-person-strategy",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "sv-worlds-paste",
+      "title": "World Champion team builds",
+      "url": "https://www.vrpastes.com/VP48GdZh",
+      "author": "Giovanni Cischke; hosted by Victory Road",
+      "kind": "original-team",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "worlds-results",
+      "title": "2025 Pokémon World Championships results",
+      "url": "https://www.pokemon.com/uk/play-pokemon/worlds/2025/event-results",
+      "author": "The Pokémon Company",
+      "kind": "official",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "pokeathlon",
+      "title": "HeartGold/SoulSilver Pokéathlon",
+      "url": "https://www.serebii.net/heartgoldsoulsilver/pokeathlon.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "pwt",
+      "title": "Black 2/White 2 World Tournament",
+      "url": "https://www.serebii.net/black2white2/pwt/",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "black-tower",
+      "title": "Black Tower / White Treehollow",
+      "url": "https://www.serebii.net/black2white2/blackcitywhiteforest.shtml",
+      "author": "Serebii",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    },
+    {
+      "id": "bulba-footprint",
+      "title": "Footprint Ribbon and BDSP exceptions",
+      "url": "https://bulbapedia.bulbagarden.net/wiki/Footprint",
+      "author": "Bulbapedia contributors",
+      "kind": "mechanics-reference",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "read"
+    }
+  ],
+  "guideModules": [
+    {
+      "id": "purification",
+      "title": "Purification",
+      "gameIDs": [
+        "colosseum",
+        "xd",
+        "xd-nso"
+      ],
+      "awardIDs": [
+        "national-ribbon"
+      ],
+      "steps": [
+        "Purify the eligible Shadow Pokémon. The National Ribbon records that purification."
+      ],
+      "cautions": [
+        "Only Pokémon originally obtainable as Shadow Pokémon qualify; do not add this to an ordinary Pokémon.",
+        "XD NSO release-specific behavior still needs a separate check."
+      ],
+      "sourceIDs": [
+        "athis-orre"
+      ],
+      "status": "source-backed-draft"
+    },
+    {
+      "id": "mt-battle",
+      "title": "Mt. Battle",
+      "gameIDs": [
+        "colosseum",
+        "xd",
+        "xd-nso"
+      ],
+      "awardIDs": [
+        "earth-ribbon"
+      ],
+      "steps": [
+        "Complete all 100 Mt. Battle trainers in one uninterrupted challenge with the Pokémon in the party.",
+        "Use the story-mode challenge in Colosseum. Keep the same party throughout the run."
+      ],
+      "cautions": [
+        "Do not leave the challenge or change party members.",
+        "XD NSO needs a release-specific confirmation before publishing its guide."
+      ],
+      "sourceIDs": [
+        "athis-orre"
+      ],
+      "status": "source-backed-draft"
+    },
+    {
+      "id": "rse-contests",
+      "title": "Hoenn contests",
+      "gameIDs": [
+        "ruby",
+        "sapphire",
+        "emerald"
+      ],
+      "awardIDs": [
+        "cool-ribbon-hoenn",
+        "cool-ribbon-super-hoenn",
+        "cool-ribbon-hyper-hoenn",
+        "cool-ribbon-master-hoenn",
+        "beauty-ribbon-hoenn",
+        "beauty-ribbon-super-hoenn",
+        "beauty-ribbon-hyper-hoenn",
+        "beauty-ribbon-master-hoenn",
+        "cute-ribbon-hoenn",
+        "cute-ribbon-super-hoenn",
+        "cute-ribbon-hyper-hoenn",
+        "cute-ribbon-master-hoenn",
+        "smart-ribbon-hoenn",
+        "smart-ribbon-super-hoenn",
+        "smart-ribbon-hyper-hoenn",
+        "smart-ribbon-master-hoenn",
+        "tough-ribbon-hoenn",
+        "tough-ribbon-super-hoenn",
+        "tough-ribbon-hyper-hoenn",
+        "tough-ribbon-master-hoenn"
+      ],
+      "steps": [
+        "Work through Normal, Super, Hyper and Master in each of the five contest categories.",
+        "Plan Pokéblocks before feeding: condition and Sheen carry forward. Pick moves and combinations valid for this species in this game."
+      ],
+      "cautions": [
+        "These 20 legacy awards contribute to Contest Memory after transfer.",
+        "Do not reuse ORAS or Sinnoh move-combo advice here."
+      ],
+      "sourceIDs": [
+        "athis-rse",
+        "serebii-rse"
+      ],
+      "status": "source-backed-draft"
+    },
+    {
+      "id": "artist",
+      "title": "Artist Ribbon",
+      "gameIDs": [
+        "ruby",
+        "sapphire",
+        "emerald"
+      ],
+      "awardIDs": [
+        "artist-ribbon"
+      ],
+      "steps": [
+        "Speak to the Lilycove Museum director to enable the painting request.",
+        "Win a sufficiently high-scoring Master Rank contest and accept the artist’s painting."
+      ],
+      "cautions": [
+        "Exact score threshold needs a further check before putting a number in the app."
+      ],
+      "sourceIDs": [
+        "athis-rse",
+        "serebii-rse"
+      ],
+      "status": "source-backed-draft",
+      "pending": [
+        "Exact score threshold and score definition."
+      ]
+    },
+    {
+      "id": "rse-tower",
+      "title": "Hoenn Battle Tower",
+      "gameIDs": [
+        "ruby",
+        "sapphire",
+        "emerald"
+      ],
+      "awardIDs": [
+        "winning-ribbon",
+        "victory-ribbon"
+      ],
+      "steps": [
+        "Winning: reach 56 consecutive wins in the Level 50 challenge.",
+        "Victory: reach 56 wins in Ruby/Sapphire Level 100 or Emerald Open Level.",
+        "Bring the Ribbon Master for the final seven-battle set, battles 50–56."
+      ],
+      "cautions": [
+        "Earn Winning before leveling past 50; these games do not scale a higher-level Pokémon down.",
+        "Emerald Open Level opponents are at least level 60. Check facility species/item clauses."
+      ],
+      "sourceIDs": [
+        "athis-rse"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "rse-athis-core"
+      ]
+    },
+    {
+      "id": "iv-contests",
+      "title": "Sinnoh Super Contests",
+      "gameIDs": [
+        "diamond",
+        "pearl",
+        "platinum"
+      ],
+      "awardIDs": [
+        "cool-ribbon-sinnoh",
+        "cool-ribbon-great-sinnoh",
+        "cool-ribbon-ultra-sinnoh",
+        "cool-ribbon-master-sinnoh",
+        "beauty-ribbon-sinnoh",
+        "beauty-ribbon-great-sinnoh",
+        "beauty-ribbon-ultra-sinnoh",
+        "beauty-ribbon-master-sinnoh",
+        "cute-ribbon-sinnoh",
+        "cute-ribbon-great-sinnoh",
+        "cute-ribbon-ultra-sinnoh",
+        "cute-ribbon-master-sinnoh",
+        "smart-ribbon-sinnoh",
+        "smart-ribbon-great-sinnoh",
+        "smart-ribbon-ultra-sinnoh",
+        "smart-ribbon-master-sinnoh",
+        "tough-ribbon-sinnoh",
+        "tough-ribbon-great-sinnoh",
+        "tough-ribbon-ultra-sinnoh",
+        "tough-ribbon-master-sinnoh"
+      ],
+      "steps": [
+        "Complete Normal, Great, Ultra and Master in each category.",
+        "Prepare condition with Poffins, collect accessories and scarves, then handle Visual, Dance and Acting rounds."
+      ],
+      "cautions": [
+        "Sheen limits feeding. Gen III contest combinations do not apply to these Acting rounds."
+      ],
+      "sourceIDs": [
+        "athis-dppt"
+      ],
+      "status": "source-backed-draft"
+    },
+    {
+      "id": "iv-tower",
+      "title": "Sinnoh and Johto Battle Tower",
+      "gameIDs": [
+        "diamond",
+        "pearl",
+        "platinum",
+        "hg",
+        "ss"
+      ],
+      "awardIDs": [
+        "ability-ribbon",
+        "great-ability-ribbon",
+        "double-ability-ribbon",
+        "multi-ability-ribbon",
+        "pair-ability-ribbon",
+        "world-ability-ribbon"
+      ],
+      "steps": [
+        "Ability: defeat Palmer at battle 21; Great Ability: defeat him at 49 in Singles.",
+        "Double Ability: win battle 50 in Doubles. Multi Ability: win battle 50 with an NPC partner.",
+        "Pair Ability: win battle 50 with a human link partner. World Ability: reach Wi-Fi Rank 5."
+      ],
+      "cautions": [
+        "The official Nintendo Wi-Fi service has ended; World Ability is an optional historical/unofficial-service branch.",
+        "D/P and Platinum/HGSS use different opponent pools. Check which game hosts the linked battle.",
+        "A Singles team is not a substitute for an NPC or human Multi team."
+      ],
+      "sourceIDs": [
+        "athis-dppt",
+        "athis-hgss",
+        "iv-multi"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "iv-peterko",
+        "iv-quentin-multi"
+      ]
+    },
+    {
+      "id": "maison",
+      "title": "Battle Maison",
+      "gameIDs": [
+        "x",
+        "y",
+        "or",
+        "as"
+      ],
+      "awardIDs": [
+        "skillful-battler-ribbon",
+        "expert-battler-ribbon"
+      ],
+      "steps": [
+        "Defeat a Battle Chatelaine at battle 20 in a normal format for Skillful Battler.",
+        "Defeat a Chatelaine at battle 50 in a Super format for Expert Battler.",
+        "Only one format is needed per ribbon; review the selected format’s team and item restrictions."
+      ],
+      "cautions": [
+        "The ribbon recipient must participate in the awarding battle. Teams can be changed between individual battles here.",
+        "Do not apply the Gen III seven-battle entry rule to the Maison."
+      ],
+      "sourceIDs": [
+        "athis-xy",
+        "maison-guide"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "vi-ggunit-truant"
+      ]
+    },
+    {
+      "id": "oras-contests",
+      "title": "Hoenn Contest Spectaculars",
+      "gameIDs": [
+        "or",
+        "as"
+      ],
+      "awardIDs": [
+        "coolness-master-ribbon",
+        "beauty-master-ribbon",
+        "cuteness-master-ribbon",
+        "cleverness-master-ribbon",
+        "toughness-master-ribbon",
+        "contest-star-ribbon"
+      ],
+      "steps": [
+        "Win Master Rank in each of the five categories for its Master ribbon.",
+        "Win all five with the same Pokémon for Contest Star.",
+        "Build condition with Pokéblocks and choose a species-compatible contest moveset."
+      ],
+      "cautions": [
+        "ORAS has no old Sheen feeding cap. Its combinations and awards differ from RSE."
+      ],
+      "sourceIDs": [
+        "athis-oras",
+        "serebii-oras"
+      ],
+      "status": "source-backed-draft"
+    },
+    {
+      "id": "tree",
+      "title": "Battle Tree",
+      "gameIDs": [
+        "sun",
+        "moon",
+        "usun",
+        "umoon"
+      ],
+      "awardIDs": [
+        "battle-tree-great-ribbon",
+        "battle-tree-master-ribbon"
+      ],
+      "steps": [
+        "Win battle 20 of a normal challenge for Battle Tree Great.",
+        "Win battle 50 of a Super challenge for Battle Tree Master."
+      ],
+      "cautions": [
+        "USUM normal challenges allow restricted Pokémon that SM normal challenges do not.",
+        "The USUM normal exception does not apply to Super formats."
+      ],
+      "sourceIDs": [
+        "athis-alola",
+        "serebii-sm"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "vii-silverstarstream"
+      ]
+    },
+    {
+      "id": "royal",
+      "title": "Battle Royal",
+      "gameIDs": [
+        "sun",
+        "moon",
+        "usun",
+        "umoon"
+      ],
+      "awardIDs": [
+        "battle-royal-master-ribbon"
+      ],
+      "steps": [
+        "Unlock the higher ranks and win a Master Rank Battle Royal with the Pokémon on the entered team.",
+        "Plan around the scoring and the round ending when one trainer loses all three Pokémon."
+      ],
+      "cautions": [
+        "A strong lead can support the other slots, but no method is a guaranteed win."
+      ],
+      "sourceIDs": [
+        "athis-alola",
+        "royal-muk"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "vii-muk-lead"
+      ]
+    },
+    {
+      "id": "swsh-tower",
+      "title": "Galar Battle Tower",
+      "gameIDs": [
+        "sw",
+        "sh"
+      ],
+      "awardIDs": [
+        "tower-master-ribbon"
+      ],
+      "steps": [
+        "Climb the Battle Tower to Master Ball tier.",
+        "Defeat Leon at Master Ball tier with your own Pokémon entered."
+      ],
+      "cautions": [
+        "An ordinary win after reaching the tier is not the Leon requirement.",
+        "Rental teams can help climb; a rented Pokémon cannot receive a ribbon for your own Pokémon."
+      ],
+      "sourceIDs": [
+        "athis-galar",
+        "serebii-swsh"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "viii-bobdat"
+      ]
+    },
+    {
+      "id": "bdsp-tower",
+      "title": "Sinnoh remakes Battle Tower",
+      "gameIDs": [
+        "bd",
+        "sp"
+      ],
+      "awardIDs": [
+        "tower-master-ribbon"
+      ],
+      "steps": [
+        "Unlock Master Class by completing the normal Tower requirement.",
+        "Climb Master Class and defeat Palmer at Rank 10 with the ribbon recipient entered."
+      ],
+      "cautions": [
+        "This is the same Tower Master Ribbon as Sword/Shield, with a different challenge.",
+        "Full unlock/rank progression and recipient timing need the final editorial pass."
+      ],
+      "sourceIDs": [
+        "athis-bdsp",
+        "serebii-bdsp"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "viii-cerorift",
+        "viii-eisenherz"
+      ]
+    },
+    {
+      "id": "bdsp-contests",
+      "title": "Sinnoh Super Contest Shows",
+      "gameIDs": [
+        "bd",
+        "sp"
+      ],
+      "awardIDs": [
+        "coolness-master-ribbon",
+        "beauty-master-ribbon",
+        "cuteness-master-ribbon",
+        "cleverness-master-ribbon",
+        "toughness-master-ribbon",
+        "contest-star-ribbon",
+        "twinkling-star-ribbon"
+      ],
+      "steps": [
+        "Win Star of the Show at Master Rank in each standard category for its Master ribbon.",
+        "Complete all five for Contest Star, then win the Master Rank Brilliant/Shining contest for Twinkling Star.",
+        "Prepare condition, Ball Capsule stickers and a contest move; practice the rhythm sequence."
+      ],
+      "cautions": [
+        "Twinkling Star requires Master Rank, not just any Brilliant/Shining rank.",
+        "The Poffin feeding/Sheen constraints differ from ORAS Pokéblocks."
+      ],
+      "sourceIDs": [
+        "athis-bdsp",
+        "serebii-bdsp",
+        "bulba-ribbons"
+      ],
+      "status": "source-backed-draft"
+    },
+    {
+      "id": "ranked",
+      "title": "Master Rank Ribbon",
+      "gameIDs": [
+        "sw",
+        "sh",
+        "scar",
+        "vio"
+      ],
+      "awardIDs": [
+        "master-rank-ribbon"
+      ],
+      "steps": [
+        "Win at Master Ball tier with your own registered Battle Team. The ribbon applies to eligible Pokémon on that team, including those not selected at Team Preview.",
+        "Check that game’s active regulation before selecting a build or replacement slot."
+      ],
+      "cautions": [
+        "A rental can help climb but cannot award the ribbon to your own Pokémon.",
+        "Regulations, service availability and rental codes need dated reviews.",
+        "Pokémon Champions titles must not be presented as a portable Master Rank Ribbon."
+      ],
+      "sourceIDs": [
+        "sv-season41",
+        "swsh-series14",
+        "serebii-swsh",
+        "serebii-sv",
+        "bulba-ribbons"
+      ],
+      "status": "source-backed-draft",
+      "teamIDs": [
+        "ix-cischke"
+      ],
+      "currentReview": {
+        "sv": "Season 41: Regulation I from 2026-04-01 04:00 UTC until service ends, per official announcement.",
+        "swsh": "Series 14 reference checked; seek an official service/rule confirmation before claiming indefinite current availability."
+      }
+    },
+    {
+      "id": "hisui-photo",
+      "title": "Hisui photo studio",
+      "gameIDs": [
+        "pla"
+      ],
+      "awardIDs": [
+        "hisui-ribbon"
+      ],
+      "steps": [
+        "Prepare the Pokémon for a photo at the Jubilife Village photography studio."
+      ],
+      "cautions": [
+        "Actually taking the picture is not required. The ribbon is invisible in Legends: Arceus; later compatible software displays it."
+      ],
+      "sourceIDs": [
+        "athis-hisui",
+        "bulba-ribbons"
+      ],
+      "status": "source-backed-draft"
+    },
+    {
+      "id": "memory",
+      "title": "Legacy ribbon consolidation",
+      "gameIDs": [
+        "x",
+        "y",
+        "or",
+        "as"
+      ],
+      "awardIDs": [
+        "contest-memory-ribbon",
+        "contest-memory-ribbon-gold",
+        "battle-memory-ribbon",
+        "battle-memory-ribbon-gold"
+      ],
+      "steps": [
+        "Treat Memory Ribbons as the transferred record of Gen III/IV contest and battle awards.",
+        "Keep the original earned awards in the passport history while displaying the consolidated result for later games."
+      ],
+      "cautions": [
+        "These are not new contest/Tower tasks to complete in Gen VI.",
+        "Maison, Tree and newer battle ribbons stay separate. Gold appearance/thresholds vary with software version and need an explicit version table."
+      ],
+      "sourceIDs": [
+        "bulba-ribbons"
+      ],
+      "status": "source-backed-draft",
+      "pending": [
+        "Check Gen VII display bugs and exact version behavior before using these thresholds for artwork; do not alter stored history based on display."
+      ],
+      "reportedGoldThresholds": {
+        "contest": "40 legacy contest awards",
+        "battleGenVItoVIII": "8 legacy battle awards",
+        "battleScarletViolet": "7 or 8 legacy battle awards"
+      }
+    },
+    {
+      "id": "daily",
+      "title": "Weekday ribbons",
+      "gameIDs": [
+        "diamond",
+        "pearl",
+        "platinum",
+        "hg",
+        "ss",
+        "x",
+        "y",
+        "or",
+        "as",
+        "bd",
+        "sp"
+      ],
+      "awardIDs": [
+        "alert-ribbon",
+        "shock-ribbon",
+        "downcast-ribbon",
+        "careless-ribbon",
+        "relax-ribbon",
+        "snooze-ribbon",
+        "smile-ribbon"
+      ],
+      "steps": [
+        "Speak to the correct NPC on the matching weekday with the intended Pokémon selected.",
+        "Monday Alert; Tuesday Shock; Wednesday Downcast; Thursday Careless; Friday Relax; Saturday Snooze; Sunday Smile."
+      ],
+      "cautions": [
+        "Check the game’s location and any first-meeting prerequisite. Do not show a generic location for every generation."
+      ],
+      "sourceIDs": [
+        "athis-dppt",
+        "athis-hgss",
+        "serebii-xy",
+        "athis-oras",
+        "athis-bdsp"
+      ],
+      "status": "source-backed-draft",
+      "locations": {
+        "diamond pearl platinum bd sp": "Julia, Sunyshore City",
+        "hg ss": "Week Siblings; confirm meet-all prerequisite",
+        "x y": "Hotel circuit: Ambrette Mon, Camphrier Tue, Geosenge Wed, Coumarine Thu, Couriway Fri, Cyllage Sat, Coumarine Sun",
+        "or as": "Mauville Hills"
+      }
+    },
+    {
+      "id": "purchase",
+      "title": "Ribbon purchases",
+      "gameIDs": [
+        "diamond",
+        "pearl",
+        "platinum",
+        "or",
+        "as",
+        "bd",
+        "sp"
+      ],
+      "awardIDs": [
+        "gorgeous-ribbon",
+        "royal-ribbon",
+        "gorgeous-royal-ribbon"
+      ],
+      "steps": [
+        "Purchase Gorgeous for ₽10,000, Royal for ₽100,000, then Gorgeous Royal for ₽999,999 for the selected Pokémon."
+      ],
+      "cautions": [
+        "Check the local access requirement and purchase order."
+      ],
+      "sourceIDs": [
+        "athis-dppt",
+        "athis-oras",
+        "athis-bdsp"
+      ],
+      "status": "source-backed-draft",
+      "locations": {
+        "diamond pearl platinum bd sp": "Resort Area Ribbon Syndicate",
+        "or as": "Mauville Hills"
+      }
+    },
+    {
+      "id": "effort",
+      "title": "Effort Ribbon",
+      "gameIDs": [
+        "ruby",
+        "sapphire",
+        "emerald",
+        "diamond",
+        "pearl",
+        "platinum",
+        "hg",
+        "ss",
+        "x",
+        "y",
+        "or",
+        "as",
+        "sun",
+        "moon",
+        "usun",
+        "umoon",
+        "sw",
+        "sh",
+        "bd",
+        "sp",
+        "scar",
+        "vio"
+      ],
+      "awardIDs": [
+        "effort-ribbon"
+      ],
+      "steps": [
+        "Finish the Pokémon’s EV training (510 total effort values), then speak to the Effort Ribbon NPC."
+      ],
+      "cautions": [],
+      "sourceIDs": [
+        "serebii-rse",
+        "serebii-xy",
+        "serebii-oras",
+        "serebii-sm",
+        "serebii-swsh",
+        "serebii-bdsp",
+        "serebii-sv"
+      ],
+      "status": "source-backed-draft",
+      "locations": {
+        "ruby sapphire emerald or as": "Slateport market",
+        "diamond pearl platinum bd sp": "Sunyshore market",
+        "hg ss": "Blackthorn City",
+        "x y": "Laverre Pokémon Fan Club",
+        "sun moon usun umoon": "Battle Royal Dome",
+        "sw sh": "Hammerlocke",
+        "scar vio": "Levincia"
+      }
+    },
+    {
+      "id": "friendship",
+      "title": "Best Friends Ribbon",
+      "gameIDs": [
+        "x",
+        "y",
+        "or",
+        "as",
+        "sun",
+        "moon",
+        "usun",
+        "umoon",
+        "sw",
+        "sh",
+        "bd",
+        "sp",
+        "scar",
+        "vio"
+      ],
+      "awardIDs": [
+        "best-friends-ribbon"
+      ],
+      "steps": [
+        "Build the required relationship value, then visit the game’s ribbon NPC.",
+        "XY/ORAS use Pokémon-Amie affection; Alola uses Pokémon Refresh affection. Later games use friendship."
+      ],
+      "cautions": [
+        "Affection and friendship must not be treated as the same counter in Gen VI/VII.",
+        "Verify the exact NPC and threshold for each version before release."
+      ],
+      "sourceIDs": [
+        "serebii-xy",
+        "serebii-oras",
+        "serebii-sm",
+        "serebii-swsh",
+        "serebii-bdsp",
+        "serebii-sv"
+      ],
+      "status": "source-backed-draft",
+      "pending": [
+        "Confirm exact NPC details and numerical friendship/affection thresholds in final editorial pass."
+      ],
+      "locations": {
+        "x y": "Bonnie, Prism Tower / Lumiose City",
+        "or as": "Woman in Mauville Hills",
+        "sun moon usun umoon": "Malie City community center",
+        "sw sh": "Boy in Hammerlocke",
+        "bd sp": "Hearthome City",
+        "scar vio": "Cascarrafa"
+      }
+    },
+    {
+      "id": "footprint",
+      "title": "Footprint Ribbon",
+      "gameIDs": [
+        "diamond",
+        "pearl",
+        "platinum",
+        "x",
+        "y",
+        "or",
+        "as",
+        "sun",
+        "moon",
+        "usun",
+        "umoon",
+        "bd",
+        "sp"
+      ],
+      "awardIDs": [
+        "footprint-ribbon"
+      ],
+      "steps": [
+        "D/P/Pt: show Dr. Footstep a Pokémon with the required friendship.",
+        "XY/ORAS/Alola: raise it at least 30 levels above its recorded met-level baseline, then visit the ribbon NPC.",
+        "BDSP: normally use the 30-level rule; voiceless Pokémon use the friendship exception."
+      ],
+      "cautions": [
+        "Check transfer changes to the recorded met level, particularly Gen V migration.",
+        "The last-chance decision must use the Pokémon’s actual baseline, level cap and reachable later games."
+      ],
+      "sourceIDs": [
+        "athis-dppt",
+        "athis-xy",
+        "athis-oras",
+        "athis-alola",
+        "athis-bdsp",
+        "bulba-ribbons",
+        "bulba-footprint"
+      ],
+      "status": "source-backed-draft",
+      "pending": [
+        "Cross-check numerical friendship threshold and transferred met-level baselines before implementation; exception list is source-recorded but not playtested."
+      ],
+      "locations": {
+        "diamond pearl platinum bd sp": "Dr. Footstep, Route 213",
+        "x y": "Rising Star, Shalour City",
+        "or as": "Collector, Battle Resort",
+        "sun moon usun umoon": "Pokémon Breeder, Hano Grand Resort"
+      },
+      "bdspVoicelessSpecies": [
+        "Metapod",
+        "Kakuna",
+        "Paras",
+        "Parasect",
+        "Venomoth",
+        "Magnemite",
+        "Magneton",
+        "Staryu",
+        "Starmie",
+        "Porygon",
+        "Kabuto",
+        "Xatu",
+        "Unown",
+        "Pineco",
+        "Forretress",
+        "Remoraid",
+        "Porygon2",
+        "Pupitar",
+        "Silcoon",
+        "Cascoon",
+        "Seedot",
+        "Nincada",
+        "Nosepass",
+        "Lunatone",
+        "Solrock",
+        "Baltoy",
+        "Claydol",
+        "Lileep",
+        "Cradily",
+        "Anorith",
+        "Shelgon",
+        "Beldum",
+        "Metang",
+        "Regirock",
+        "Regice",
+        "Registeel",
+        "Bronzor",
+        "Bronzong",
+        "Magnezone",
+        "Porygon-Z",
+        "Probopass",
+        "Regigigas"
+      ]
+    },
+    {
+      "id": "super-training",
+      "title": "Training Ribbon",
+      "gameIDs": [
+        "x",
+        "y",
+        "or",
+        "as"
+      ],
+      "awardIDs": [
+        "training-ribbon"
+      ],
+      "steps": [
+        "Earn gold medals in all 30 Super Training courses, including the Secret courses, with this Pokémon.",
+        "Visit the ribbon NPC after completing the course list."
+      ],
+      "cautions": [
+        "Training bags alone are not course completion."
+      ],
+      "sourceIDs": [
+        "athis-xy",
+        "athis-oras",
+        "serebii-xy",
+        "serebii-oras"
+      ],
+      "status": "source-backed-draft",
+      "locations": {
+        "x y": "Lumiose café",
+        "or as": "Dewford Town"
+      }
+    },
+    {
+      "id": "champions",
+      "title": "League and champion ribbons",
+      "gameIDs": [
+        "ruby",
+        "sapphire",
+        "emerald",
+        "fr",
+        "lg",
+        "fr-switch",
+        "lg-switch",
+        "diamond",
+        "pearl",
+        "platinum",
+        "hg",
+        "ss",
+        "x",
+        "y",
+        "or",
+        "as",
+        "sun",
+        "moon",
+        "usun",
+        "umoon",
+        "sw",
+        "sh",
+        "bd",
+        "sp",
+        "scar",
+        "vio"
+      ],
+      "awardIDs": [
+        "champion-ribbon",
+        "sinnoh-champion-ribbon",
+        "legend-ribbon",
+        "kalos-champion-ribbon",
+        "hoenn-champion-ribbon",
+        "alola-champion-ribbon",
+        "galar-champion-ribbon",
+        "paldea-champion-ribbon"
+      ],
+      "steps": [
+        "Complete the appropriate champion battle with the Pokémon in the qualifying party."
+      ],
+      "cautions": [
+        "The Gen III Champion Ribbon and ORAS Hoenn Champion Ribbon are distinct awards.",
+        "FR/LG Switch release details need their own verification.",
+        "Do not invent an earnable Unova Champion Ribbon; record a Gen V league victory as an optional honor."
+      ],
+      "sourceIDs": [
+        "serebii-rse",
+        "athis-dppt",
+        "athis-hgss",
+        "athis-xy",
+        "athis-oras",
+        "athis-alola",
+        "athis-galar",
+        "athis-bdsp",
+        "athis-paldea"
+      ],
+      "status": "source-backed-draft",
+      "requirements": {
+        "champion-ribbon": "Gen III Hall of Fame",
+        "sinnoh-champion-ribbon": "Sinnoh League, original or remake",
+        "legend-ribbon": "Defeat Red in HGSS",
+        "kalos-champion-ribbon": "Defeat Diantha",
+        "hoenn-champion-ribbon": "Defeat Steven in ORAS",
+        "alola-champion-ribbon": "Alola League and final challenger",
+        "galar-champion-ribbon": "Champion Cup",
+        "paldea-champion-ribbon": "Defeat Geeta or win the Academy Ace Tournament"
+      }
+    },
+    {
+      "id": "earned-marks",
+      "title": "Marks obtainable after capture",
+      "gameIDs": [
+        "scar",
+        "vio"
+      ],
+      "awardIDs": [
+        "itemfinder-mark",
+        "partner-mark",
+        "gourmand-mark",
+        "jumbo-mark",
+        "mini-mark"
+      ],
+      "steps": [
+        "Itemfinder: collect ground items with the Pokémon using Let’s Go.",
+        "Partner: travel with the Pokémon at friendship 200 or higher; the mark is awarded by chance while walking.",
+        "Gourmand: share purchased meals or sandwiches; the mark is awarded by chance.",
+        "Jumbo/Mini: have the Mesagoza size judge inspect a Pokémon at the appropriate extreme size."
+      ],
+      "cautions": [
+        "Jumbo and Mini are optional and explicitly excluded from Ribbon Master requirements.",
+        "Do not imply that catching a Pokémon without a catch-only mark can add that mark later.",
+        "Do not list Once-in-a-Lifetime as an available earning task without verified implementation evidence.",
+        "Avoid exact mark probabilities until conflicting references are resolved."
+      ],
+      "sourceIDs": [
+        "sv-marks",
+        "athis-paldea"
+      ],
+      "status": "source-backed-draft",
+      "pending": [
+        "Verify numerical steps/friendship thresholds from implementation evidence before publishing exact counters."
+      ]
+    }
+  ],
+  "teamCandidates": [
+    {
+      "id": "rse-athis-core",
+      "title": "Latios / Metagross / Suicune",
+      "gameIDs": [
+        "ruby",
+        "sapphire",
+        "emerald"
+      ],
+      "facility": "Battle Tower",
+      "format": "Singles",
+      "author": ".athis",
+      "sourceIDs": [
+        "athis-starter"
+      ],
+      "members": [
+        {
+          "species": "Latios",
+          "item": "Lum Berry",
+          "ability": "Levitate",
+          "nature": "Timid",
+          "evs": "4 HP / 252 SpA / 252 Spe",
+          "moves": [
+            "Psychic",
+            "Dragon Claw",
+            "Thunderbolt",
+            "Ice Beam"
+          ]
+        },
+        {
+          "species": "Metagross",
+          "item": "Choice Band",
+          "ability": "Clear Body",
+          "nature": "Adamant",
+          "evs": "4 HP / 252 Atk / 252 Spe",
+          "moves": [
+            "Earthquake",
+            "Meteor Mash",
+            "Shadow Ball",
+            "Explosion"
+          ]
+        },
+        {
+          "species": "Suicune",
+          "item": "Leftovers",
+          "ability": "Pressure",
+          "nature": "Bold",
+          "evs": "252 HP / 252 Def / 4 SpD",
+          "moves": [
+            "Surf",
+            "Calm Mind",
+            "Rest",
+            "Sleep Talk"
+          ]
+        }
+      ],
+      "documentedResult": null,
+      "ribbonMasterSlot": {
+        "status": "guide-suggested-role-replacement",
+        "note": "Author recommends replacing the closest role with the RM. This is not proof for an arbitrary species."
+      },
+      "strategySummary": "Use the fast special attacker, physical attacker and defensive setup roles; adapt the final seven-battle set.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified",
+      "sourceVariantNote": "Ice Beam is selected from the source’s Ice Beam/Calm Mind alternative; Gen III items and moves only."
+    },
+    {
+      "id": "iv-peterko",
+      "title": "Latias / Registeel / Garchomp",
+      "gameIDs": [
+        "platinum",
+        "hg",
+        "ss"
+      ],
+      "facility": "Battle Tower",
+      "format": "Singles",
+      "author": "Peterko",
+      "sourceIDs": [
+        "iv-index",
+        "peterko-paste"
+      ],
+      "members": [
+        {
+          "species": "Latias",
+          "item": "Choice Scarf",
+          "ability": "Levitate",
+          "nature": "Timid",
+          "evs": "244 HP / 156 Def / 108 Spe",
+          "moves": [
+            "Charm",
+            "Thunder Wave",
+            "Trick",
+            "Recover"
+          ],
+          "level": 50,
+          "ivs": "0 Atk"
+        },
+        {
+          "species": "Registeel",
+          "item": "Leftovers",
+          "ability": "Clear Body",
+          "nature": "Careful",
+          "evs": "252 HP / 100 Atk / 140 Def / 12 SpD / 4 Spe",
+          "moves": [
+            "Iron Head",
+            "Substitute",
+            "Curse",
+            "Amnesia"
+          ],
+          "level": 50,
+          "ivs": "9 Spe"
+        },
+        {
+          "species": "Garchomp",
+          "item": "Lum Berry",
+          "ability": "Sand Veil",
+          "nature": "Jolly",
+          "evs": "252 Atk / 4 Def / 252 Spe",
+          "moves": [
+            "Substitute",
+            "Swords Dance",
+            "Earthquake",
+            "Outrage"
+          ],
+          "level": 50
+        }
+      ],
+      "documentedResult": {
+        "wins": 2363,
+        "evidence": "Published leaderboard and linked build"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated",
+        "note": "Keep this as a benchmark team; replacing a member changes its setup strategy."
+      },
+      "strategySummary": "Disrupt the lead with Trick and stat control, then set up behind a Substitute.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified"
+    },
+    {
+      "id": "iv-quentin-multi",
+      "title": "Staraptor / Tauros",
+      "gameIDs": [
+        "hg",
+        "ss",
+        "platinum"
+      ],
+      "facility": "Battle Tower",
+      "format": "NPC Multi",
+      "author": "QuentinQuonce",
+      "sourceIDs": [
+        "iv-index",
+        "iv-multi"
+      ],
+      "members": [
+        {
+          "species": "Staraptor",
+          "item": "Choice Scarf",
+          "ability": "Intimidate",
+          "nature": "Adamant",
+          "evs": "4 HP / 252 Atk / 76 Def / 4 SpD / 172 Spe",
+          "moves": [
+            "Brave Bird",
+            "Giga Impact",
+            "Close Combat",
+            "U-turn"
+          ]
+        },
+        {
+          "species": "Tauros",
+          "item": "Life Orb",
+          "ability": "Intimidate",
+          "nature": "Jolly",
+          "evs": "4 HP / 252 Atk / 252 Spe",
+          "moves": [
+            "Double-Edge",
+            "Earthquake",
+            "Rock Slide",
+            "Zen Headbutt"
+          ]
+        }
+      ],
+      "documentedResult": {
+        "wins": 83,
+        "game": "SoulSilver",
+        "evidence": "Published leaderboard and original report"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated",
+        "note": "Two owned slots plus an NPC. An arbitrary RM substitution has not been established."
+      },
+      "strategySummary": "Select an NPC team that complements the lead; Riley is often useful. Intimidate helps both allied Pokémon. Watch shared Ice/Electric weaknesses.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified"
+    },
+    {
+      "id": "vi-ggunit-truant",
+      "title": "Durant / Cloyster / Drapion",
+      "gameIDs": [
+        "x",
+        "y",
+        "or",
+        "as"
+      ],
+      "facility": "Battle Maison",
+      "format": "Super Singles",
+      "author": "GG Unit",
+      "sourceIDs": [
+        "maison-records"
+      ],
+      "members": [
+        {
+          "species": "Durant",
+          "item": "Choice Scarf",
+          "ability": "Truant",
+          "nature": "Jolly",
+          "evs": "220 HP / 60 Def / 228 Spe",
+          "moves": [
+            "Entrainment",
+            "X-Scissor",
+            "Protect",
+            "Confide"
+          ]
+        },
+        {
+          "species": "Cloyster",
+          "item": "Focus Sash",
+          "ability": "Skill Link",
+          "nature": "Naughty",
+          "evs": "252 Atk / 92 SpA / 164 Spe",
+          "moves": [
+            "Shell Smash",
+            "Icicle Spear",
+            "Surf",
+            "Protect"
+          ]
+        },
+        {
+          "species": "Drapion",
+          "item": "Black Sludge",
+          "ability": "Battle Armor",
+          "nature": "Adamant",
+          "evs": "252 HP / 252 Atk / 4 SpD",
+          "moves": [
+            "Acupressure",
+            "Substitute",
+            "Knock Off",
+            "Protect"
+          ]
+        }
+      ],
+      "documentedResult": {
+        "wins": 971,
+        "evidence": "Historical Maison records article"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated",
+        "note": "The three roles form a specific engine; do not advertise a free RM slot."
+      },
+      "strategySummary": "Pass Truant, alternate protection and setup, then sweep. Learn the Protect, Fake Out, Magic Bounce and self-KO exceptions; setup can be slow.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified"
+    },
+    {
+      "id": "vii-silverstarstream",
+      "title": "Garchomp / Mega Scizor / Tapu Fini",
+      "gameIDs": [
+        "sun",
+        "moon",
+        "usun",
+        "umoon"
+      ],
+      "facility": "Battle Tree",
+      "format": "Super Singles",
+      "author": "SilverstarStream",
+      "sourceIDs": [
+        "tree-index",
+        "tree-report",
+        "tree-paste"
+      ],
+      "members": [
+        {
+          "species": "Garchomp",
+          "item": "Dragonium Z",
+          "ability": "Rough Skin",
+          "nature": "Jolly",
+          "evs": "252 Atk / 4 Def / 252 Spe",
+          "moves": [
+            "Earthquake",
+            "Outrage",
+            "Swords Dance",
+            "Substitute"
+          ]
+        },
+        {
+          "species": "Scizor-Mega",
+          "item": "Scizorite",
+          "ability": "Technician",
+          "nature": "Adamant",
+          "evs": "244 HP / 4 Atk / 4 Def / 252 SpD / 4 Spe",
+          "moves": [
+            "Bullet Punch",
+            "Brutal Swing",
+            "Roost",
+            "Swords Dance"
+          ]
+        },
+        {
+          "species": "Tapu Fini",
+          "item": "Sitrus Berry",
+          "ability": "Misty Surge",
+          "nature": "Modest",
+          "evs": "252 HP / 172 SpA / 84 Spe",
+          "moves": [
+            "Moonblast",
+            "Surf",
+            "Grass Knot",
+            "Calm Mind"
+          ]
+        }
+      ],
+      "documentedResult": {
+        "wins": 1064,
+        "evidence": "Published report, index and linked build"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated",
+        "note": "Review which member can be replaced for the final battle; no universal carry claim."
+      },
+      "strategySummary": "Use complementary setup attackers and Fini’s defensive coverage; follow the original report for threats and terrain interactions.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified"
+    },
+    {
+      "id": "vii-muk-lead",
+      "title": "Alolan Muk Battle Royal lead",
+      "gameIDs": [
+        "sun",
+        "moon",
+        "usun",
+        "umoon"
+      ],
+      "facility": "Battle Royal",
+      "format": "Master Rank",
+      "author": "Original Reddit author [deleted]",
+      "sourceIDs": [
+        "royal-muk"
+      ],
+      "members": [
+        {
+          "species": "Muk-Alola",
+          "item": "Black Sludge",
+          "ability": "Poison Touch",
+          "nature": "Impish",
+          "evs": "252 HP / 252 Atk / 4 SpD",
+          "moves": [
+            "Substitute",
+            "Poison Gas",
+            "Curse",
+            "Shadow Sneak"
+          ]
+        }
+      ],
+      "documentedResult": {
+        "wins": null,
+        "evidence": "First-person method; later commenter reports ribbon-quest success, not a measured streak"
+      },
+      "ribbonMasterSlot": {
+        "status": "lead-only-candidate",
+        "note": "Other two slots are not fully specified. Supports investigating an RM slot, not a finished three-Pokémon team."
+      },
+      "strategySummary": "Protect with Substitute, poison where useful, boost with Curse and take finishing blows with Shadow Sneak. Account for immunities and the round ending.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified",
+      "completeness": "one-complete-lead-not-full-team"
+    },
+    {
+      "id": "viii-bobdat",
+      "title": "Zamazenta / Eternatus / Charizard",
+      "gameIDs": [
+        "sw",
+        "sh"
+      ],
+      "facility": "Battle Tower",
+      "format": "Singles",
+      "author": "bobdat",
+      "sourceIDs": [
+        "swsh-bobdat"
+      ],
+      "members": [
+        {
+          "species": "Zamazenta-Crowned",
+          "item": "Rusted Shield",
+          "ability": "Dauntless Shield",
+          "nature": "Adamant",
+          "evs": "4 HP / 252 Atk / 252 Spe",
+          "moves": [
+            "Behemoth Bash",
+            "Psychic Fangs",
+            "Close Combat",
+            "Crunch"
+          ],
+          "ivs": "Hyper Trained: all 31"
+        },
+        {
+          "species": "Eternatus",
+          "item": "Choice Specs",
+          "ability": "Pressure",
+          "nature": "Modest",
+          "evs": "4 HP / 252 SpA / 252 Spe",
+          "moves": [
+            "Dynamax Cannon",
+            "Sludge Wave",
+            "Hyper Beam",
+            "Flamethrower"
+          ],
+          "ivs": "Hyper Trained: all 31"
+        },
+        {
+          "species": "Charizard-Gmax",
+          "item": "Heavy-Duty Boots",
+          "ability": "Blaze",
+          "nature": "Modest",
+          "evs": "4 HP / 252 SpA / 252 Spe",
+          "moves": [
+            "Blast Burn",
+            "Flamethrower",
+            "Dragon Pulse",
+            "Air Slash"
+          ],
+          "ivs": "Hyper Trained: 31/x/31/31/31/31"
+        }
+      ],
+      "documentedResult": {
+        "wins": 100,
+        "ongoingAtPublication": true,
+        "evidence": "Author’s original Singles and Doubles Ubers report, 2020-02-10"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated",
+        "note": "Charizard is the original Singles backup. Replacing it with the RM is a proposed adaptation only."
+      },
+      "strategySummary": "Lead Zamazenta for quick physical pressure; Eternatus supplies special damage and Charizard is a Dynamax backup.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified",
+      "sourceVariantNote": "Original Doubles version adds Inteleon. These rules/ability effects are for Sword/Shield; do not reuse unchanged in later games."
+    },
+    {
+      "id": "viii-cerorift",
+      "title": "Rotom-Wash / Scizor / Garchomp",
+      "gameIDs": [
+        "bd",
+        "sp"
+      ],
+      "facility": "Battle Tower",
+      "format": "Master Singles",
+      "author": "CeroRift",
+      "sourceIDs": [
+        "bdsp-index",
+        "bdsp-singles"
+      ],
+      "members": [
+        {
+          "species": "Rotom-Wash",
+          "item": "Choice Scarf",
+          "ability": "Levitate",
+          "nature": "Modest",
+          "evs": "20 HP / 4 Def / 252 SpA / 12 SpD / 222 Spe",
+          "moves": [
+            "Trick",
+            "Volt Switch",
+            "Thunderbolt",
+            "Dark Pulse"
+          ],
+          "ivs": "0 Atk"
+        },
+        {
+          "species": "Scizor",
+          "item": "Leftovers",
+          "ability": "Technician",
+          "nature": "Adamant",
+          "evs": "132 HP / 252 Atk / 4 Def / 116 SpD / 6 Spe",
+          "moves": [
+            "Swords Dance",
+            "Bullet Punch",
+            "Thief",
+            "Roost"
+          ]
+        },
+        {
+          "species": "Garchomp",
+          "item": "Lum Berry",
+          "ability": "Rough Skin",
+          "nature": "Jolly",
+          "evs": "214 Atk / 44 Def / 252 Spe",
+          "moves": [
+            "Earthquake",
+            "Swords Dance",
+            "Substitute",
+            "Outrage"
+          ]
+        }
+      ],
+      "documentedResult": {
+        "wins": 1050,
+        "evidence": "Published leaderboard and linked build"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated",
+        "note": "Do not promise the published result after an RM substitution."
+      },
+      "strategySummary": "Use Trick and pivots to create setup opportunities. Keep the source’s unusual EV values intact.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified",
+      "sourceVariantNote": "Published 510-EV spreads retained, including values not divisible by four."
+    },
+    {
+      "id": "viii-eisenherz",
+      "title": "Pelipper / Kingdra rain",
+      "gameIDs": [
+        "bd",
+        "sp"
+      ],
+      "facility": "Battle Tower",
+      "format": "Master Doubles",
+      "author": "Eisenherz",
+      "sourceIDs": [
+        "bdsp-index",
+        "bdsp-rain",
+        "bdsp-rain-report"
+      ],
+      "members": [
+        {
+          "species": "Pelipper",
+          "item": "Focus Sash",
+          "ability": "Drizzle",
+          "nature": "Modest",
+          "evs": "252 SpA / 4 SpD / 252 Spe",
+          "moves": [
+            "Brine",
+            "Hurricane",
+            "Tailwind",
+            "Protect"
+          ],
+          "level": 50
+        },
+        {
+          "species": "Kingdra",
+          "item": "Life Orb",
+          "ability": "Swift Swim",
+          "nature": "Modest",
+          "evs": "252 SpA / 4 SpD / 252 Spe",
+          "moves": [
+            "Scald",
+            "Dragon Pulse",
+            "Ice Beam",
+            "Protect"
+          ],
+          "level": 50
+        },
+        {
+          "species": "Raikou",
+          "item": "Choice Specs",
+          "ability": "Inner Focus",
+          "nature": "Timid",
+          "evs": "4 Def / 252 SpA / 252 Spe",
+          "moves": [
+            "Thunder",
+            "Thunderbolt",
+            "Volt Switch",
+            "Shadow Ball"
+          ],
+          "level": 50
+        },
+        {
+          "species": "Scizor",
+          "item": "Sitrus Berry",
+          "ability": "Technician",
+          "nature": "Adamant",
+          "evs": "204 Atk / 132 SpD / 172 Spe",
+          "moves": [
+            "Bullet Punch",
+            "X-Scissor",
+            "Swords Dance",
+            "Protect"
+          ],
+          "level": 50
+        }
+      ],
+      "documentedResult": {
+        "wins": 1045,
+        "evidence": "Published leaderboard and original linked build"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated-by-team-author",
+        "note": "Separate community reports suggest replacing Scizor for Rank 10; retain as an unverified adaptation until its specific report is recorded and reviewed."
+      },
+      "strategySummary": "Lead Pelipper and Kingdra for rain pressure; Raikou and Scizor cover later turns. Review weather changes and friendly-fire interactions.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified"
+    },
+    {
+      "id": "ix-cischke",
+      "title": "Koraidon / Lunala Regulation I",
+      "gameIDs": [
+        "scar",
+        "vio"
+      ],
+      "facility": "Ranked Battles",
+      "format": "Doubles — Regulation I",
+      "author": "Giovanni Cischke",
+      "sourceIDs": [
+        "sv-worlds-report",
+        "sv-worlds-paste",
+        "worlds-results",
+        "sv-season41"
+      ],
+      "members": [
+        {
+          "species": "Koraidon",
+          "item": "Life Orb",
+          "ability": "Orichalcum Pulse",
+          "nature": "Jolly",
+          "evs": "4 HP / 252 Atk / 252 Spe",
+          "moves": [
+            "Close Combat",
+            "Flare Blitz",
+            "Flame Charge",
+            "Protect"
+          ],
+          "level": 50,
+          "teraType": "Fire"
+        },
+        {
+          "species": "Lunala",
+          "item": "Power Herb",
+          "ability": "Shadow Shield",
+          "nature": "Modest",
+          "evs": "204 HP / 28 Def / 100 SpA / 116 SpD / 60 Spe",
+          "moves": [
+            "Moongeist Beam",
+            "Meteor Beam",
+            "Wide Guard",
+            "Trick Room"
+          ],
+          "level": 50,
+          "teraType": "Water",
+          "ivs": "0 Atk"
+        },
+        {
+          "species": "Flutter Mane",
+          "item": "Focus Sash",
+          "ability": "Protosynthesis",
+          "nature": "Timid",
+          "evs": "4 HP / 252 SpA / 252 Spe",
+          "moves": [
+            "Shadow Ball",
+            "Moonblast",
+            "Icy Wind",
+            "Protect"
+          ],
+          "level": 50,
+          "teraType": "Stellar",
+          "ivs": "3 Atk"
+        },
+        {
+          "species": "Chi-Yu",
+          "item": "Choice Scarf",
+          "ability": "Beads of Ruin",
+          "nature": "Modest",
+          "evs": "52 HP / 4 Def / 196 SpA / 4 SpD / 252 Spe",
+          "moves": [
+            "Dark Pulse",
+            "Heat Wave",
+            "Overheat",
+            "Snarl"
+          ],
+          "level": 50,
+          "teraType": "Ghost",
+          "ivs": "1 Atk"
+        },
+        {
+          "species": "Brute Bonnet",
+          "item": "Sitrus Berry",
+          "ability": "Protosynthesis",
+          "nature": "Impish",
+          "evs": "252 HP / 244 Def / 12 Spe",
+          "moves": [
+            "Seed Bomb",
+            "Sucker Punch",
+            "Spore",
+            "Rage Powder"
+          ],
+          "level": 50,
+          "teraType": "Water",
+          "ivs": "28 SpA"
+        },
+        {
+          "species": "Ursaluna",
+          "item": "Flame Orb",
+          "ability": "Guts",
+          "nature": "Brave",
+          "evs": "252 HP / 252 Atk / 4 SpD",
+          "moves": [
+            "Headlong Rush",
+            "Facade",
+            "Earthquake",
+            "Protect"
+          ],
+          "level": 50,
+          "teraType": "Ghost",
+          "ivs": "0 Spe"
+        }
+      ],
+      "documentedResult": {
+        "event": "2025 World Champion, Masters VGC",
+        "evidence": "Official result and author’s team report; this is not a ribbon-carry streak"
+      },
+      "ribbonMasterSlot": {
+        "status": "not-demonstrated",
+        "note": "A tournament team is a learning/reference option. Swapping an arbitrary RM can break its strategy or legality."
+      },
+      "strategySummary": "Reference build with fast sun pressure and a Trick Room mode; link the author’s matchup guidance. Do not label it a beginner carry team.",
+      "checkedOn": "2026-10-16",
+      "reviewStatus": "source-read-not-playtested",
+      "rentalCode": null,
+      "rentalStatus": "not-supplied-or-live-verified",
+      "regulation": "I",
+      "role": "competitive-reference-not-ribbon-carry"
+    }
+  ],
+  "coverage": [
+    {
+      "awardID": "cool-ribbon-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-super-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-super-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-super-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-hyper-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-hyper-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-hyper-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-super-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-super-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-super-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hyper-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hyper-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hyper-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-super-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-super-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-super-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hyper-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hyper-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hyper-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-super-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-super-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-super-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hyper-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hyper-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hyper-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-super-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-super-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-super-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hyper-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hyper-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hyper-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-hoenn",
+      "gameID": "ruby",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-hoenn",
+      "gameID": "sapphire",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-hoenn",
+      "gameID": "emerald",
+      "moduleID": "rse-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "gameID": "fr-switch",
+      "moduleID": "champions",
+      "status": "needs-release-specific-check",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "gameID": "lg-switch",
+      "moduleID": "champions",
+      "status": "needs-release-specific-check",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "gameID": "ruby",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "gameID": "sapphire",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "gameID": "emerald",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "gameID": "fr",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "gameID": "lg",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "winning-ribbon",
+      "gameID": "ruby",
+      "moduleID": "rse-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "winning-ribbon",
+      "gameID": "sapphire",
+      "moduleID": "rse-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "winning-ribbon",
+      "gameID": "emerald",
+      "moduleID": "rse-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "victory-ribbon",
+      "gameID": "ruby",
+      "moduleID": "rse-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "victory-ribbon",
+      "gameID": "sapphire",
+      "moduleID": "rse-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "victory-ribbon",
+      "gameID": "emerald",
+      "moduleID": "rse-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "artist-ribbon",
+      "gameID": "ruby",
+      "moduleID": "artist",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "artist-ribbon",
+      "gameID": "sapphire",
+      "moduleID": "artist",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "artist-ribbon",
+      "gameID": "emerald",
+      "moduleID": "artist",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "ruby",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "sapphire",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "emerald",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "diamond",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "pearl",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "platinum",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "hg",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "ss",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "x",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "y",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "or",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "as",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "sun",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "moon",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "usun",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "umoon",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "sw",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "sh",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "bd",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "sp",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "scar",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "gameID": "vio",
+      "moduleID": "effort",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "national-ribbon",
+      "gameID": "colosseum",
+      "moduleID": "purification",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "national-ribbon",
+      "gameID": "xd",
+      "moduleID": "purification",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "national-ribbon",
+      "gameID": "xd-nso",
+      "moduleID": "purification",
+      "status": "needs-release-specific-check",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "earth-ribbon",
+      "gameID": "colosseum",
+      "moduleID": "mt-battle",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "earth-ribbon",
+      "gameID": "xd",
+      "moduleID": "mt-battle",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "earth-ribbon",
+      "gameID": "xd-nso",
+      "moduleID": "mt-battle",
+      "status": "needs-release-specific-check",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "sinnoh-champion-ribbon",
+      "gameID": "diamond",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "sinnoh-champion-ribbon",
+      "gameID": "pearl",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "sinnoh-champion-ribbon",
+      "gameID": "platinum",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "sinnoh-champion-ribbon",
+      "gameID": "bd",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "sinnoh-champion-ribbon",
+      "gameID": "sp",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "ability-ribbon",
+      "gameID": "diamond",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "ability-ribbon",
+      "gameID": "pearl",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "ability-ribbon",
+      "gameID": "platinum",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "ability-ribbon",
+      "gameID": "hg",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "ability-ribbon",
+      "gameID": "ss",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "great-ability-ribbon",
+      "gameID": "diamond",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "great-ability-ribbon",
+      "gameID": "pearl",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "great-ability-ribbon",
+      "gameID": "platinum",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "great-ability-ribbon",
+      "gameID": "hg",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "great-ability-ribbon",
+      "gameID": "ss",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "double-ability-ribbon",
+      "gameID": "diamond",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "double-ability-ribbon",
+      "gameID": "pearl",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "double-ability-ribbon",
+      "gameID": "platinum",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "double-ability-ribbon",
+      "gameID": "hg",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "double-ability-ribbon",
+      "gameID": "ss",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "multi-ability-ribbon",
+      "gameID": "diamond",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "multi-ability-ribbon",
+      "gameID": "pearl",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "multi-ability-ribbon",
+      "gameID": "platinum",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "multi-ability-ribbon",
+      "gameID": "hg",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "multi-ability-ribbon",
+      "gameID": "ss",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "pair-ability-ribbon",
+      "gameID": "diamond",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "pair-ability-ribbon",
+      "gameID": "pearl",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "pair-ability-ribbon",
+      "gameID": "platinum",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "pair-ability-ribbon",
+      "gameID": "hg",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "pair-ability-ribbon",
+      "gameID": "ss",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "world-ability-ribbon",
+      "gameID": "diamond",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "world-ability-ribbon",
+      "gameID": "pearl",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "world-ability-ribbon",
+      "gameID": "platinum",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "world-ability-ribbon",
+      "gameID": "hg",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "world-ability-ribbon",
+      "gameID": "ss",
+      "moduleID": "iv-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "diamond",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "pearl",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "platinum",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "hg",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "ss",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "x",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "y",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "or",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "as",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "bd",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "gameID": "sp",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "diamond",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "pearl",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "platinum",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "hg",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "ss",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "x",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "y",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "or",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "as",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "bd",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "gameID": "sp",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "diamond",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "pearl",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "platinum",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "hg",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "ss",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "x",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "y",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "or",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "as",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "bd",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "gameID": "sp",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "diamond",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "pearl",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "platinum",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "hg",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "ss",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "x",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "y",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "or",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "as",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "bd",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "gameID": "sp",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "diamond",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "pearl",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "platinum",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "hg",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "ss",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "x",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "y",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "or",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "as",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "bd",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "gameID": "sp",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "diamond",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "pearl",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "platinum",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "hg",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "ss",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "x",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "y",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "or",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "as",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "bd",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "gameID": "sp",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "diamond",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "pearl",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "platinum",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "hg",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "ss",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "x",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "y",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "or",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "as",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "bd",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "gameID": "sp",
+      "moduleID": "daily",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "gameID": "diamond",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "gameID": "pearl",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "gameID": "platinum",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "gameID": "or",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "gameID": "as",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "gameID": "bd",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "gameID": "sp",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "gameID": "diamond",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "gameID": "pearl",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "gameID": "platinum",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "gameID": "or",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "gameID": "as",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "gameID": "bd",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "gameID": "sp",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "gameID": "diamond",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "gameID": "pearl",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "gameID": "platinum",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "gameID": "or",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "gameID": "as",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "gameID": "bd",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "gameID": "sp",
+      "moduleID": "purchase",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "diamond",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "pearl",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "platinum",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "x",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "y",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "or",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "as",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "sun",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "moon",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "usun",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "umoon",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "bd",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "gameID": "sp",
+      "moduleID": "footprint",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "legend-ribbon",
+      "gameID": "hg",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "legend-ribbon",
+      "gameID": "ss",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-great-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-great-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-great-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-ultra-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-ultra-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-ultra-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-great-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-great-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-great-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-ultra-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-ultra-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-ultra-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-great-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-great-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-great-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-ultra-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-ultra-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-ultra-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-great-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-great-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-great-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-ultra-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-ultra-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-ultra-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-great-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-great-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-great-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-ultra-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-ultra-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-ultra-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-sinnoh",
+      "gameID": "diamond",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-sinnoh",
+      "gameID": "pearl",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-sinnoh",
+      "gameID": "platinum",
+      "moduleID": "iv-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "contest-memory-ribbon",
+      "gameID": "x",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon",
+      "gameID": "y",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon",
+      "gameID": "or",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon",
+      "gameID": "as",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon-gold",
+      "gameID": "x",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon-gold",
+      "gameID": "y",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon-gold",
+      "gameID": "or",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon-gold",
+      "gameID": "as",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon",
+      "gameID": "x",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon",
+      "gameID": "y",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon",
+      "gameID": "or",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon",
+      "gameID": "as",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon-gold",
+      "gameID": "x",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon-gold",
+      "gameID": "y",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon-gold",
+      "gameID": "or",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon-gold",
+      "gameID": "as",
+      "moduleID": "memory",
+      "status": "draft-mapped",
+      "kind": "consolidation"
+    },
+    {
+      "awardID": "kalos-champion-ribbon",
+      "gameID": "x",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "kalos-champion-ribbon",
+      "gameID": "y",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "x",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "y",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "or",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "as",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "sun",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "moon",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "usun",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "umoon",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "sw",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "sh",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "bd",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "sp",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "scar",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "gameID": "vio",
+      "moduleID": "friendship",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "training-ribbon",
+      "gameID": "x",
+      "moduleID": "super-training",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "training-ribbon",
+      "gameID": "y",
+      "moduleID": "super-training",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "training-ribbon",
+      "gameID": "or",
+      "moduleID": "super-training",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "training-ribbon",
+      "gameID": "as",
+      "moduleID": "super-training",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "skillful-battler-ribbon",
+      "gameID": "x",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "skillful-battler-ribbon",
+      "gameID": "y",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "skillful-battler-ribbon",
+      "gameID": "or",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "skillful-battler-ribbon",
+      "gameID": "as",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "expert-battler-ribbon",
+      "gameID": "x",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "expert-battler-ribbon",
+      "gameID": "y",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "expert-battler-ribbon",
+      "gameID": "or",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "expert-battler-ribbon",
+      "gameID": "as",
+      "moduleID": "maison",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "hoenn-champion-ribbon",
+      "gameID": "or",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "hoenn-champion-ribbon",
+      "gameID": "as",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "coolness-master-ribbon",
+      "gameID": "or",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "coolness-master-ribbon",
+      "gameID": "as",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "coolness-master-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "coolness-master-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-master-ribbon",
+      "gameID": "or",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-master-ribbon",
+      "gameID": "as",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-master-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "beauty-master-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cuteness-master-ribbon",
+      "gameID": "or",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cuteness-master-ribbon",
+      "gameID": "as",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cuteness-master-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cuteness-master-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cleverness-master-ribbon",
+      "gameID": "or",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cleverness-master-ribbon",
+      "gameID": "as",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cleverness-master-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "cleverness-master-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "toughness-master-ribbon",
+      "gameID": "or",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "toughness-master-ribbon",
+      "gameID": "as",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "toughness-master-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "toughness-master-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "contest-star-ribbon",
+      "gameID": "or",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "contest-star-ribbon",
+      "gameID": "as",
+      "moduleID": "oras-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "contest-star-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "contest-star-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alola-champion-ribbon",
+      "gameID": "sun",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alola-champion-ribbon",
+      "gameID": "moon",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alola-champion-ribbon",
+      "gameID": "usun",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "alola-champion-ribbon",
+      "gameID": "umoon",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-royal-master-ribbon",
+      "gameID": "sun",
+      "moduleID": "royal",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-royal-master-ribbon",
+      "gameID": "moon",
+      "moduleID": "royal",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-royal-master-ribbon",
+      "gameID": "usun",
+      "moduleID": "royal",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-royal-master-ribbon",
+      "gameID": "umoon",
+      "moduleID": "royal",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-great-ribbon",
+      "gameID": "sun",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-great-ribbon",
+      "gameID": "moon",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-great-ribbon",
+      "gameID": "usun",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-great-ribbon",
+      "gameID": "umoon",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-master-ribbon",
+      "gameID": "sun",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-master-ribbon",
+      "gameID": "moon",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-master-ribbon",
+      "gameID": "usun",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "battle-tree-master-ribbon",
+      "gameID": "umoon",
+      "moduleID": "tree",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "galar-champion-ribbon",
+      "gameID": "sw",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "galar-champion-ribbon",
+      "gameID": "sh",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tower-master-ribbon",
+      "gameID": "sw",
+      "moduleID": "swsh-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tower-master-ribbon",
+      "gameID": "sh",
+      "moduleID": "swsh-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tower-master-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "tower-master-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-tower",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "master-rank-ribbon",
+      "gameID": "sw",
+      "moduleID": "ranked",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "master-rank-ribbon",
+      "gameID": "sh",
+      "moduleID": "ranked",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "master-rank-ribbon",
+      "gameID": "scar",
+      "moduleID": "ranked",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "master-rank-ribbon",
+      "gameID": "vio",
+      "moduleID": "ranked",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "twinkling-star-ribbon",
+      "gameID": "bd",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "twinkling-star-ribbon",
+      "gameID": "sp",
+      "moduleID": "bdsp-contests",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "hisui-ribbon",
+      "gameID": "pla",
+      "moduleID": "hisui-photo",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "paldea-champion-ribbon",
+      "gameID": "scar",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "paldea-champion-ribbon",
+      "gameID": "vio",
+      "moduleID": "champions",
+      "status": "draft-mapped",
+      "kind": "ribbon"
+    },
+    {
+      "awardID": "itemfinder-mark",
+      "gameID": "scar",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "itemfinder-mark",
+      "gameID": "vio",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "partner-mark",
+      "gameID": "scar",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "partner-mark",
+      "gameID": "vio",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "gourmand-mark",
+      "gameID": "scar",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "gourmand-mark",
+      "gameID": "vio",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "jumbo-mark",
+      "gameID": "scar",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "jumbo-mark",
+      "gameID": "vio",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "mini-mark",
+      "gameID": "scar",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    },
+    {
+      "awardID": "mini-mark",
+      "gameID": "vio",
+      "moduleID": "earned-marks",
+      "status": "draft-mapped",
+      "kind": "post-capture-mark"
+    }
+  ],
+  "catalogueClassification": [
+    {
+      "awardID": "cool-ribbon-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-super-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-hyper-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-super-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-hyper-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-super-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-hyper-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-super-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-hyper-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-super-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-hyper-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-hoenn",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "champion-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "winning-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "victory-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "artist-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "effort-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "national-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "earth-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "country-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "world-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "sinnoh-champion-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "ability-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "great-ability-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "double-ability-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "multi-ability-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "pair-ability-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "world-ability-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "alert-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "shock-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "downcast-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "careless-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "relax-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "snooze-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smile-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "gorgeous-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "royal-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "gorgeous-royal-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "footprint-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "legend-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-great-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-ultra-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cool-ribbon-master-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-great-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-ultra-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-ribbon-master-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-great-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-ultra-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cute-ribbon-master-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-great-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-ultra-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "smart-ribbon-master-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-great-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-ultra-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tough-ribbon-master-sinnoh",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "classic-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "premier-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "event-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "birthday-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "special-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "souvenir-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "wishing-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "battle-champion-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "regional-champion-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "national-champion-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "world-champion-ribbon",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "contest-memory-ribbon",
+      "category": "consolidation"
+    },
+    {
+      "awardID": "contest-memory-ribbon-gold",
+      "category": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon",
+      "category": "consolidation"
+    },
+    {
+      "awardID": "battle-memory-ribbon-gold",
+      "category": "consolidation"
+    },
+    {
+      "awardID": "kalos-champion-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "best-friends-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "training-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "skillful-battler-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "expert-battler-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "hoenn-champion-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "coolness-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "beauty-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cuteness-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "cleverness-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "toughness-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "contest-star-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "alola-champion-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "battle-royal-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "battle-tree-great-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "battle-tree-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "galar-champion-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "tower-master-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "master-rank-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "twinkling-star-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "hisui-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "lunchtime-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "sleepy-time-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "dusk-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "dawn-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "cloudy-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "rainy-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "stormy-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "snowy-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "blizzard-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "dry-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "sandstorm-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "misty-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "destiny-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "fishing-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "curry-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "uncommon-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "rare-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "rowdy-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "absent-minded-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "jittery-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "excited-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "charismatic-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "calmness-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "intense-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "zoned-out-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "joyful-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "angry-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "smiley-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "teary-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "upbeat-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "peeved-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "intellectual-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "ferocious-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "crafty-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "scowling-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "kindly-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "flustered-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "pumped-up-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "zero-energy-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "prideful-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "unsure-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "humble-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "thorny-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "vigor-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "slump-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "paldea-champion-ribbon",
+      "category": "earnable-ribbon"
+    },
+    {
+      "awardID": "itemfinder-mark",
+      "category": "post-capture-mark"
+    },
+    {
+      "awardID": "partner-mark",
+      "category": "post-capture-mark"
+    },
+    {
+      "awardID": "gourmand-mark",
+      "category": "post-capture-mark"
+    },
+    {
+      "awardID": "jumbo-mark",
+      "category": "post-capture-mark"
+    },
+    {
+      "awardID": "mini-mark",
+      "category": "post-capture-mark"
+    },
+    {
+      "awardID": "alpha-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "mightiest-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "titan-mark",
+      "category": "no-post-capture-earning-task"
+    },
+    {
+      "awardID": "partner-ribbon",
+      "category": "no-post-capture-earning-task"
+    }
+  ],
+  "editorialRules": [
+    "Community strategy is attributed advice, not an official game description.",
+    "Read a source is not equivalent to independently playtested.",
+    "Preserve published EVs/IVs and move order; record adaptations separately.",
+    "Unknown fields remain unknown. Rental codes are never marked live without checking in game.",
+    "Optional honors and size marks never count toward Ribbon Master completion.",
+    "Current Pokémon eligibility and completed legacy history are separate; do not erase earned history after transfer.",
+    "Do not infer HOME registration, individual earning games or trainer-wide honors from a Pokémon save record.",
+    "Keep notes, screenshots and personal builds in app backup/recovery; omit unsupported fields from external exports."
+  ],
+  "conflicts": [
+    {
+      "topic": "Once-in-a-Lifetime Ribbon",
+      "decision": "Do not offer as earnable. References disagree about whether granting logic exists; seek implementation-level evidence.",
+      "sourceIDs": [
+        "serebii-sv",
+        "bulba-ribbons"
+      ]
+    },
+    {
+      "topic": "Gourmand probability",
+      "decision": "Use chance-after-meals wording; exact reported probabilities conflict.",
+      "sourceIDs": [
+        "athis-paldea",
+        "sv-marks"
+      ]
+    },
+    {
+      "topic": "Twinkling Star rank",
+      "decision": "Require Master Rank Brilliant/Shining; do not simplify to any rank.",
+      "sourceIDs": [
+        "athis-bdsp",
+        "bulba-ribbons",
+        "serebii-bdsp"
+      ]
+    },
+    {
+      "topic": "Champions titles",
+      "decision": "Do not promise a portable Master Rank Ribbon. Track only as optional local honor until official return behavior is documented.",
+      "sourceIDs": []
+    }
+  ],
+  "releaseGates": [
+    "Final editorial review for every game-specific location/prerequisite.",
+    "Verify Artist score, friendship/affection thresholds, transferred Footprint baseline, Memory display bugs/version table and precise post-capture mark counters. Footprint exception species are source-recorded.",
+    "Check Switch FR/LG and XD NSO rather than assuming cartridge behavior.",
+    "Use factual builds and original summaries with attribution. Link original articles; do not bundle copied articles, author screenshots or unlicensed assets.",
+    "A dedicated RM-carry recommendation needs evidence for that replacement slot; the benchmark list alone is insufficient.",
+    "Check current online regulation/service status before shipping; no supplied rental code has been validated live.",
+    "Complete the honor catalog definitions, including what Shiny Crown means in the original suggestion."
+  ],
+  "honors": [
+    {
+      "id": "pokeathlon",
+      "name": "Pokéathlon medals/crown",
+      "gameIDs": [
+        "hg",
+        "ss"
+      ],
+      "scope": "pokemon-local-game-achievement",
+      "sourceIDs": [
+        "pokeathlon"
+      ],
+      "status": "draft",
+      "note": "Distinguish this crown from the Shiny Leaf Crown; no portable ribbon."
+    },
+    {
+      "id": "pwt",
+      "name": "Pokémon World Tournament",
+      "gameIDs": [
+        "black2",
+        "white2"
+      ],
+      "scope": "trainer-save-manual-pokemon-milestone",
+      "sourceIDs": [
+        "pwt"
+      ],
+      "status": "draft",
+      "note": "Record the exact tournament won; do not claim the game awarded this Pokémon a ribbon."
+    },
+    {
+      "id": "black-tower",
+      "name": "Black Tower / White Treehollow",
+      "gameIDs": [
+        "black2",
+        "white2"
+      ],
+      "scope": "trainer-save-manual-pokemon-milestone",
+      "sourceIDs": [
+        "black-tower"
+      ],
+      "status": "draft",
+      "note": "Clear through Area 10 and defeat Benga for an initial completion milestone. Store the exact facility, area and optional team participation; later cleared-area visits may use different bosses."
+    },
+    {
+      "id": "other-candidates",
+      "name": "Other honors from feedback",
+      "status": "definitions-and-sources-pending",
+      "candidates": [
+        "Trainer Hill",
+        "Shiny Crown / Leaf Crown clarification",
+        "Unova Champion",
+        "Pokéstar Studios strange ending / star",
+        "Battle Subway",
+        "Academy Ace Tournament"
+      ],
+      "note": "Manual milestones are authorized, but do not publish invented achievement requirements."
+    }
+  ],
+  "screenContracts": [
+    {
+      "scene": 2,
+      "name": "Ribbon field guide",
+      "content": [
+        "Game-specific requirement",
+        "Preparation",
+        "Short numbered steps",
+        "Missable/version warning",
+        "Relevant team",
+        "Sources"
+      ],
+      "layout": "Short sections with page/chapter controls; avoid an endless sheet."
+    },
+    {
+      "scene": 3,
+      "name": "Community teams",
+      "content": [
+        "Game/facility/format filters",
+        "Author",
+        "Exact builds",
+        "Published result",
+        "RM slot evidence",
+        "Strategy and threats",
+        "Regulation/rental review date"
+      ],
+      "layout": "Team list to team detail; contests link advice instead of fake battle teams."
+    },
+    {
+      "scene": 4,
+      "name": "Build notebook",
+      "content": [
+        "Save personal copy",
+        "Named versions",
+        "Notes",
+        "Showdown export",
+        "Original source retained"
+      ],
+      "layout": "Personal edits never overwrite the source catalog or the Pokémon’s recorded game."
+    },
+    {
+      "scene": 5,
+      "name": "Honors album",
+      "content": [
+        "Game/gen grouping",
+        "Manual earned state",
+        "Scope label"
+      ],
+      "layout": "Optional achievements, visibly separate from ribbon/mark totals and transfer checks."
+    },
+    {
+      "scene": 6,
+      "name": "Honor record",
+      "content": [
+        "Game",
+        "Optional historic date",
+        "Note",
+        "Optional local screenshot",
+        "Earned/remove state"
+      ],
+      "layout": "No inferred completion date or automatic verification claim."
+    },
+    {
+      "scene": 7,
+      "name": "Journey notes and Move Dex",
+      "content": [
+        "Dated entries",
+        "Local photos",
+        "Manual move/game checklist",
+        "Manually checked HOME status"
+      ],
+      "layout": "Keep current passport tabs; no automatic move registration/learnability claims."
+    },
+    {
+      "scene": 8,
+      "name": "Sources and review",
+      "content": [
+        "Author/link",
+        "Game/format",
+        "Checked date",
+        "Evidence level",
+        "Local correction draft"
+      ],
+      "layout": "No automatic messages or public posts."
+    }
+  ]
+}

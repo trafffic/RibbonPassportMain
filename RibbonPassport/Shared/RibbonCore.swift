@@ -117,6 +117,11 @@ struct RibbonPokemon: Codable, Identifiable, Equatable {
     var language: String? = nil
     var ball: String? = nil
     var trainername: String? = nil
+    var honors: [PassportHonor]? = nil
+    var journal: [PassportJournalEntry]? = nil
+    var moveNotes: [PassportMoveNote]? = nil
+    var savedBuilds: [PersonalBuild]? = nil
+    var communitySourceIDs: [String]? = nil
 
     var displayName: String { nickname.isEmpty ? (RibbonCatalog.shared.pokemon[species]?.name ?? species) : nickname }
     var spritePath: String {
@@ -139,6 +144,9 @@ struct RibbonTeam: Codable, Identifiable, Equatable {
     var id: String = UUID().uuidString
     var name: String
     var memberIDs: [String]
+    var communitySourceIDs: [String]? = nil
+    var savedBuilds: [PersonalTeamBuild]? = nil
+    var notebook: String? = nil
 }
 enum TeamKind: Equatable { case ribbon, showdown }
 enum Appearance: String, Codable, CaseIterable { case automatic, light, dark }
@@ -158,6 +166,7 @@ struct CollectionSnapshot: Codable {
     var widgetPresets: [WidgetPreset]? = nil
     var widgetDefaults: [String: String]? = nil
     var recoveryHistory: [RecoveryEntry]? = nil
+    var sourceNotes: [String: String]? = nil
     func members(teamID: String? = nil) -> [RibbonPokemon] {
         let id = teamID ?? selectedTeamID
         guard let team = teams.first(where: { $0.id == id }) else { return Array(pokemon.prefix(6)) }
@@ -189,7 +198,7 @@ struct CollectionSnapshot: Codable {
         var used = Set<String>()
         let refreshed = records.map { record -> RibbonPokemon in
             var p = record; p.source = "demo"
-            if let prior = old.first(where: { $0.species == p.species && !used.contains($0.id) }) { p.id = prior.id }
+            if let prior = old.first(where: { $0.species == p.species && !used.contains($0.id) }) { p.id = prior.id; p.preservePassportExtras(from: prior) }
             else { p.id = UUID().uuidString }
             used.insert(p.id); return p
         }

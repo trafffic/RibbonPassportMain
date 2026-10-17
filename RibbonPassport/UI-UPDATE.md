@@ -1,3 +1,19 @@
+# Community guides, notebooks and credits — 17 October 2026
+
+Implemented storyboard screens 2–8 using the app’s pixel controls and existing Ribbons/Competitive separation.
+
+- **Field guides:** open an award’s details → Field guide, or Passport → Journey → Guides. The bundled catalogue has 25 short guide groups, game-specific locations/requirements, notes, relevant teams and source cards. Official ribbon descriptions remain separate. Event/catch-only awards do not get invented earning tasks.
+- **Community teams:** Competitive → Options → Team library (also available from Teams). Ten sourced teams/lead methods include exact published builds, author names, original links, results and separate Ribbon Master slot notes. Save a personal copy before editing. Published streaks are not promises for arbitrary replacement Pokémon, and rental codes are not represented as live-checked.
+- **Build notebook:** open a competitive Pokémon or team → Build notebook. Save named versions and notes, inspect differences, apply saved builds and export a version through Showdown. Personal changes retain original credits. Applying a build preserves passport/journal details; missing competitive team members can be recreated from the saved version.
+- **Honors:** Passport → Journey → Honors, or Passport Options → Honorary achievements. Nine starter definitions and custom milestones support game, optional historic date, earned state, note and local screenshot. Trainer/save accomplishments carry an explicit manual-milestone label. Honors never affect ribbon/mark totals or transfer readiness.
+- **Journey notes:** Passport → Journey → Notes. Add/edit/remove memories and screenshots; Move Dex records are manual move/game notes with a separately checked HOME status. They do not infer registration or move legality.
+- **Credits:** Settings → Credits → Sources & credits. Search 57 references/credits by author or website, open original source links, read bundled licence notices and save a local correction note. Guides and teams also link directly to their own credits. Nothing is posted or sent to an author.
+- **Local backup:** Settings → Collection → App backup saves/restores complete app records, including screenshots, notebooks and recovery history. The restore preview asks before replacing the collection and retains recovery versions. Matched ribbons.guide imports preserve the new local passport metadata; website and Showdown exports omit unsupported app fields.
+
+Screenshots are resized locally before saving. Source links need an internet connection; bundled summaries, builds, notices and user records are available offline. Uncertain figures remain omitted or qualified rather than presented as verified instructions. Device signing settings are preserved.
+
+---
+
 # UI update
 
 ## Memory Ribbon consolidation

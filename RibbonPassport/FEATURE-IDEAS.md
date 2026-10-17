@@ -1,7 +1,7 @@
 # Feature ideas
 
 Living discussion list. An idea appearing here is not approval to implement it.
-Status: F07, F08, F15 and F18 are the user's favourites. F18 local recovery history is implemented. F06 online backup has been declined. Other features remain unscheduled.
+Status: F07, F08, F15 and F18 are the user's favourites. F18 local recovery history is implemented. F06 online backup has been declined. Community storyboard screens 2–8 are implemented; see the decisions below. Other features remain unscheduled.
 
 ## Gaps identified from ribbons.guide
 
@@ -78,3 +78,44 @@ Shortlist confirmed: Collection goals, Pokémon journal, Showcase cards and Coll
 F18 completed: automatic saved-change history, deleted-item recovery, version preview and comparison, reversible restores, and safe placement/team restoration. History starts with future saved changes; earlier deletions are not recoverable retroactively. Validation: 13 recovery unit/render tests, eight existing regressions, three simulator interaction tests, and an unsigned Release iPhone app/widget build.
 
 Save-file viewer support preference confirmed: GBA → DS → 3DS main-series titles, inclusive. Implementation has not been requested yet.
+
+## Community feedback storyboard — 16 October 2026
+
+Source: https://www.reddit.com/r/pokemonribbons/comments/1x6w2n1/been_working_on_an_app_for_tracking_ribbons_like/
+
+Status: storyboard screens 2–8 are implemented. Guides and source cards open from award details; the curated team library opens from Competitive; build notebooks open from Pokémon/team details; honors and Journey/Move Dex notes open from the passport Journey tab and Options; Settings contains Sources & credits and complete local app backups. The working research remains in `Research/`; edited offline content is bundled in `RibbonAssets/community-content.json`. Keep Ribbons and Competitive separate and avoid adding permanent controls to the PC home screen.
+
+Confirmed content decisions: cover all ribbon games including Switch; start with a few well-documented teams; provide offline summaries with original source links. Allow manual Pokémon milestones even when the game records the feat for the trainer/save, with an explicit scope label. These optional milestones never count as actual ribbons/marks or affect Ribbon Master completion. Dates are optional for historic records. Screen 1 is outside the requested 2–8 scope; use the existing contextual entry points.
+
+| Feature | Proposed location | Scope |
+| --- | --- | --- |
+| F03 Extra achievements — expanded | Passport → Honorary achievements | Optional records separate from actual ribbon/mark totals, earnable filters, last-chance checks and Ribbon Master completion. Candidate honors from the comments: Trainer Hill, Pokéathlon, Shiny Crown (clarify exact achievement), Unova Champion, Pokéstar Studios, Pokémon World Tournament, Black Tower/White Treehollow, Battle Subway and Academy Ace Tournament. Define game/species eligibility before publishing them. |
+| F08 Pokémon journal — expanded | Journey → Journey notes; honor record → attachment | Dated notes, milestones and optional local screenshots. An attachment is supporting evidence, not automatic verification. Store references safely and include journal/achievement metadata in local recovery and app backup formats. |
+| F21 Ribbon field guides | Ribbon detail → Guide; compact passport overview shortcut | Short, game-specific guides, contest advice, preparation checklists and links to appropriate teams. Keep official descriptions separate from guide prose. Paginate long guides or use short sections rather than one endless screen. |
+| F22 Curated community team library | Competitive → Team library; contextual guide link | Battle Tower teams, contest strategies, online rental codes, battle records and instructions. Filter by game/facility/format, explain the Ribbon Master slot, credit original authors, track source/review dates and show stale or unknown code/eligibility status. No unreviewed sample team described as proven. |
+| F11 Build library — expanded | Team detail → Save personal copy → Build notebook | Multiple named builds for a Pokémon, personal notes and existing Showdown text export. Preserve original source and keep personal edits separate. Do not silently change a Ribbon Master’s actual recorded game or details when viewing a proposed build. |
+| F23 HOME Move Dex notes | Journey notes → Move Dex notes | Start with manual move/game notes and a manually checked HOME record status. Later add verified version-specific learnability and transfer warnings. Never infer HOME registration from possession of a move or treat a movedex task as a Ribbon Master requirement. |
+| F24 Sources and review | Guide/team → source card; Settings → References & credits | Original link, author, exact game/format, relevant battle record and last review. Link to community work first; obtain permission where needed before redistributing it. Save correction drafts locally; sharing needs a separate explicit action. AI-related comments are development feedback, not a request for an AI feature in the app. |
+
+### Storyboard flow
+
+1. Passport entry: compact rows for Ribbon field guide, Honorary achievements and Journey notes, alongside current owned ribbon and transfer status UI. No new bottom navigation destination.
+2. Ribbon field guide: select a ribbon, switch from Description to Guide, follow short steps and open a relevant team or source card. Sample guide text needs editorial verification before release.
+3. Community teams: game/facility-specific team list, strategy, documented results and Ribbon Master slot. Online mode adds regulation/rental validity; contests opens advice rather than pretending contest advice is a battle team.
+4. Build notebook: save a personal team copy, switch named builds, add notes and export through the existing Showdown pathway.
+5. Honors album: browse optional achievements by compatible game/generation, distinct from actual awards. Grid and list layouts are alternatives to review.
+6. Honor record: select game, optional date, note, optional screenshot and earned state. Do not assume historic completion dates or auto-detect unsupported save flags.
+7. Journey notes: memories/photos and Move Dex notes as local subsections, without a fourth passport tab. Metadata survives changes to the tracked Pokémon and save reimports.
+8. Source card: see attribution and review status, follow the original guide and prepare a local correction note. No automatic posting or private Discord ingestion.
+
+### Proposed delivery order
+
+1. **Shared groundwork:** persistent IDs for honors/guides/team references and journal records; backward-compatible decoding, versioned app backups and recovery integration. Keep existing ribbons.guide and Showdown exports restricted to compatible fields. Do not change existing ribbon completion logic to include honors.
+2. **Small guide pilot:** one complete, sourced guide for a selected game plus one reviewed Battle Tower team and one contest guide. Review the UI and factual content before expanding the catalogue. Tie a guide to the existing ribbon detail so it can be shipped before the full library.
+3. **Honor records and journal:** starter catalog, game eligibility, manual earned state, notes and local photos, with correction/removal/recovery. Expand every proposed honor only after checking what that accomplishment actually records and whether it belongs to the Pokémon or to the save/trainer.
+4. **Teams and personal builds:** curated catalogue and saved copies, source provenance, multiple builds and Showdown export. Rental codes and competitive eligibility must be versioned by game/regulation and reviewed when rules change; offline content must show its review date.
+5. **Move notes:** manual checklist first; add verified move availability/transfer/HOME warnings separately. Defer automatic save detection to F19, importing only recorded facts.
+
+Validation for implementation: old collections decode without loss; optional honors never affect ribbon counts or transfer readiness; correct game-specific guides; saved team copies preserve attribution; photos and notes recover correctly; unsupported external export fields stay excluded; compact-phone labels and pagination stay readable; VoiceOver and reduced-motion behavior remain usable. Do not assert current ranked eligibility or a code’s validity from an old guide.
+
+Feedback references: Sredleg honors https://www.reddit.com/r/pokemonribbons/comments/1x6w2n1/comment/pgz83wo/ ; screenshots https://www.reddit.com/r/pokemonribbons/comments/1x6w2n1/comment/pgzbx5v/ ; Dahks guides/teams/builds/moves https://www.reddit.com/r/pokemonribbons/comments/1x6w2n1/comment/pgzpj07/ .

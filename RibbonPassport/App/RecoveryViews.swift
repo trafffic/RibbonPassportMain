@@ -235,6 +235,10 @@ enum RecoveryComparison {
             if !removed.isEmpty { changes.append("Remove awards: " + RibbonCatalog.shared.chronologicalAwards(Array(removed)).map { RibbonCatalog.shared.awardPickerName($0) }.joined(separator: ", ")) }
             if current.earnedGames != saved.earnedGames || current.earnedGenerations != saved.earnedGenerations { changes.append("Restore the saved earning locations.") }
             if current.visits != saved.visits { changes.append("Restore the saved journey.") }
+            if current.honors != saved.honors { changes.append("Restore the saved honorary achievements and screenshots.") }
+            if current.journal != saved.journal { changes.append("Restore the saved journey notes and photos.") }
+            if current.moveNotes != saved.moveNotes { changes.append("Restore the saved Move Dex notes.") }
+            if current.savedBuilds != saved.savedBuilds { changes.append("Restore the saved build notebook.") }
             if current.showdownSet != saved.showdownSet { changes.append("Restore the saved competitive build.") }
             if current.title != saved.title || current.titleText != saved.titleText { changes.append("Restore the saved equipped title.") }
             if current.gender != saved.gender || current.shadow != saved.shadow || current.gmax != saved.gmax || current.metLevel != saved.metLevel || current.ball != saved.ball || current.language != saved.language || current.trainername != saved.trainername || current.source != saved.source {
@@ -246,6 +250,7 @@ enum RecoveryComparison {
             var changes: [String] = []
             if saved.name != current.name { changes.append("Name: \(current.name) → \(saved.name)") }
             if saved.memberIDs != current.memberIDs { changes.append("Restore the available saved members in their saved order.") }
+            if saved.savedBuilds != current.savedBuilds { changes.append("Restore the saved team build versions.") }
             return changes
         }
         return []

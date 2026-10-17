@@ -2,6 +2,20 @@
 
 Ribbon Passport is an unofficial Pokémon fan app. It is not affiliated with Pokémon, Niantic, Pokémon Showdown or ribbons.guide.
 
+## Field guides, teams and honorary achievements
+
+The offline field guides are original short summaries with links to the source material, reviewed 16 October 2026. They are separate from official in-game ribbon descriptions. Full attribution and individual links are available in **Settings → Sources & credits**, and on each guide/team's Sources page. Published battle records describe their original rosters; they are not independent playtests by Ribbon Passport or a guarantee for replacement Pokémon. No rental code is presented as live-verified.
+
+- [.athis — Athis Ribbon Handbook](https://sites.google.com/view/athis-ribbon-handbook/home): game-specific ribbon routes, contest preparation and the Latios/Metagross/Suicune starting recommendation.
+- [Smogon](https://www.smogon.com/): facility guides and original team reports. Maison guide authors NoCheese and Lumari; team creators **Peterko**, **QuentinQuonce**, **GG Unit**, **SilverstarStream**, **bobdat**, **CeroRift** and **Eisenherz** are named on their corresponding team cards. Exact original reports and build links are included in `RibbonAssets/community-content.json`.
+- The Alolan Muk Battle Royal lead comes from the [original Reddit write-up](https://www.reddit.com/r/pokemon/comments/5lu7et/alolan_muk_is_a_real_mvp_in_battle_royal/). Its original author's account is deleted; no replacement author is inferred.
+- **Giovanni Cischke**: [World Champion team report, published by Victory Road](https://victoryroad.pro/2026/08/27/giovanni-cischke-worlds/). [VR Pastes](https://www.vrpastes.com/VP48GdZh) hosts the corresponding detailed build. [PokéPaste](https://pokepast.es/) hosts several other authors' linked builds. Hosting websites are not credited as the team creators.
+- [Serebii](https://www.serebii.net/): game-specific ribbon/mark mechanics and honorary-achievement references, including Shiny Leaves, Pokéathlon, Pokéstar Studios, Trainer Hill, PWT, Subway and Black Tower/White Treehollow.
+- [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/List_of_Ribbons_in_the_games): ribbon mechanics cross-checks; [Footprint](https://bulbapedia.bulbagarden.net/wiki/Footprint) documents the BDSP voiceless-species exception.
+- [Pokémon Support](https://support.pokemon.com/hc/en-us/articles/6372731346452-Why-did-my-Pok%C3%A9mon-s-moves-change), [Pokémon HOME](https://home.pokemon.com/en-us/move/), [official ranked news](https://sv-news.pokemon.co.jp/en/page/389.html) and [World Championship results](https://www.pokemon.com/uk/play-pokemon/worlds/2025/event-results): official references linked from the relevant source cards.
+
+Manual honors, journals and Move Dex notes are user records. They are not official ribbons, automatically verified achievements or endorsements by these authors/sites. Source review notes remain local; the app does not send correction messages.
+
 - Native application code in this project: GPL-3.0, matching the source catalogue's licence. Full text: Licences/GPL-3.0.txt.
 - ribbons.guide species/game/ribbon catalogue and title data: [SlyAceZeta/Ribbons.Guide](https://github.com/SlyAceZeta/Ribbons.Guide), GPL-3.0. Catalogue snapshot: 14 October 2026. Ribbon introduction-generation metadata in `RibbonAssets/catalog-order.json` was checked against the same upstream [ribbon data](https://github.com/SlyAceZeta/Ribbons.Guide/blob/main/data/ribbons.json) on 15 October 2026.
 - Pokémon pixel sprites and cover-mascot images: [msikma/PokeSprite](https://github.com/msikma/pokesprite), MIT repository licence in Licences/PokeSprite-MIT.txt. This includes the decorative Shadow Lugia fan sprite used for XD-origin Lugia.

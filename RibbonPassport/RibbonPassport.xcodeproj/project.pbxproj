@@ -40,6 +40,11 @@ F00300000000000000000001 = {isa = PBXBuildFile; fileRef = F003000000000000000000
 		F00400000000000000000005 /* Shared/RecoveryHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00400000000000000000001 /* Shared/RecoveryHistory.swift */; };
 		F00400000000000000000006 /* App/RecoveryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00400000000000000000002 /* App/RecoveryViews.swift */; };
 		F00400000000000000000007 /* Tests/RecoveryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00400000000000000000003 /* Tests/RecoveryTests.swift */; };
+		F00500000000000000000011 = {isa = PBXBuildFile; fileRef = F00500000000000000000001; };
+		F00500000000000000000012 = {isa = PBXBuildFile; fileRef = F00500000000000000000002; };
+		F00500000000000000000013 = {isa = PBXBuildFile; fileRef = F00500000000000000000003; };
+		F00500000000000000000014 = {isa = PBXBuildFile; fileRef = F00500000000000000000001; };
+F00500000000000000000015 = {isa = PBXBuildFile; fileRef = F00500000000000000000004; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -106,6 +111,10 @@ F00300000000000000000003 = {isa = PBXFileReference; explicitFileType = wrapper.c
 		F00400000000000000000001 /* Shared/RecoveryHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/RecoveryHistory.swift; sourceTree = "<group>"; };
 		F00400000000000000000002 /* App/RecoveryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/RecoveryViews.swift; sourceTree = "<group>"; };
 		F00400000000000000000003 /* Tests/RecoveryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/RecoveryTests.swift; sourceTree = "<group>"; };
+		F00500000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shared/CommunityContent.swift; sourceTree = "<group>"; };
+		F00500000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/CommunityScreens.swift; sourceTree = "<group>"; };
+		F00500000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/PassportNotebook.swift; sourceTree = "<group>"; };
+F00500000000000000000004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests/CommunityTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -148,6 +157,10 @@ F00300000000000000000003,
 		958B6263A0B70C847CDA462B /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+F00500000000000000000004,
+				F00500000000000000000003,
+				F00500000000000000000002,
+				F00500000000000000000001,
 				F00400000000000000000001 /* Shared/RecoveryHistory.swift */,
 				F00400000000000000000002 /* App/RecoveryViews.swift */,
 				F00400000000000000000003 /* Tests/RecoveryTests.swift */,
@@ -337,6 +350,7 @@ F00300000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+F00500000000000000000015,
 				F00400000000000000000007 /* Tests/RecoveryTests.swift in Sources */,
 
 				0C603B8F3E5FC0AEA746BF9F /* Tests/ImportTests.swift in Sources */,
@@ -347,6 +361,7 @@ F00300000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F00500000000000000000014,
 				F00400000000000000000005 /* Shared/RecoveryHistory.swift in Sources */,
 
 				EEA2C89A071EDEAA472B91C0 /* Shared/CustomizationPacks.swift in Sources */,
@@ -365,6 +380,9 @@ F00300000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F00500000000000000000013,
+				F00500000000000000000012,
+				F00500000000000000000011,
 				F00400000000000000000004 /* Shared/RecoveryHistory.swift in Sources */,
 				F00400000000000000000006 /* App/RecoveryViews.swift in Sources */,
 
