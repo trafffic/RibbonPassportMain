@@ -206,7 +206,7 @@ struct PokemonWidgetView: View {
         Group {
             if let pokemon {
                 SinglePassport(pokemon: pokemon, size: family == .systemSmall ? .small : family == .systemMedium ? .medium : .large, theme: theme)
-                    .widgetURL(URL(string: "ribbonpassport://pokemon/\(pokemon.id)"))
+                    .widgetURL(URL(string: "ribbonpassport://pokemon/\(pokemon.id)?section=\((entry.style.pokemonLayout ?? .passport).destinationSection)"))
             } else { EmptyWidget(theme: theme) }
         }.containerBackground(for: .widget) {
             if let wallpaper = theme.style.wallpaper { PixelWallpaperView(settings: wallpaper, dark: theme.dark, base: theme.paper) }

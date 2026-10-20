@@ -621,11 +621,97 @@ final class CustomizationTests: XCTestCase {
     }
 }
 
+final class FeatureWidgetTests: XCTestCase {
+    func testAlphaSapphireMascotUsesItsVisibleBoundsInBothAppearances() throws {
+        for appearance in ["light", "dark"] {
+            let key = "game-as-" + appearance
+            let url = try XCTUnwrap(Bundle.main.url(forResource: key, withExtension: "png", subdirectory: "RibbonAssets/Art"))
+            let original = try XCTUnwrap(UIImage(contentsOfFile: url.path))
+            let mascot = try XCTUnwrap(Artwork.image(key))
+            XCTAssertEqual(mascot.size, Artwork.trimmed(original).size)
+            XCTAssertLessThan(mascot.size.width, original.size.width)
+            XCTAssertEqual(mascot.size.width / mascot.size.height, 36.0 / 21.0, accuracy: 0.001)
+        }
+        let otherURL = try XCTUnwrap(Bundle.main.url(forResource: "game-sapphire-light", withExtension: "png", subdirectory: "RibbonAssets/Art"))
+        XCTAssertEqual(Artwork.image("game-sapphire-light")?.size, UIImage(contentsOfFile: otherURL.path)?.size)
+    }
+    func testOldStylesAndNewLayoutPresetsRoundTripWithoutChangingDefaults() throws {
+        let old = try JSONEncoder().encode(WidgetStyle())
+        XCTAssertNil(try JSONDecoder().decode(WidgetStyle.self, from: old).pokemonLayout)
+        for layout in PokemonWidgetLayout.allCases where layout != .passport {
+            var preset = layout.preset
+            preset.selectionID = "my-pokemon"
+            preset.style.palette = .ocean
+            let snapshot = CollectionSnapshot(widgetPresets: [preset], widgetDefaults: ["pokemon": preset.id])
+            let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
+            XCTAssertEqual(restored.preset(for: .pokemon), preset)
+            XCTAssertEqual(restored.availableWidgetPresets.filter { $0.id == preset.id }.count, 1)
+            XCTAssertNil(restored.preset(for: .ribbonTeam, id: preset.id))
+            XCTAssertEqual(restored.preset(for: .showdownTeam), WidgetThemePack.defaultPack(for: .showdownTeam).preset(for: .showdownTeam))
+        }
+    }
+    func testNextRibbonPrioritizesAnUnownedEligibleLastChanceRibbon() throws {
+        var pokemon = RibbonPokemon(species: "rayquaza", currentgame: "as", origingame: "sapphire")
+        pokemon.ribbons = RibbonRules.shared.ribbonIDs.filter { $0 != "training-ribbon" }
+        let goal = WidgetRibbonGoal.next(for: pokemon)
+        XCTAssertEqual(goal.awardID, "training-ribbon")
+        XCTAssertEqual(goal.game, "as")
+        XCTAssertTrue(goal.isLastChance)
+        XCTAssertNil(RibbonRules.shared.unavailableReason(try XCTUnwrap(goal.awardID), game: goal.game, pokemon: pokemon))
+        pokemon.ribbons.append("training-ribbon")
+        XCTAssertNil(WidgetRibbonGoal.next(for: pokemon).awardID)
+    }
+    func testNextRibbonCanNameAnotherGameInTheCurrentGeneration() {
+        var pokemon = RibbonPokemon(species: "rayquaza", currentgame: "as", origingame: "sapphire")
+        pokemon.ribbons = RibbonRules.shared.ribbonIDs.filter { $0 != "kalos-champion-ribbon" }
+        let goal = WidgetRibbonGoal.next(for: pokemon)
+        XCTAssertEqual(goal.awardID, "kalos-champion-ribbon")
+        XCTAssertTrue(["x", "y"].contains(goal.game))
+        XCTAssertTrue(goal.isLastChance)
+    }
+    func testNextRibbonDoesNotInventEligibilityOrHideUnresolvedFootprintChecks() throws {
+        XCTAssertNil(WidgetRibbonGoal.next(for: RibbonPokemon(species: "rayquaza")).awardID)
+        XCTAssertNil(WidgetRibbonGoal.next(for: RibbonPokemon(species: "unknown", currentgame: "as")).awardID)
+        for pokemon in SharedStore.demo().pokemon {
+            let goal = WidgetRibbonGoal.next(for: pokemon)
+            if let id = goal.awardID {
+                XCTAssertFalse(pokemon.ribbons.contains(id))
+                XCTAssertNil(RibbonRules.shared.unavailableReason(id, game: goal.game, pokemon: pokemon))
+            }
+        }
+        var pokemon = RibbonPokemon(species: "pikachu", currentgame: "as", origingame: "x", currentlevel: 85)
+        pokemon.ribbons = RibbonRules.shared.ribbonIDs.filter { $0 != "footprint-ribbon" }
+        let goal = WidgetRibbonGoal.next(for: pokemon)
+        XCTAssertFalse(goal.transfer.warnings.isEmpty)
+        XCTAssertNil(goal.awardID)
+    }
+    @MainActor func testFeatureLayoutsRenderAtEveryWidgetSizeAndAppearance() throws {
+        let pokemon = try XCTUnwrap(SharedStore.demo().pokemon.first { $0.species == "rayquaza" })
+        for layout in PokemonWidgetLayout.allCases where layout != .passport {
+            for dark in [false, true] {
+                for (size, width, height) in [(PassportSize.small, CGFloat(170), CGFloat(170)), (.medium, 300, 170), (.large, 300, 354)] {
+                    var style = layout.preset.style
+                    style.textScale = 1.15
+                    let view = ConfiguredWidgetView(pokemon: [pokemon], name: "", content: .pokemon, size: size,
+                        theme: PassportTheme(dark: dark, game: pokemon.currentgame, style: style))
+                        .frame(width: width, height: height).environment(\.colorScheme, dark ? .dark : .light)
+                    let renderer = ImageRenderer(content: view); renderer.scale = 2
+                    let image = try XCTUnwrap(renderer.uiImage)
+                    XCTAssertEqual(image.size, CGSize(width: width, height: height))
+                    let attachment = XCTAttachment(image: image)
+                    attachment.name = "\(layout.rawValue)-\(size)-\(dark ? "dark" : "light")"
+                    attachment.lifetime = .keepAlways; add(attachment)
+                }
+            }
+        }
+    }
+}
+
 final class CollectionUpdateTests: XCTestCase {
     func testStarterPacksAreAvailableWithoutReplacingSavedDefaults() throws {
         let blank = CollectionSnapshot()
-        XCTAssertEqual(blank.availableWidgetPresets.count, 15)
-        XCTAssertEqual(Set(blank.availableWidgetPresets.map(\.id)).count, 15)
+        XCTAssertEqual(blank.availableWidgetPresets.count, 19)
+        XCTAssertEqual(Set(blank.availableWidgetPresets.map(\.id)).count, 19)
         for content in WidgetContent.allCases {
             XCTAssertEqual(blank.preset(for: content)?.style, WidgetThemePack.defaultPack(for: content).style)
             for pack in WidgetThemePack.allCases {
@@ -639,7 +725,7 @@ final class CollectionUpdateTests: XCTestCase {
         let restored = try JSONDecoder().decode(CollectionSnapshot.self, from: JSONEncoder().encode(snapshot))
         XCTAssertEqual(restored.preset(for: .pokemon), custom)
         XCTAssertEqual(restored.widgetPresets, [custom])
-        XCTAssertEqual(restored.availableWidgetPresets.count, 16)
+        XCTAssertEqual(restored.availableWidgetPresets.count, 20)
         XCTAssertNil(restored.preset(for: .showdownTeam, id: custom.id))
         var stale = restored; stale.widgetDefaults?["pokemon"] = "deleted"
         XCTAssertEqual(stale.preset(for: .pokemon), WidgetThemePack.pocketGreen.preset(for: .pokemon))

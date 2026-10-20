@@ -133,7 +133,33 @@ enum AwardOrdering: String, Codable, CaseIterable, Identifiable {
     var id: String { rawValue }
     var name: String { rawValue.capitalized }
 }
+enum PokemonWidgetLayout: String, Codable, CaseIterable, Identifiable {
+    case passport, pocketCompanion, ribbonCabinet, journeyTicket, nextRibbon
+    var id: String { rawValue }
+    var name: String {
+        switch self {
+        case .passport: "Classic passport"
+        case .pocketCompanion: "Pocket companion"
+        case .ribbonCabinet: "Ribbon cabinet"
+        case .journeyTicket: "Journey ticket"
+        case .nextRibbon: "Next ribbon"
+        }
+    }
+    var preferredSize: PassportSize {
+        switch self { case .passport, .ribbonCabinet: .large; case .pocketCompanion: .small; case .journeyTicket, .nextRibbon: .medium }
+    }
+    var destinationSection: String {
+        switch self { case .journeyTicket: "journey"; case .ribbonCabinet, .nextRibbon: "ribbons"; case .passport, .pocketCompanion: "overview" }
+    }
+    var preset: WidgetPreset {
+        var style = WidgetStyle()
+        style.pokemonLayout = self
+        return WidgetPreset(id: "layout.\(rawValue)", name: name, content: .pokemon, style: style)
+    }
+}
 struct WidgetStyle: Codable, Equatable {
+    // Optional so designs saved before layout choices still decode as classic passports.
+    var pokemonLayout: PokemonWidgetLayout? = nil
     var wallpaper: WallpaperSettings? = nil
     var appearance: Appearance = .automatic
     var palette: WidgetPalette = .sage
@@ -176,7 +202,9 @@ extension CollectionSnapshot {
     var availableWidgetPresets: [WidgetPreset] {
         let saved = widgetPresets ?? []
         let ids = Set(saved.map(\.id))
-        return saved + WidgetContent.allCases.flatMap { content in WidgetThemePack.allCases.map { $0.preset(for: content) }.filter { !ids.contains($0.id) } }
+        let themes = WidgetContent.allCases.flatMap { content in WidgetThemePack.allCases.map { $0.preset(for: content) } }
+        let layouts = PokemonWidgetLayout.allCases.filter { $0 != .passport }.map(\.preset)
+        return saved + (themes + layouts).filter { !ids.contains($0.id) }
     }
     var organizedStorage: StorageLayout {
         storage(for: .ribbon)

@@ -88,7 +88,7 @@ struct PCStorageView: View {
     private var pokemonRoute: Binding<String?> {
         Binding(get: { store.snapshot.section(forPokemon: store.openPokemonID ?? "") == kind ? store.openPokemonID : nil }, set: { id in
             if id != nil || store.snapshot.section(forPokemon: store.openPokemonID ?? "") == kind { store.openPokemonID = id }
-            if id == nil { passportSection = .overview }
+            if id == nil { passportSection = .overview; store.openPassportSection = nil }
         })
     }
     private var teamRoute: Binding<String?> {
@@ -176,7 +176,7 @@ struct PCStorageView: View {
                 .background(theme.paper).toolbar(.hidden, for: .navigationBar)
                 .navigationDestination(item: pokemonRoute) { id in
                     if let p = pokemon(id), p.showdownSet != nil { CompetitiveBuildView(pokemonID: id) }
-                    else { StampAlbumView(pokemonID: id, section: passportSection) }
+                    else { StampAlbumView(pokemonID: id, section: store.openPassportSection ?? passportSection) }
                 }
                 .navigationDestination(item: teamRoute) { id in RetroTeamDetailView(teamID: id) }
                 .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
@@ -655,6 +655,9 @@ struct StampAlbumView: View {
             }
         }
         .background(theme.paper).foregroundStyle(theme.ink).navigationTitle("Passport").navigationBarTitleDisplayMode(.inline).toolbar(.visible, for: .navigationBar).terminalBackControl()
+            .onReceive(store.$openPassportSection) { requested in
+                if store.openPokemonID == pokemonID, let requested { section = requested }
+            }
             .toolbar {
                 TerminalToolbarItem(placement: .principal) { Text(section == .ribbons ? p?.displayName.uppercased() ?? "PASSPORT" : "PASSPORT").font(PixelFont.font(20)).lineLimit(1) }
                 TerminalToolbarItem(placement: .topBarTrailing) {

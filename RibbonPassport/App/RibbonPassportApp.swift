@@ -9,6 +9,7 @@ final class AppStore: ObservableObject {
     @Published var notice: String?
     @Published var tab = 0
     @Published var openPokemonID: String?
+    @Published var openPassportSection: PassportSection?
     @Published var openTeamID: String?
     private let saveSnapshot: (CollectionSnapshot) throws -> Void
     private let refreshWidgets: Bool
@@ -198,6 +199,8 @@ struct RibbonPassportApp: App {
                 .preferredColorScheme(store.snapshot.appearance == .automatic ? nil : store.snapshot.appearance == .dark ? .dark : .light)
                 .onOpenURL { url in
                     if url.scheme == "ribbonpassport", url.host == "pokemon" {
+                        let section = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "section" }?.value
+                        store.openPassportSection = PassportSection.allCases.first { $0.rawValue.lowercased() == section } ?? .overview
                         store.choose(url.lastPathComponent)
                         store.tab = store.snapshot.section(forPokemon: url.lastPathComponent) == .showdown ? 1 : 0; store.openPokemonID = url.lastPathComponent
                     } else if url.scheme == "ribbonpassport", url.host == "team" {

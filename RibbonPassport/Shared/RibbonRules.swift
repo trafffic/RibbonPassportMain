@@ -46,6 +46,41 @@ struct RibbonTransferCheck {
     }
 }
 
+/// A suggested unowned ribbon, using the same eligibility rules as the transfer checklist.
+struct WidgetRibbonGoal {
+    var awardID: String?
+    var game: String
+    var isLastChance = false
+    var transfer: RibbonTransferCheck
+
+    static func next(for pokemon: RibbonPokemon) -> WidgetRibbonGoal {
+        let rules = RibbonRules.shared
+        let current = pokemon.currentgame
+        let check = rules.transferCheck(from: current, pokemon: pokemon)
+        let empty = WidgetRibbonGoal(game: current, transfer: check)
+        guard check.canAssess else { return empty }
+        let remaining = rules.ribbonIDs.filter { !pokemon.ribbons.contains($0) }
+        let urgent = remaining.filter { check.lastChance.contains($0) }
+        // Prefer a last-chance ribbon in the current game, then a reachable game in this generation.
+        for candidates in [urgent, remaining] {
+            if let id = candidates.first(where: { rules.unavailableReason($0, game: current, pokemon: pokemon) == nil }) {
+                return WidgetRibbonGoal(awardID: id, game: current, isLastChance: check.lastChance.contains(id), transfer: check)
+            }
+            for id in candidates {
+                if let game = rules.generationEarningGames(for: id, from: current, pokemon: pokemon).first {
+                    return WidgetRibbonGoal(awardID: id, game: game, isLastChance: check.lastChance.contains(id), transfer: check)
+                }
+            }
+        }
+        for id in remaining {
+            if let game = rules.earningGames(for: id, pokemon: pokemon).first {
+                return WidgetRibbonGoal(awardID: id, game: game, transfer: check)
+            }
+        }
+        return empty
+    }
+}
+
 /// Offline snapshot of ribbons.guide's availability and directed transfer graph.
 struct RibbonRules: Decodable {
     var species: [String: RibbonSpeciesRule]

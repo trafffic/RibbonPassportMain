@@ -108,7 +108,9 @@ enum Artwork {
     }
     static func image(_ key: String) -> UIImage? {
         guard let url = Bundle.main.url(forResource: key, withExtension: "png", subdirectory: "RibbonAssets/Art") else { return nil }
-        return UIImage(contentsOfFile: url.path)
+        guard let image = UIImage(contentsOfFile: url.path) else { return nil }
+        // Primal Kyogre's padded sprite canvas otherwise makes this mascot much smaller than its slot.
+        return key == "game-as-light" || key == "game-as-dark" ? trimmed(image) : image
     }
     static func sprite(_ p: RibbonPokemon) -> UIImage? {
         if p.spritePath == "regular/lugia-shadow.png" { return image("sprite-lugia-shadow") }

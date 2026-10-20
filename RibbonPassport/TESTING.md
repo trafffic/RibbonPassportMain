@@ -1,3 +1,17 @@
+# Widget layouts and Alpha Sapphire mascot — 20 October 2026
+
+Alpha Sapphire's light/dark Primal Kyogre mascots now use their visible pixel bounds when loaded. The bundled 64 × 64 images contain 36 × 21 pixels of visible artwork; trimming that padding lets the existing aspect-fit views use their allocated space. Source images and other game mascots are unchanged.
+
+Widget Studio now offers Pocket companion, Ribbon cabinet, Journey ticket, and Next ribbon under **Pokémon Passport → Layout**, with their recommended size selected on layout changes. These layouts are also built-in choices in the Home Screen Pokémon Passport widget's **Saved design** picker. Existing saved designs retain the classic layout, selection, palette, and defaults. Theme changes preserve the chosen layout. The shared SwiftUI renderer handles all three supported widget sizes.
+
+Next ribbon uses the existing availability/transfer rules, prioritizes unowned last-chance ribbons, names the actual earning game, and keeps unresolved Footprint warnings visible. Journey and ribbon widgets link to the corresponding passport tab. The cabinet shows a bounded selection and a remaining-ribbon count when needed; journeys use recorded visits and known endpoints.
+
+Validation in this Windows session: inspected both mascot assets, reviewed the shared source and integration, and ran `git diff --check`. **Xcode and the iPhone SDK are unavailable here: no native build, XCTest execution, simulator run, or native screenshot validation has been performed for this change.** Added `FeatureWidgetTests` cover both mascot appearances, legacy style decoding and layout round trips, default independence, rule-based goals, another game in the same generation, unresolved Footprint checks, and native render attachments for every layout/size/appearance. These tests still need to run in Xcode.
+
+Before release, run Command + U in Xcode, inspect the new render attachments (including 300-point widths and 115% text), and check a saved design on an actual Home Screen. Confirm mascot size in the game picker and Journey, tap Journey ticket/Next ribbon, and test repeated widget links while the passport is already open.
+
+---
+
 # Usability passes 1–3 — 17 October 2026
 
 The implementation covers empty collection entry points, explicit import/demo/edit actions, separate ribbon details and recording controls, Journey shortcuts and pagination labels, unresolved transfer status and a direct met-level editor, comparison-first recovery previews, simplified widget setup, direct numeric levels, optional date pickers, labelled editor controls and community-card game names. Optional/Last chance markers and the existing ribbon rules remain available.

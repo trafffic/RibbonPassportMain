@@ -57,6 +57,15 @@ struct WidgetStudioView: View {
                     if content != .pokemon && size == .small { size = .medium }
                 }), values: section.widgetContents, name: { $0.name })
                 selectionPicker
+                if draft.content == .pokemon {
+                    TerminalSelector(title: "Layout", selection: Binding(get: { draft.style.pokemonLayout ?? .passport }, set: { layout in
+                        draft.style.pokemonLayout = layout
+                        draft.name = layout.name
+                        size = WidgetPreviewSize.allCases.first { $0.passport == layout.preferredSize } ?? .large
+                        savedMessage = ""
+                    }), values: PokemonWidgetLayout.allCases, name: { $0.name })
+                        .accessibilityIdentifier("widgets.layout")
+                }
                 themePacks
                 TerminalSelector(title: "Size", selection: $size, values: WidgetPreviewSize.allCases.filter { draft.content == .pokemon || $0 != .small }, name: { $0.name }, inline: true)
                 if isDemo { Text("Demo preview").font(PixelFont.font(13)).foregroundStyle(theme.muted) }
@@ -85,7 +94,7 @@ struct WidgetStudioView: View {
                         HStack { Text("Text size"); Spacer(); Text("\(Int((draft.style.textScale * 100).rounded()))%") }
                         TerminalSlider(value: $draft.style.textScale, in: 0.85...1.15, step: 0.05).accessibilityLabel("Widget text size")
                         TerminalDisclosureGroup("Visible details") { detailToggles.padding(.top, 10) }
-                        if draft.content != .showdownTeam {
+                        if draft.content != .showdownTeam && (draft.content != .pokemon || [PokemonWidgetLayout.passport, .pocketCompanion, .ribbonCabinet].contains(draft.style.pokemonLayout ?? .passport)) {
                             TerminalSelector(title: "Ribbon order", selection: $draft.style.awardOrdering, values: AwardOrdering.allCases, name: { $0.name })
                         }
                     }.font(PixelFont.font(16)).retroPanel().accessibilityIdentifier("widgets.customisation")
@@ -119,6 +128,9 @@ struct WidgetStudioView: View {
                     preset.id = UUID().uuidString
                     if !selection.isEmpty { preset.selectionID = selection }
                     draft = preset
+                    if draft.content == .pokemon, let layout = draft.style.pokemonLayout {
+                        size = WidgetPreviewSize.allCases.first { $0.passport == layout.preferredSize } ?? .large
+                    }
                     selectedPack = WidgetThemePack.allCases.first { $0.style == preset.style }
                 }
             }
@@ -137,7 +149,9 @@ struct WidgetStudioView: View {
                     ForEach(WidgetThemePack.allCases) { pack in
                         Button {
                             selectedPack = pack
+                            let layout = draft.style.pokemonLayout
                             draft.name = pack.name; draft.style = pack.style
+                            draft.style.pokemonLayout = layout
                             savedMessage = ""
                         } label: {
                             let packTheme = PassportTheme(dark: pack.style.appearance == .dark || (pack.style.appearance == .automatic && scheme == .dark), game: "", style: pack.style)
@@ -178,20 +192,29 @@ struct WidgetStudioView: View {
 
     private var detailToggles: some View {
         VStack(spacing: 10) {
-            Toggle("Shiny icon", isOn: $draft.style.showShiny)
-            Toggle("Level", isOn: $draft.style.showLevel)
-            if draft.content == .showdownTeam {
-                Toggle("Held item", isOn: $draft.style.showItem)
-                Toggle("Ability", isOn: $draft.style.showAbility)
-                Toggle("Tera type", isOn: $draft.style.showTera)
-                Toggle("Nature · large", isOn: $draft.style.showNature)
-                Toggle("Moves · large", isOn: $draft.style.showMoves)
+            if draft.content == .pokemon, let layout = draft.style.pokemonLayout, layout != .passport {
+                if layout == .pocketCompanion || layout == .journeyTicket { Toggle("Shiny icon", isOn: $draft.style.showShiny) }
+                if layout == .pocketCompanion { Toggle("Level", isOn: $draft.style.showLevel) }
+                if layout == .pocketCompanion || layout == .ribbonCabinet { Toggle("Equipped title · large", isOn: $draft.style.showTitle) }
+                if layout != .ribbonCabinet { Toggle("Game", isOn: $draft.style.showGame) }
+                if layout == .pocketCompanion || layout == .ribbonCabinet { Toggle(layout == .ribbonCabinet ? "Ribbons" : "Ribbons & marks", isOn: $draft.style.showAwards) }
+                if layout == .journeyTicket { Toggle("Recorded visits", isOn: $draft.style.showJourney) }
             } else {
-                Toggle("Equipped title", isOn: $draft.style.showTitle)
-                Toggle("Game", isOn: $draft.style.showGame)
-                Toggle("Origin console", isOn: $draft.style.showConsole)
-                Toggle("Ribbons & marks", isOn: $draft.style.showAwards)
-                if draft.content == .pokemon { Toggle("Generation stamps · large", isOn: $draft.style.showJourney) }
+                Toggle("Shiny icon", isOn: $draft.style.showShiny)
+                Toggle("Level", isOn: $draft.style.showLevel)
+                if draft.content == .showdownTeam {
+                    Toggle("Held item", isOn: $draft.style.showItem)
+                    Toggle("Ability", isOn: $draft.style.showAbility)
+                    Toggle("Tera type", isOn: $draft.style.showTera)
+                    Toggle("Nature · large", isOn: $draft.style.showNature)
+                    Toggle("Moves · large", isOn: $draft.style.showMoves)
+                } else {
+                    Toggle("Equipped title", isOn: $draft.style.showTitle)
+                    Toggle("Game", isOn: $draft.style.showGame)
+                    Toggle("Origin console", isOn: $draft.style.showConsole)
+                    Toggle("Ribbons & marks", isOn: $draft.style.showAwards)
+                    if draft.content == .pokemon { Toggle("Generation stamps · large", isOn: $draft.style.showJourney) }
+                }
             }
         }
     }
@@ -204,6 +227,9 @@ struct WidgetStudioView: View {
                     Button {
                         // Changing the content picker normally starts a new design; restore the whole preset after that update.
                         draft = preset; selectedPack = WidgetThemePack.allCases.first { $0.style == preset.style }; savedMessage = ""
+                        if preset.content == .pokemon, let layout = preset.style.pokemonLayout {
+                            size = WidgetPreviewSize.allCases.first { $0.passport == layout.preferredSize } ?? .large
+                        }
                         if preset.content != .pokemon && size == .small { size = .medium }
                     } label: {
                         VStack(alignment: .leading, spacing: 4) {
