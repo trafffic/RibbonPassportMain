@@ -126,7 +126,10 @@ final class GuidedMoveUITests: XCTestCase {
     private func tap(_ id: String) {
         let button = app.buttons[id]
         XCTAssertTrue(button.waitForExistence(timeout: 6), id)
-        for _ in 0..<5 { if button.isHittable { break }; app.swipeUp() }
+        for _ in 0..<6 {
+            if button.isHittable { break }
+            if button.frame.midY < app.frame.midY { app.swipeDown() } else { app.swipeUp() }
+        }
         button.tap()
     }
     private func capture(_ name: String) {
@@ -157,6 +160,7 @@ final class GuidedMoveUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Ultra Sun"].firstMatch.waitForExistence(timeout: 5))
         capture("guided-move-passport-updated")
         tap("passport.tab.journey")
+        tap("album.grouping.games")
         XCTAssertTrue(app.buttons["album.game.as"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["album.game.usun"].exists)
         capture("guided-move-journey-updated")

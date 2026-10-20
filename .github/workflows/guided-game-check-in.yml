@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: guided-game-check-in-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   native-tests:
     runs-on: macos-15-intel
