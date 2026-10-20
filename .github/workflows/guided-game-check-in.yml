@@ -1,0 +1,70 @@
+name: Guided game check-in native validation
+
+on:
+  push:
+    branches: [codex/guided-game-check-in]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-tests:
+    runs-on: macos-15-intel
+    timeout-minutes: 35
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select and boot iPhone simulator
+        run: |
+          xcodebuild -version
+          mkdir -p .ci-results
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import json, subprocess
+          devices = json.loads(subprocess.check_output(['xcrun', 'simctl', 'list', 'devices', 'available', '--json']))['devices']
+          candidates = [(runtime, device) for runtime, entries in devices.items() if '.iOS-' in runtime for device in entries if device.get('isAvailable') and device['name'].startswith('iPhone')]
+          runtime, device = max(candidates, key=lambda item: (tuple(map(int, item[0].split('iOS-')[-1].split('-'))), item[1]['name']))
+          print(f"SIMULATOR_UDID={device['udid']}")
+          PY
+          source "$GITHUB_ENV"
+          xcrun simctl boot "$SIMULATOR_UDID"
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+      - name: Build and run unit and render regressions
+        run: |
+          set -o pipefail
+          xcodebuild test -project RibbonPassport/RibbonPassport.xcodeproj -scheme RibbonPassport \
+            -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/ribbon-derived-data" -resultBundlePath .ci-results/unit.xcresult \
+            -parallel-testing-enabled NO -only-testing:RibbonPassportTests \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= \
+            2>&1 | tee .ci-results/unit.log
+      - name: Exercise guided moves and existing transfer checklist
+        run: |
+          set -o pipefail
+          xcodebuild test -project RibbonPassport/RibbonPassport.xcodeproj -scheme RibbonPassport \
+            -configuration Debug -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/ribbon-derived-data" -resultBundlePath .ci-results/guided-move.xcresult \
+            -parallel-testing-enabled NO -only-testing:RibbonPassportUITests/GuidedMoveUITests \
+            -only-testing:RibbonPassportUITests/RibbonTransferUITests \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= \
+            2>&1 | tee .ci-results/guided-move.log
+      - name: Export screenshots and summaries
+        if: always()
+        run: |
+          for result in .ci-results/*.xcresult; do
+            if [ -d "$result" ]; then
+              label="$(basename "$result" .xcresult)"
+              xcrun xcresulttool export attachments --path "$result" --output-path ".ci-results/$label-images"
+              xcrun xcresulttool get test-results summary --path "$result" > ".ci-results/$label-summary.json"
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: guided-game-check-in-results
+          path: .ci-results/
+          include-hidden-files: true
+          retention-days: 3
