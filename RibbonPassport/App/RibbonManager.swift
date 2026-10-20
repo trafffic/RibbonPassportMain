@@ -151,7 +151,7 @@ struct RibbonManager: View {
                 }
                 .sheet(item: $detail) { choice in detailView(choice.id) }
                 .onChange(of: pokemon) { _, value in
-                    if embedded { destinationPokemon = value }
+                    if embedded && destinationPokemon != value { destinationPokemon = value }
                 }
                 .task(id: feedback?.id) {
                     guard feedback != nil else { return }
@@ -383,7 +383,8 @@ struct RibbonManager: View {
     }
     private var transferDrawer: some View {
         RibbonTransferDrawer(pokemon: pokemon, game: game, check: transferCheck, message: message, canUndo: undo != nil,
-                             onRecord: { id, chosen in record(id, in: chosen) }, onUndo: restore, onDone: { panel = nil }, onMetLevelChange: { level in undo = pokemon; pokemon.metLevel = level })
+                             onRecord: { id, chosen in record(id, in: chosen) }, onUndo: restore, onDone: { panel = nil }, onMetLevelChange: { level in undo = pokemon; pokemon.metLevel = level },
+                             onMove: recordMove, onUndoMove: undoMove)
     }
     private var ownedDrawer: some View {
         NavigationStack {
@@ -506,10 +507,32 @@ struct RibbonManager: View {
     }
     private func restore() {
         if let previous = undo {
+            if pokemon.currentgame != previous.currentgame { game = previous.currentgame }
             pokemon = previous; undo = nil; message = "Change undone"
             showFeedback(award: nil, title: "Change undone", subtitle: "Owned awards restored")
             page = min(page, pageCount - 1)
         }
+    }
+    private func recordMove(to chosen: String) -> Bool {
+        var updated = pokemon
+        guard updated.recordMove(to: chosen) else { return false }
+        if embedded {
+            destinationPokemon = updated
+            guard destinationPokemon == updated else { return false }
+        }
+        undo = pokemon; pokemon = updated; game = chosen; page = 0
+        message = "Moved to " + RibbonCatalog.shared.compactGameName(chosen)
+        return true
+    }
+    private func undoMove() -> Bool {
+        guard let previous = undo else { return false }
+        if embedded {
+            destinationPokemon = previous
+            guard destinationPokemon == previous else { return false }
+        }
+        game = previous.currentgame; pokemon = previous; undo = nil; page = 0
+        message = "Move undone"
+        return true
     }
 }
 
@@ -534,6 +557,173 @@ struct RibbonTransferStatus: View {
     }
 }
 
+/// Two-step check-in reached from a safe current-game transfer check.
+struct RibbonMoveFlow: View {
+    var onMove: (String) -> Bool
+    var onUndo: (() -> Bool)?
+    var onDone: () -> Void
+    @State private var departure: RibbonPokemon
+    @State private var generation: Int?
+    @State private var choosingGame = false
+    @State private var selectedGame = ""
+    @State private var recordedGame: String?
+    @State private var error = ""
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.dismiss) private var dismiss
+    private let rules = RibbonRules.shared
+    private let catalog = RibbonCatalog.shared
+
+    init(pokemon: RibbonPokemon, onMove: @escaping (String) -> Bool, onUndo: (() -> Bool)? = nil, onDone: @escaping () -> Void) {
+        _departure = State(initialValue: pokemon)
+        _generation = State(initialValue: RibbonRules.shared.moveDestinations(for: pokemon).first.flatMap { RibbonRules.shared.games[$0]?.gen })
+        self.onMove = onMove; self.onUndo = onUndo; self.onDone = onDone
+    }
+    private var destinations: [String] { rules.moveDestinations(for: departure) }
+    private var generations: [Int] { Set(destinations.compactMap { rules.games[$0]?.gen }).sorted() }
+    private var games: [String] { destinations.filter { rules.games[$0]?.gen == generation } }
+    private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: recordedGame ?? departure.currentgame) }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let recordedGame { arrival(recordedGame) }
+                    else { selection }
+                    if !error.isEmpty {
+                        Text(error).font(PixelFont.font(14)).fixedSize(horizontal: false, vertical: true)
+                            .foregroundStyle(theme.warningInk).padding(10).background(theme.warningSurface)
+                            .accessibilityIdentifier("ribbons.move.error")
+                    }
+                }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+            }
+            actions.padding(16).background(theme.panel)
+        }.font(PixelFont.font(16)).background(theme.panel).foregroundStyle(theme.ink)
+            .navigationTitle("Check in").navigationBarTitleDisplayMode(.inline).terminalBackControl()
+            .toolbar {
+                TerminalToolbarItem(placement: .principal) {
+                    Text(recordedGame == nil ? "Check in" : "Move recorded").font(PixelFont.font(21)).lineLimit(1)
+                }
+            }
+    }
+    private var selection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 6) {
+                Rectangle().fill(theme.accent).frame(height: 3)
+                Rectangle().fill(choosingGame ? theme.accent : theme.border).frame(height: 3)
+            }.accessibilityHidden(true)
+            RibbonTransferStatus(check: rules.transferCheck(from: departure.currentgame, pokemon: departure), theme: theme)
+            HStack(spacing: 10) {
+                PokemonSprite(pokemon: departure).frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(departure.displayName).font(PixelFont.font(21))
+                    Text("Current game · " + catalog.gameName(departure.currentgame)).font(PixelFont.font(13)).foregroundStyle(theme.muted)
+                }.fixedSize(horizontal: false, vertical: true)
+            }
+            if choosingGame {
+                Button("‹ Change generation") { choosingGame = false; selectedGame = ""; error = "" }
+                    .font(PixelFont.font(14)).buttonStyle(.plain).foregroundStyle(theme.accent).frame(minHeight: 44)
+                    .accessibilityIdentifier("ribbons.move.back")
+            }
+            VStack(alignment: .leading, spacing: 8) {
+                Text(choosingGame ? "STEP 2 OF 2 · GEN \(generation?.roman ?? "")" : "STEP 1 OF 2")
+                    .font(PixelFont.font(12)).foregroundStyle(theme.muted)
+                Text(choosingGame ? "Which game is it in?" : "Which generation?").font(PixelFont.font(25))
+                    .accessibilityIdentifier("ribbons.move.heading")
+                Text(choosingGame ? "Select the game you moved \(departure.displayName) into." : "Choose where \(departure.displayName) has moved.")
+                    .font(PixelFont.font(14)).foregroundStyle(theme.muted).fixedSize(horizontal: false, vertical: true)
+            }
+            if choosingGame {
+                ForEach(games, id: \.self) { game in gameRow(game) }
+            } else {
+                ForEach(generations, id: \.self) { generationRow($0) }
+            }
+            if destinations.isEmpty {
+                Text("Recheck the current game before recording a move.").font(PixelFont.font(14)).foregroundStyle(theme.muted)
+            }
+        }
+    }
+    private func generationRow(_ value: Int) -> some View {
+        Button { generation = value; selectedGame = ""; error = "" } label: {
+            HStack(spacing: 14) {
+                Text(value.roman).font(PixelFont.font(25)).frame(minWidth: 40)
+                Text("Generation " + value.roman).font(PixelFont.font(18)).frame(maxWidth: .infinity, alignment: .leading)
+                Text(generation == value ? "✓" : "○").font(PixelFont.font(19)).accessibilityHidden(true)
+            }.padding(12).frame(maxWidth: .infinity, minHeight: 64)
+                .background(generation == value ? theme.board : theme.panel)
+                .overlay(Rectangle().stroke(generation == value ? theme.accent : theme.border, lineWidth: generation == value ? 2 : 1))
+                .contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityLabel("Generation " + value.roman)
+            .accessibilityAddTraits(generation == value ? .isSelected : [])
+            .accessibilityIdentifier("ribbons.move.generation.\(value)")
+    }
+    private func gameRow(_ game: String) -> some View {
+        Button { selectedGame = game; error = "" } label: {
+            HStack(spacing: 12) {
+                GameMascot(game: game, size: 32)
+                Text(catalog.gameName(game)).font(PixelFont.font(18)).fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(selectedGame == game ? "✓" : "○").font(PixelFont.font(19)).accessibilityHidden(true)
+            }.padding(12).frame(maxWidth: .infinity, minHeight: 58)
+                .background(selectedGame == game ? theme.board : theme.panel)
+                .overlay(Rectangle().stroke(selectedGame == game ? theme.accent : theme.border, lineWidth: selectedGame == game ? 2 : 1))
+                .contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityLabel(catalog.gameName(game))
+            .accessibilityAddTraits(selectedGame == game ? .isSelected : [])
+            .accessibilityIdentifier("ribbons.move.game." + game)
+    }
+    private func arrival(_ game: String) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            PokemonSprite(pokemon: departure).frame(width: 72, height: 72).frame(maxWidth: .infinity)
+            Text("Move recorded").font(PixelFont.font(26)).accessibilityIdentifier("ribbons.move.recorded")
+            Text("\(departure.displayName)’s current game has been updated.").font(PixelFont.font(15)).fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("CURRENT GAME").font(PixelFont.font(12)).foregroundStyle(theme.muted)
+                HStack(spacing: 12) { GameMascot(game: game, size: 32); Text(catalog.gameName(game)).font(PixelFont.font(22)) }
+                    .accessibilityIdentifier("ribbons.move.currentGame")
+                Text(catalog.compactGameName(departure.currentgame) + " → " + catalog.compactGameName(game))
+                    .font(PixelFont.font(15)).fixedSize(horizontal: false, vertical: true)
+                Text("Your ribbon record stays with \(departure.displayName).").font(PixelFont.font(14)).foregroundStyle(theme.muted)
+            }.retroPanel()
+        }
+    }
+    @ViewBuilder private var actions: some View {
+        VStack(spacing: 6) {
+            if recordedGame != nil {
+                Button(action: onDone) { Text("Back to passport").frame(maxWidth: .infinity) }.buttonStyle(RetroAction(prominent: true))
+                    .accessibilityIdentifier("ribbons.move.done")
+                if let onUndo {
+                    Button("Undo move") {
+                        if onUndo() { recordedGame = nil; selectedGame = ""; choosingGame = false; error = "" }
+                        else { error = "Could not undo the move. Try again." }
+                    }.buttonStyle(RetroAction()).accessibilityIdentifier("ribbons.move.undo")
+                }
+            } else {
+                if choosingGame {
+                    Button {
+                        guard games.contains(selectedGame), onMove(selectedGame) else {
+                            error = "Could not save the move. Recheck the current game and try again."; return
+                        }
+                        recordedGame = selectedGame; error = ""
+                    } label: {
+                        Text(selectedGame.isEmpty ? "Choose a game" : "Record move to " + catalog.gameName(selectedGame))
+                            .frame(maxWidth: .infinity).fixedSize(horizontal: false, vertical: true)
+                    }.buttonStyle(RetroAction(prominent: true)).disabled(!games.contains(selectedGame))
+                        .accessibilityIdentifier("ribbons.move.save")
+                } else {
+                    Button { choosingGame = true; error = "" } label: {
+                        Text("Choose a Gen \(generation?.roman ?? "") game →").frame(maxWidth: .infinity)
+                    }
+                        .buttonStyle(RetroAction(prominent: true)).disabled(generation == nil || destinations.isEmpty)
+                        .accessibilityIdentifier("ribbons.move.next")
+                }
+                Button("Not moved yet") { dismiss() }.font(PixelFont.font(14)).buttonStyle(.plain)
+                    .frame(maxWidth: .infinity, minHeight: 44).foregroundStyle(theme.accent)
+                    .accessibilityIdentifier("ribbons.move.cancel")
+            }
+        }.frame(maxWidth: .infinity)
+    }
+}
+
 struct RibbonTransferDrawer: View {
     var pokemon: RibbonPokemon
     var game: String
@@ -544,12 +734,15 @@ struct RibbonTransferDrawer: View {
     var onUndo: () -> Void
     var onDone: () -> Void
     var onMetLevelChange: ((Int?) -> Void)? = nil
+    var onMove: ((String) -> Bool)? = nil
+    var onUndoMove: (() -> Bool)? = nil
     @Environment(\.colorScheme) private var scheme
     @State private var page = 0
     @State private var laterPage = 0
     @State private var showingLater = false
     @State private var editingMetLevel = false
     @State private var earning: RibbonDetails?
+    @State private var recordingMove = false
     private let rules = RibbonRules.shared
     private var theme: PassportTheme { PassportTheme(dark: scheme == .dark, game: game) }
     private var pages: Int { max(1, (check.lastChance.count + 3) / 4) }
@@ -581,6 +774,11 @@ struct RibbonTransferDrawer: View {
                 .sheet(isPresented: $editingMetLevel) {
                     MetLevelEntry(pokemon: pokemon) { level in onMetLevelChange?(level); editingMetLevel = false }
                 }
+                .navigationDestination(isPresented: $recordingMove) {
+                    if let onMove {
+                        RibbonMoveFlow(pokemon: pokemon, onMove: onMove, onUndo: onUndoMove, onDone: onDone)
+                    }
+                }
                 .onChange(of: check.lastChance.count) { _, _ in page = min(page, pages - 1) }
         }.tint(theme.accent).presentationDetents([.fraction(0.85), .large]).presentationDragIndicator(.visible)
     }
@@ -607,6 +805,11 @@ struct RibbonTransferDrawer: View {
             if check.lastChance.isEmpty {
                 Text(check.isSafe ? "✓ Ready to move up" : check.warnings.isEmpty ? "No last-chance ribbons left" : "Check Footprint eligibility above")
                     .font(PixelFont.font(17)).padding(16).frame(maxWidth: .infinity).background(theme.board)
+                if check.isSafe, game == pokemon.currentgame, onMove != nil {
+                    Button { recordingMove = true } label: { Text("Record a new game").frame(maxWidth: .infinity) }
+                        .buttonStyle(RetroAction(prominent: true)).frame(maxWidth: .infinity)
+                        .accessibilityIdentifier("ribbons.transfer.move")
+                }
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(check.lastChance.dropFirst(min(page, pages - 1) * 4).prefix(4)), id: \.self) { id in

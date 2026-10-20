@@ -15,7 +15,7 @@ final class AppStore: ObservableObject {
     private let refreshWidgets: Bool
     static var interactionTesting: Bool {
         #if DEBUG
-        return ["1", "transfer", "recovery", "memory", "marks", "journey", "community", "empty", "metlevel"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
+        return ["1", "transfer", "move", "recovery", "memory", "marks", "journey", "community", "empty", "metlevel"].contains(ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] ?? "")
         #else
         return false
         #endif
@@ -40,6 +40,10 @@ final class AppStore: ObservableObject {
             }
             if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "metlevel" {
                 a.currentgame = "as"; a.origingame = "emerald"; a.currentlevel = 85; a.metLevel = nil
+            }
+            if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "move" {
+                a.currentgame = "as"; a.origingame = "emerald"; a.metLevel = 5
+                a.ribbons = RibbonRules.shared.ribbonIDs.filter { (RibbonRules.shared.awards[$0]?.gen ?? 99) <= 6 }
             }
             if ProcessInfo.processInfo.environment["RibbonPassportInteractionTest"] == "memory" {
                 a.currentgame = "as"; a.origingame = "emerald"

@@ -224,6 +224,13 @@ struct RibbonRules: Decodable {
         return check
     }
 
+    /// Forward destinations for the current game, after its whole generation is safe to leave.
+    func moveDestinations(for p: RibbonPokemon) -> [String] {
+        let check = transferCheck(from: p.currentgame, pokemon: p)
+        guard check.isSafe, let generation = check.generation else { return [] }
+        return compatibleGames(for: p).filter { (games[$0]?.gen ?? 0) > generation }
+    }
+
     func footprintTransferWarning(from game: String, pokemon p: RibbonPokemon) -> String? {
         guard !p.ribbons.contains("footprint-ribbon"),
               !generationEarningGames(for: "footprint-ribbon", from: game, pokemon: p).isEmpty,
@@ -241,6 +248,16 @@ enum RibbonPageSize {
 }
 
 extension RibbonPokemon {
+    /// Record only the known departure and arrival; never infer intermediate visits or ribbons.
+    @discardableResult mutating func recordMove(to game: String) -> Bool {
+        guard RibbonRules.shared.moveDestinations(for: self).contains(game) else { return false }
+        var route = recordedVisits
+        if !route.contains(where: { $0.game == game }) { route.append(JourneyVisit(game: game)) }
+        visits = route
+        currentgame = game
+        return true
+    }
+
     /// Original records remain editable and retain their individual earning locations.
     var ownedRibbonIDs: [String] { RibbonCatalog.shared.chronologicalAwards(ribbons.filter { RibbonRules.shared.isManagedAward($0) }) }
     /// All visible owned awards, including marks and automatic Memory Ribbon consolidation.

@@ -692,6 +692,20 @@ struct StampAlbumView: View {
                         guard var updated = self.p else { return }
                         let previous = updated; updated.metLevel = level; store.update(updated)
                         if store.error == nil { transferUndo = previous }
+                    }, onMove: { chosen in
+                        guard var updated = self.p else { return false }
+                        let previous = updated
+                        guard updated.recordMove(to: chosen) else { return false }
+                        store.update(updated)
+                        guard store.error == nil else { return false }
+                        transferUndo = previous
+                        return true
+                    }, onUndoMove: {
+                        guard let previous = transferUndo else { return false }
+                        store.update(previous)
+                        guard store.error == nil else { return false }
+                        transferUndo = nil
+                        return true
                     })
                 }
             }
