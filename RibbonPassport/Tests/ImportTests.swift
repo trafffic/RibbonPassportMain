@@ -622,18 +622,22 @@ final class CustomizationTests: XCTestCase {
 }
 
 final class FeatureWidgetTests: XCTestCase {
-    func testAlphaSapphireMascotUsesItsVisibleBoundsInBothAppearances() throws {
-        for appearance in ["light", "dark"] {
-            let key = "game-as-" + appearance
-            let url = try XCTUnwrap(Bundle.main.url(forResource: key, withExtension: "png", subdirectory: "RibbonAssets/Art"))
-            let original = try XCTUnwrap(UIImage(contentsOfFile: url.path))
-            let mascot = try XCTUnwrap(Artwork.image(key))
-            XCTAssertEqual(mascot.size, Artwork.trimmed(original).size)
-            XCTAssertLessThan(mascot.size.width, original.size.width)
-            XCTAssertEqual(mascot.size.width / mascot.size.height, 36.0 / 21.0, accuracy: 0.001)
+    func testPrimalMascotsUseOptionDInBothAppearances() throws {
+        for (game, aspectRatio) in [("as", 36.0 / 21.0), ("or", 36.0 / 24.0)] {
+            for appearance in ["light", "dark"] {
+                let key = "game-\(game)-\(appearance)"
+                let url = try XCTUnwrap(Bundle.main.url(forResource: key, withExtension: "png", subdirectory: "RibbonAssets/Art"))
+                let original = try XCTUnwrap(UIImage(contentsOfFile: url.path))
+                let mascot = try XCTUnwrap(Artwork.image(key))
+                XCTAssertEqual(mascot.size, Artwork.trimmed(original).size)
+                XCTAssertLessThan(mascot.size.width, original.size.width)
+                XCTAssertEqual(mascot.size.width / mascot.size.height, aspectRatio, accuracy: 0.001)
+                XCTAssertEqual(24 * Artwork.displayScale(for: key), 20, accuracy: 0.001)
+            }
         }
         let otherURL = try XCTUnwrap(Bundle.main.url(forResource: "game-sapphire-light", withExtension: "png", subdirectory: "RibbonAssets/Art"))
         XCTAssertEqual(Artwork.image("game-sapphire-light")?.size, UIImage(contentsOfFile: otherURL.path)?.size)
+        XCTAssertEqual(Artwork.displayScale(for: "game-sapphire-light"), 1)
     }
     func testOldStylesAndNewLayoutPresetsRoundTripWithoutChangingDefaults() throws {
         let old = try JSONEncoder().encode(WidgetStyle())

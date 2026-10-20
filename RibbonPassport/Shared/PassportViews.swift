@@ -43,7 +43,10 @@ extension Color {
 struct AssetImage: View {
     var key: String
     var body: some View {
-        if let image = Artwork.image(key) { Image(uiImage: image).resizable().interpolation(.none).scaledToFit() }
+        if let image = Artwork.image(key) {
+            Image(uiImage: image).resizable().interpolation(.none).scaledToFit()
+                .scaleEffect(Artwork.displayScale(for: key))
+        }
         else { Image(systemName: "circle.lefthalf.filled").resizable().scaledToFit().foregroundStyle(.secondary) }
     }
 }
