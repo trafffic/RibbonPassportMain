@@ -109,8 +109,16 @@ enum Artwork {
     static func image(_ key: String) -> UIImage? {
         guard let url = Bundle.main.url(forResource: key, withExtension: "png", subdirectory: "RibbonAssets/Art") else { return nil }
         guard let image = UIImage(contentsOfFile: url.path) else { return nil }
-        // Primal Kyogre's padded sprite canvas otherwise makes this mascot much smaller than its slot.
-        return key == "game-as-light" || key == "game-as-dark" ? trimmed(image) : image
+        return displayScale(for: key) == 1 ? image : trimmed(image)
+    }
+    static func displayScale(for key: String) -> CGFloat {
+        switch key {
+        case "game-as-light", "game-as-dark", "game-or-light", "game-or-dark":
+            // Option D: 20 pt of visible artwork in a 24 pt slot, proportional at smaller sizes.
+            return 20.0 / 24.0
+        default:
+            return 1
+        }
     }
     static func sprite(_ p: RibbonPokemon) -> UIImage? {
         if p.spritePath == "regular/lugia-shadow.png" { return image("sprite-lugia-shadow") }
