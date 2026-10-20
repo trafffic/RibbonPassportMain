@@ -3,6 +3,84 @@ import SwiftUI
 import UIKit
 @testable import RibbonPassport
 
+final class GuidedMoveTests: XCTestCase {
+    private let rules = RibbonRules.shared
+    private func fixture() -> RibbonPokemon {
+        var p = RibbonPokemon(species: "metagross", currentgame: "as", origingame: "emerald", metLevel: 5)
+        p.ribbons = rules.ribbonIDs.filter { (rules.awards[$0]?.gen ?? 99) <= 6 }
+        p.earnedGames = ["effort-ribbon": "ruby"]
+        p.earnedGenerations = ["effort-ribbon": 3]
+        p.visits = [JourneyVisit(game: "ruby")]
+        return p
+    }
+    func testMovePreservesRibbonHistoryAndOnlyRecordsKnownEndpoints() throws {
+        var p = fixture(); let before = p
+        XCTAssertTrue(rules.transferCheck(from: p.currentgame, pokemon: p).isSafe)
+        XCTAssertTrue(rules.moveDestinations(for: p).contains("usun"))
+        XCTAssertTrue(p.recordMove(to: "usun"))
+        XCTAssertEqual(p.currentgame, "usun"); XCTAssertEqual(p.origingame, before.origingame)
+        XCTAssertEqual(p.ribbons, before.ribbons); XCTAssertEqual(p.earnedGames, before.earnedGames)
+        XCTAssertEqual(p.earnedGenerations, before.earnedGenerations); XCTAssertEqual(p.metLevel, before.metLevel)
+        XCTAssertEqual(Set(p.recordedVisits.map(\.game)), ["emerald", "ruby", "as", "usun"])
+        XCTAssertEqual(p.recordedVisits.map(\.game).filter { $0 == "as" }.count, 1)
+        XCTAssertEqual(try JSONDecoder().decode(RibbonPokemon.self, from: JSONEncoder().encode(p)), p)
+        XCTAssertFalse(p.recordMove(to: "as")); XCTAssertFalse(p.recordMove(to: "usun"))
+    }
+    func testMoveRejectsUnsafeUnknownIncompatibleAndServiceDestinations() {
+        var p = fixture()
+        for game in ["", "ruby", "as", "y", "bank", "home", "red"] {
+            let before = p; XCTAssertFalse(p.recordMove(to: game)); XCTAssertEqual(p, before)
+        }
+        p.removeAward("kalos-champion-ribbon")
+        XCTAssertFalse(p.recordMove(to: "usun")); XCTAssertTrue(rules.moveDestinations(for: p).isEmpty)
+        p = fixture(); p.currentlevel = 100; p.metLevel = nil; p.removeAward("footprint-ribbon")
+        XCTAssertFalse(p.recordMove(to: "usun"))
+        p = fixture(); p.species = "pikachu-cosplay"
+        XCTAssertTrue(rules.moveDestinations(for: p).isEmpty); XCTAssertFalse(p.recordMove(to: "sun"))
+        p = fixture(); p.species = "unknown-species"
+        XCTAssertTrue(rules.moveDestinations(for: p).isEmpty)
+    }
+    func testSkippingGenerationsDoesNotInventIntermediateVisits() {
+        var p = fixture()
+        XCTAssertTrue(p.recordMove(to: "scar"))
+        XCTAssertEqual(Set(p.recordedVisits.map(\.game)), ["emerald", "ruby", "as", "scar"])
+        XCTAssertEqual(p.visitedGenerations, [3, 6, 9])
+    }
+    @MainActor func testMoveSaveFailureAndRecoveryKeepTheOriginalRecord() throws {
+        let original = fixture(); var moved = original
+        XCTAssertTrue(moved.recordMove(to: "usun"))
+        var writes: [CollectionSnapshot] = []
+        let store = AppStore(snapshot: CollectionSnapshot(pokemon: [original]), save: { writes.append($0) })
+        store.update(moved)
+        XCTAssertNil(store.error); XCTAssertEqual(store.snapshot.pokemon.first, moved); XCTAssertEqual(writes.count, 1)
+        let version = try XCTUnwrap(store.snapshot.recoveryHistory?.first)
+        XCTAssertTrue(store.restoreHistory(version.id)); XCTAssertEqual(store.snapshot.pokemon.first, original)
+        let failing = AppStore(snapshot: CollectionSnapshot(pokemon: [original]), save: { _ in throw ImportError.invalid("Disk full") })
+        failing.update(moved)
+        XCTAssertNotNil(failing.error); XCTAssertEqual(failing.snapshot.pokemon.first, original)
+        XCTAssertNil(failing.snapshot.recoveryHistory)
+    }
+    @MainActor func testNativeGuidedMoveRendersWithPixelFontAtCompactWidths() throws {
+        _ = PixelFont.font(16)
+        XCTAssertNotNil(UIFont(name: "PixelifySans-Regular", size: 16))
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
+        let previous = scene.windows.first { $0.isKeyWindow }
+        let window = UIWindow(windowScene: scene)
+        let controller = UIHostingController(rootView: AnyView(EmptyView())); window.rootViewController = controller
+        defer { controller.rootView = AnyView(EmptyView()); window.isHidden = true; window.rootViewController = nil; previous?.makeKey() }
+        for width in [320.0, 390.0] { for dark in [false, true] {
+            window.frame = CGRect(x: 0, y: 0, width: width, height: 720)
+            let view = NavigationStack { RibbonMoveFlow(pokemon: fixture(), onMove: { _ in true }, onDone: {}) }
+                .environment(\.colorScheme, dark ? .dark : .light).environment(\.dynamicTypeSize, .xxxLarge)
+            controller.rootView = AnyView(view.id("\(width)-\(dark)"))
+            window.makeKeyAndVisible(); controller.view.frame = window.bounds; controller.view.layoutIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.2))
+            let image = UIGraphicsImageRenderer(size: window.bounds.size).image { _ in controller.view.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+            let attachment = XCTAttachment(image: image); attachment.name = "guided-move-\(Int(width))-\(dark ? "dark" : "light")"; attachment.lifetime = .keepAlways; add(attachment)
+        } }
+    }
+}
+
 final class RibbonManagerTests: XCTestCase {
     private let rules = RibbonRules.shared
     func testPostCaptureMarksRespectGameSizeAndOwnedRecords() throws {

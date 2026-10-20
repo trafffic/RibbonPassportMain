@@ -115,6 +115,54 @@ final class PCInteractionUITests: XCTestCase {
     }
 }
 
+final class GuidedMoveUITests: XCTestCase {
+    private var app: XCUIApplication!
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication(); app.launchEnvironment["RibbonPassportInteractionTest"] = "move"; app.launch()
+        XCTAssertTrue(app.buttons["pc.box.slot.0"].waitForExistence(timeout: 10))
+    }
+    override func tearDownWithError() throws { app.terminate(); app = nil }
+    private func tap(_ id: String) {
+        let button = app.buttons[id]
+        XCTAssertTrue(button.waitForExistence(timeout: 6), id)
+        for _ in 0..<5 { if button.isHittable { break }; app.swipeUp() }
+        button.tap()
+    }
+    private func capture(_ name: String) {
+        let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)
+    }
+    func testOverviewMoveChecksInAndUndoRestoresDeparture() {
+        tap("Passport ▸"); tap("passport.transfer.review"); tap("ribbons.transfer.move")
+        capture("guided-move-generation")
+        tap("ribbons.move.generation.7"); tap("ribbons.move.next")
+        XCTAssertFalse(app.buttons["ribbons.move.save"].isEnabled)
+        tap("ribbons.move.game.usun"); capture("guided-move-game-selected")
+        tap("ribbons.move.back"); tap("ribbons.move.generation.8"); tap("ribbons.move.next")
+        XCTAssertFalse(app.buttons["ribbons.move.save"].isEnabled)
+        XCTAssertTrue(app.buttons["ribbons.move.game.sw"].exists)
+        XCTAssertFalse(app.buttons["ribbons.move.game.usun"].exists)
+        tap("ribbons.move.back"); tap("ribbons.move.generation.7"); tap("ribbons.move.next")
+        tap("ribbons.move.game.usun"); tap("ribbons.move.save")
+        XCTAssertTrue(app.staticTexts["ribbons.move.recorded"].waitForExistence(timeout: 5)); capture("guided-move-recorded")
+        tap("ribbons.move.undo"); tap("ribbons.move.cancel")
+        XCTAssertTrue(app.buttons["ribbons.transfer.move"].waitForExistence(timeout: 5))
+        tap("ribbons.transfer.done")
+        XCTAssertTrue(app.staticTexts["Alpha Sapphire"].firstMatch.waitForExistence(timeout: 5))
+    }
+    func testRibbonTabMoveUpdatesPassportAndJourney() {
+        tap("ribbons.manage"); tap("ribbons.transfer.review"); tap("ribbons.transfer.move")
+        tap("ribbons.move.next"); tap("ribbons.move.game.usun"); tap("ribbons.move.save"); tap("ribbons.move.done")
+        tap("passport.tab.overview")
+        XCTAssertTrue(app.staticTexts["Ultra Sun"].firstMatch.waitForExistence(timeout: 5))
+        capture("guided-move-passport-updated")
+        tap("passport.tab.journey")
+        XCTAssertTrue(app.buttons["album.game.as"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["album.game.usun"].exists)
+        capture("guided-move-journey-updated")
+    }
+}
+
 final class RibbonTransferUITests: XCTestCase {
     func testTransferChecklistRecordsSpecificGamesUpdatesWarningAndUndo() {
         continueAfterFailure = false
