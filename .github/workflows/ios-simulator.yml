@@ -1,0 +1,101 @@
+name: iOS simulator and widget renders
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-simulator-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-tests:
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Show Xcode and simulator runtimes
+        run: |
+          xcodebuild -version
+          xcrun simctl list runtimes
+          mkdir -p .ci-results
+
+      - name: Choose an available iPhone simulator
+        run: |
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          import subprocess
+          import sys
+          devices = json.loads(subprocess.check_output(["xcrun", "simctl", "list", "devices", "available", "--json"]))["devices"]
+          candidates = [(runtime, device) for runtime, entries in devices.items() if ".iOS-" in runtime for device in entries if device.get("isAvailable") and device["name"].startswith("iPhone")]
+          if not candidates:
+              raise SystemExit("No available iPhone simulator runtime was found")
+          def version(item):
+              return tuple(int(part) for part in item[0].split("iOS-")[-1].split("-"))
+          runtime, device = max(candidates, key=lambda item: (version(item), item[1]["name"]))
+          print(f"SIMULATOR_UDID={device['udid']}")
+          print(f"Using {device['name']} on {runtime}: {device['udid']}", file=sys.stderr)
+          PY
+
+      - name: Boot the iPhone simulator
+        run: |
+          xcrun simctl boot "$SIMULATOR_UDID"
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+
+      - name: Build app and widgets; run unit and native render tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project RibbonPassport/RibbonPassport.xcodeproj \
+            -scheme RibbonPassport \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/ribbon-derived-data" \
+            -resultBundlePath .ci-results/unit.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:RibbonPassportTests \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= \
+            2>&1 | tee .ci-results/unit.log
+
+      - name: Test Widget Studio setup on the simulator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project RibbonPassport/RibbonPassport.xcodeproj \
+            -scheme RibbonPassport \
+            -configuration Debug \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -derivedDataPath "$RUNNER_TEMP/ribbon-derived-data" \
+            -resultBundlePath .ci-results/widget-studio.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:RibbonPassportUITests/StreamlinedUIUITests/testWidgetSetupKeepsAdvancedControlsOptional \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= \
+            2>&1 | tee .ci-results/widget-studio.log
+
+      - name: Export native test images and summaries
+        if: always()
+        run: |
+          for result in .ci-results/*.xcresult; do
+            if [ -d "$result" ]; then
+              label="$(basename "$result" .xcresult)"
+              xcrun xcresulttool export attachments --path "$result" --output-path ".ci-results/$label-images"
+              xcrun xcresulttool get test-results summary --path "$result" > ".ci-results/$label-summary.json"
+            fi
+          done
+
+      - name: Upload test results and widget images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-results
+          path: .ci-results/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 3
