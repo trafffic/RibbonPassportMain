@@ -104,7 +104,7 @@ extension CollectionSnapshot {
         guard let entry = recoveryHistory?.first(where: { $0.id == id }) else { throw ImportError.invalid("This saved version is no longer available.") }
         if entry.kind == .pokemon, let saved = entry.pokemon, saved.id == entry.objectID {
             let previousSection = section(forPokemon: saved.id)
-            let oldTeamKinds = Dictionary(teams.map { ($0.id, kind(of: $0)) }, uniquingKeysWith: { _, last in last })
+            let oldTeamKinds = Dictionary(teams.map { ($0.id, self.kind(of: $0)) }, uniquingKeysWith: { _, last in last })
             if let i = pokemon.firstIndex(where: { $0.id == saved.id }) { pokemon[i] = saved }
             else { pokemon.append(saved) }
             let kind: TeamKind = saved.showdownSet == nil ? .ribbon : .showdown

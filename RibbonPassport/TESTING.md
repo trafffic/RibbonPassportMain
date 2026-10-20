@@ -10,6 +10,8 @@ Validation in this Windows session: inspected both mascot assets, reviewed the s
 
 Before release, run Command + U in Xcode, inspect the new render attachments (including 300-point widths and 115% text), and check a saved design on an actual Home Screen. Confirm mascot size in the game picker and Journey, tap Journey ticket/Next ribbon, and test repeated widget links while the passport is already open.
 
+Native CI follow-up: [run 39506074126](https://github.com/trafffic/RibbonPassportMain/actions/runs/39506074126) successfully provisioned a macOS runner with Xcode 26.6 and booted an iPhone Air simulator on iOS 26.5. The build stopped at `RecoveryHistory.swift:107`, where a local `kind: TeamKind` shadows the `kind(of:)` method. The method call is now qualified as `self.kind(of:)`. No tests ran and no widget render images were produced in that first run; a new run is required to validate this fix and the widgets.
+
 ---
 
 # Usability passes 1–3 — 17 October 2026
