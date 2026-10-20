@@ -9,12 +9,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: ios-simulator-${{ github.ref }}
+  group: ios-simulator-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:
   native-tests:
-    runs-on: macos-26
+    runs-on: macos-15-intel
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
