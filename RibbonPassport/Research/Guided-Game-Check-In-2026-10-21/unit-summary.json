@@ -1,0 +1,46 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "x86_64",
+        "deviceId" : "B0784041-4057-4B9E-85B9-5C63C5C0D0B2",
+        "deviceName" : "iPhone SE (3rd generation)",
+        "modelName" : "iPhone SE (3rd generation)",
+        "osBuildNumber" : "23C54",
+        "osVersion" : "26.2",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 0,
+      "passedTests" : 104,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "RibbonPassport · Built with macOS 15.7.9",
+  "expectedFailures" : 0,
+  "failedTests" : 0,
+  "finishTime" : 1792539477.738,
+  "passedTests" : 104,
+  "result" : "Passed",
+  "skippedTests" : 0,
+  "startTime" : 1792538569.047,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+
+  ],
+  "title" : "Test - RibbonPassport",
+  "topInsights" : [
+    {
+      "category" : "Longest Test Runs",
+      "impact" : "66% of duration",
+      "text" : "3 longest test runs with outlier durations exceeding 39.03s (three standard deviations)"
+    }
+  ],
+  "totalTestCount" : 104
+}

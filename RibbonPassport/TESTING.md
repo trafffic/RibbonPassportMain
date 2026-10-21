@@ -1,3 +1,13 @@
+# Guided game check-in — 21 October 2026
+
+The guided move flow passed **104 unit/render tests and 3 simulator UI tests** with zero failures or skips. The app and widget targets compiled with Xcode 26.3 on the Intel macOS runner. Native light/dark captures at 320/390 points with larger text, plus the generation/game selection, confirmation, passport and Journey screens, were visually inspected for the bundled pixel font and layout.
+
+Open a safe current-game **Transfer check → Record a new game**. Choose a generation, select the game the Pokémon has moved into, then record it. The current game and known Journey endpoints update together; ribbons and earning locations remain intact. Undo restores the departure record. Cancel leaves it unchanged. Failed saves do not show success. Add/Edit sheets retain their existing outer Save action.
+
+See the [validation report and retained native captures](Research/Guided-Game-Check-In-2026-10-21/REPORT.md). The simulator checks use isolated fixtures and injected saves. Physical-device and VoiceOver interactions were not automated.
+
+---
+
 # Widget layouts and Alpha Sapphire mascot — 20 October 2026
 
 Alpha Sapphire's light/dark Primal Kyogre mascots now use their visible pixel bounds when loaded. The bundled 64 × 64 images contain 36 × 21 pixels of visible artwork; trimming that padding lets the existing aspect-fit views use their allocated space. Source images and other game mascots are unchanged.
